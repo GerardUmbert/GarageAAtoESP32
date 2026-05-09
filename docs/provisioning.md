@@ -9,45 +9,79 @@ Keep it secret — share verbally or via secure message, never in the repo or pl
 
 ---
 
-## Step 2 — Flash the firmware
+## Step 2 — Install PlatformIO (one-time)
 
-### Prerequisites
+PlatformIO is the build system used to compile and flash the firmware. You only install it once.
 
-- [VS Code](https://code.visualstudio.com/) installed
-- [PlatformIO IDE extension](https://marketplace.visualstudio.com/items?itemName=platformio.platformio-ide) installed in VS Code
-- ESP32 connected via USB
+### Option A — VS Code extension (recommended)
 
-### Configure
+1. Install [VS Code](https://code.visualstudio.com/).
+2. Open VS Code → Extensions (`Ctrl+Shift+X`) → search **PlatformIO IDE** → Install.
+3. Restart VS Code. The `pio` CLI is now available in your terminal automatically.
 
-1. Open `firmware/include/config.h`.
-2. Change `USER_PIN` to your chosen PIN:
+### Option B — CLI only (no VS Code needed)
+
+Requires Python 3. If you don't have Python:
+- Windows: download from [python.org](https://www.python.org/downloads/) — tick **"Add Python to PATH"** during install.
+- macOS/Linux: `brew install python` or use your package manager.
+
+Then install PlatformIO:
+```bash
+pip install platformio
+```
+
+Verify it works:
+```bash
+pio --version
+```
+
+---
+
+## Step 3 — Flash the firmware
+
+### Option A — Flash script (easiest, Windows)
+
+A script is provided that asks for your PIN, flashes the firmware, then immediately wipes the PIN from the file so it's never stored on disk.
+
+1. Connect your ESP32 via USB.
+2. Double-click `firmware/flash.bat`.
+3. Enter your PIN when prompted.
+4. Wait for `Leaving... Hard resetting via RTS pin...` — done.
+
+If the script can't find the COM port automatically, run it from PowerShell with the port specified:
+```powershell
+cd firmware
+.\flash.ps1 -Port COM3
+```
+
+To find your COM port: Device Manager → Ports (COM & LPT) → look for "USB Serial Device" or "CP210x".
+
+### Option B — Flash via VS Code (PlatformIO extension)
+
+1. Open the `firmware/` folder in VS Code (`File → Open Folder…` → select `firmware/`).
+2. Edit `firmware/include/config.h` — set your PIN:
    ```cpp
    #define USER_PIN  "my-garage-2024"
    ```
-3. Optionally change `DEVICE_NAME` to distinguish multiple units nearby:
+3. Optionally change `DEVICE_NAME`:
    ```cpp
    #define DEVICE_NAME  "Garage-Main"
    ```
-4. If using a **transistor** (recommended): leave `RELAY_ACTIVE_LOW false`.
-   If using a **relay module**: change it to `true`.
+4. If using a **transistor**: leave `RELAY_ACTIVE_LOW false`. If using a **relay module**: set it to `true`.
+5. Wait for PlatformIO to finish indexing (status bar bottom-left).
+6. Click the **→ Upload** arrow in the PlatformIO toolbar, or press `Ctrl+Alt+U`.
+7. Watch the terminal for `Leaving... Hard resetting via RTS pin...` — that means success.
 
-### Flash via VS Code (PlatformIO)
-
-1. Open the `firmware/` folder in VS Code (`File → Open Folder…` → select `firmware/`).
-2. Wait for PlatformIO to finish indexing (status bar bottom-left).
-3. Click the **→ Upload** arrow in the PlatformIO toolbar (bottom status bar), or press `Ctrl+Alt+U`.
-4. PlatformIO will compile and flash. Watch the terminal for `Leaving... Hard resetting via RTS pin...` — that means success.
-
-### Flash via terminal (alternative)
+### Option C — Flash via terminal
 
 ```bash
 cd firmware
 pio run -e esp32 --target upload
 ```
 
-If you get a port error, specify the port:
+If you get a port error, specify it manually:
 ```bash
-pio run -e esp32 --target upload --upload-port COM3      # Windows
+pio run -e esp32 --target upload --upload-port COM3        # Windows
 pio run -e esp32 --target upload --upload-port /dev/ttyUSB0  # Linux/macOS
 ```
 
@@ -58,11 +92,11 @@ You should see:
 ```
 BLE advertising started: GarageOpener
 ```
-If you see nothing, press the ESP32 reset button.
+If you see nothing, press the reset button on the ESP32.
 
 ---
 
-## Step 3 — Build the Android app
+## Step 4 — Build the Android app
 
 ### Prerequisites
 
@@ -93,7 +127,7 @@ APK will be at `app/build/outputs/apk/debug/app-debug.apk`.
 
 ---
 
-## Step 4 — Enable USB debugging on your phone
+## Step 5 — Enable USB debugging on your phone
 
 1. Go to **Settings → About phone**.
 2. Tap **Build number** 7 times until you see "You are now a developer".
@@ -103,7 +137,7 @@ APK will be at `app/build/outputs/apk/debug/app-debug.apk`.
 
 ---
 
-## Step 5 — Sideload the APK onto your phone
+## Step 6 — Sideload the APK onto your phone
 
 ### Option A — via Android Studio (easiest)
 
@@ -133,7 +167,7 @@ adb -s <device-id> install app-debug.apk
 
 ---
 
-## Step 6 — Enable Android Auto Developer Mode
+## Step 7 — Enable Android Auto Developer Mode
 
 Sideloaded apps are **blocked from appearing in Android Auto by default**. You must enable developer mode in the Android Auto app to allow unknown sources.
 
@@ -148,7 +182,7 @@ Sideloaded apps are **blocked from appearing in Android Auto by default**. You m
 
 ---
 
-## Step 7 — Configure the app (one-time phone setup)
+## Step 8 — Configure the app (one-time phone setup)
 
 1. Open **Garage Opener** on your phone (it appears in your app drawer after sideloading).
 2. Tap **Settings**.
@@ -164,7 +198,7 @@ Grant Bluetooth permissions if prompted (required for BLE scan).
 
 ---
 
-## Step 8 — Test on Android Auto
+## Step 9 — Test on Android Auto
 
 ### With a real car head unit
 
@@ -195,7 +229,7 @@ The DHU lets you run Android Auto on your PC for testing without a car.
 
 ---
 
-## Step 9 — Verify with nRF Connect (optional but recommended)
+## Step 10 — Verify with nRF Connect (optional but recommended)
 
 Before testing in the car, verify the firmware independently using the free **nRF Connect** app (Play Store / App Store):
 
@@ -221,7 +255,7 @@ Before testing in the car, verify the firmware independently using the free **nR
 Each person needs:
 1. Your PIN — share verbally or via secure message (Signal, WhatsApp, etc.).
 2. The APK — build it yourself and send the file, or have them clone the repo and build it.
-3. Follow Steps 4–7 above on their phone.
+3. Follow Steps 5–8 above on their phone.
 
 The PIN never appears in the repository or the APK. Each person enters it manually in the app settings.
 
