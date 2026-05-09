@@ -1,9 +1,45 @@
 #pragma once
 
+// ── Trigger mode ──────────────────────────────────────────────────────────────
+// Choose how the ESP32 fires the garage. Pick exactly one:
+//
+//   MODE_TRANSISTOR  – Wired into the fob. GPIO HIGH for RELAY_PULSE_MS turns on
+//                      a small NPN transistor that shorts the fob's button pads.
+//                      (Requires opening the fob and soldering 3 wires.)
+//
+//   MODE_RELAY       – Wired into the fob through a relay module instead of a
+//                      transistor. GPIO LOW pulls the relay coil (most modules
+//                      are active-low). Same wiring complexity as transistor.
+//
+//   MODE_CAP_PULSE   – No soldering. ESP32 drives a small conductive pad
+//                      (copper tape) physically pressed against the capacitive
+//                      top button of an Adaprox/Tuya-style Fingerbot, faking a
+//                      finger touch. The Fingerbot then mechanically presses
+//                      the fob button. Renter-friendly, fully reversible.
+//
+#define MODE_TRANSISTOR    1
+#define MODE_RELAY         2
+#define MODE_CAP_PULSE     3
+
+#define TRIGGER_MODE       MODE_TRANSISTOR
+
 // ── Hardware ──────────────────────────────────────────────────────────────────
-#define RELAY_PIN          26
-#define RELAY_ACTIVE_LOW   false  // false = transistor (GPIO HIGH triggers); true = relay module (GPIO LOW triggers)
-#define RELAY_PULSE_MS     500    // Duration of simulated fob button press
+// Pin used to drive the load (transistor base, relay coil, or capacitive pad).
+#define TRIGGER_PIN        26
+
+// Pulse duration. For MODE_TRANSISTOR / MODE_RELAY this is how long the fob
+// button is held "pressed". For MODE_CAP_PULSE this is how long the conductive
+// pad is driven before being released to high-Z.
+#define RELAY_PULSE_MS     500
+
+// MODE_CAP_PULSE only: capacitive sensors look for a touch *and* release edge,
+// so after the pulse the pin is set to INPUT (high-Z) instead of being driven
+// LOW. Some sensors also need a short minimum touch time (typ. 100–300 ms);
+// adjust RELAY_PULSE_MS upward if a single press isn't being registered.
+
+// ── Legacy aliases (kept so the existing pin name still works in case anyone
+// is referencing it externally; new code should use TRIGGER_PIN). ─────────────
+#define RELAY_PIN          TRIGGER_PIN
 
 // ── BLE ───────────────────────────────────────────────────────────────────────
 // Change DEVICE_NAME per install so multiple units are distinguishable

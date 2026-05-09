@@ -4,18 +4,39 @@
 
 namespace RelayControl {
 
-static constexpr int RELAY_ON  = RELAY_ACTIVE_LOW ? LOW  : HIGH;
-static constexpr int RELAY_OFF = RELAY_ACTIVE_LOW ? HIGH : LOW;
+#if TRIGGER_MODE == MODE_RELAY
+    static constexpr int ON_LEVEL  = LOW;
+    static constexpr int OFF_LEVEL = HIGH;
+#elif TRIGGER_MODE == MODE_TRANSISTOR
+    static constexpr int ON_LEVEL  = HIGH;
+    static constexpr int OFF_LEVEL = LOW;
+#endif
 
 void init() {
-    pinMode(RELAY_PIN, OUTPUT);
-    digitalWrite(RELAY_PIN, RELAY_OFF);
+#if TRIGGER_MODE == MODE_CAP_PULSE
+    // Idle as high-Z so we don't influence the capacitive sensor between
+    // presses. The pin is briefly switched to OUTPUT during pulse().
+    pinMode(TRIGGER_PIN, INPUT);
+#else
+    pinMode(TRIGGER_PIN, OUTPUT);
+    digitalWrite(TRIGGER_PIN, OFF_LEVEL);
+#endif
 }
 
 void pulse(uint32_t duration_ms) {
-    digitalWrite(RELAY_PIN, RELAY_ON);
+#if TRIGGER_MODE == MODE_CAP_PULSE
+    // Drive the pad to a fixed level to inject charge into the capacitive
+    // sensor's field, mimicking a finger touch. Then release to high-Z so
+    // the sensor sees the touch-release edge it expects.
+    pinMode(TRIGGER_PIN, OUTPUT);
+    digitalWrite(TRIGGER_PIN, HIGH);
     delay(duration_ms);
-    digitalWrite(RELAY_PIN, RELAY_OFF);
+    pinMode(TRIGGER_PIN, INPUT);
+#else
+    digitalWrite(TRIGGER_PIN, ON_LEVEL);
+    delay(duration_ms);
+    digitalWrite(TRIGGER_PIN, OFF_LEVEL);
+#endif
 }
 
 } // namespace RelayControl

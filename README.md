@@ -8,27 +8,82 @@ This project exists for a specific situation: you use a **shared or communal gar
 
 This gives you a hands-free way to open the door from your car's Android Auto screen without touching your phone. It works entirely over Bluetooth — no internet, no cloud, no subscription, no hub. The ESP32 sits discreetly near the entrance powered by a USB charger or battery, and it presses the fob button for you when you tap the screen.
 
+There are **three ways** to do the actual button-press, including one that requires no soldering and doesn't modify the fob — important if you have to give it back when you move out. See [Choose your trigger mechanism](#choose-your-trigger-mechanism) below.
+
 It is **not** a replacement for a proper smart garage opener — if you own the garage and have access to the motor, there are better, cleaner solutions. This is specifically for the case where you have no choice but to use the fob.
 
 ---
 
-**How it works:** An ESP32 sits at the garage with two wires soldered to the button pads of a key fob. The Android app sends a BLE command from your phone directly to the ESP32, which briefly shorts those pads — exactly like pressing the button. No internet, no cloud, no Wi-Fi required.
+**How it works:** An ESP32 sits at the garage and is connected to a fob trigger mechanism (see the three options below). The Android app sends a BLE command from your phone directly to the ESP32, which then triggers the fob — exactly as if someone had pressed the button. No internet, no cloud, no Wi-Fi required.
+
+## Choose your trigger mechanism
+
+The ESP32 supports **three ways** to press the fob's button. Pick the one that fits your situation; the firmware handles all three from a single config flag (`TRIGGER_MODE` in `firmware/include/config.h`).
+
+| Option | Soldering required? | Fob modified? | Best for |
+|---|---|---|---|
+| **A — Transistor** | Yes (3 wires inside the fob) | Yes | You own the fob and want the cheapest, lowest-power, most reliable setup |
+| **B — Relay module** | Yes (3 wires inside the fob) | Yes | Same as A but you prefer galvanic isolation or already have a relay module |
+| **C — Capacitive pulse on a fingerbot** | **No** | **No** | You **rent** the fob (apartment block, communal car park) and have to return it untouched |
+
+### Option A — Transistor (recommended if you can solder)
+
+A single small NPN transistor (2N2222, BC547, etc.) shorts the fob's two button pads when triggered by an ESP32 GPIO. Cheapest path, lowest power draw, fastest response. Requires opening the fob and soldering 3 wires.
+
+### Option B — Relay module
+
+Same idea as Option A but with a 5 V relay module instead of a transistor. Slightly more familiar to beginners, but draws more power (relay coil ~60–80 mA) and costs a bit more. Same wiring complexity.
+
+### Option C — Capacitive pulse on a fingerbot (no soldering)
+
+If you can't open the fob — for example, parking management owns it and you'll have to return it when you move out — you can pair the ESP32 with an **Adaprox / Tuya Fingerbot Plus** (model `ADFBB531` or similar with a capacitive top button).
+
+The setup looks like this:
+
+```
+[Your phone in car]
+        │  BLE (HMAC-authenticated)
+        ▼
+   [ESP32] ──wire──▶ [copper-tape pad]  ◀── pressed against ──▶ [Fingerbot's top capacitive button]
+                                                                            │
+                                                                            │  fingerbot's mechanical arm
+                                                                            ▼
+                                                                  [fob's button is pressed]
+                                                                            │
+                                                                            ▼
+                                                                  [garage door opens]
+```
+
+**The trick** is that the ESP32 doesn't talk to the fingerbot over Bluetooth (which would require reverse-engineering Tuya's BLE protocol). Instead, a small piece of copper tape connected to one ESP32 GPIO pin is taped on top of the fingerbot's capacitive button. When the ESP32 briefly drives that pin from high-impedance to OUTPUT HIGH, it injects charge into the sensor's electric field — which is what your finger does when it gets close. The fingerbot thinks you've tapped it, runs its own trigger cycle, and its mechanical arm presses the fob.
+
+**Why this works without batteries between ESP32 and fingerbot, without protocol hacking, and without modifying anything:**
+- Capacitive sensors detect changes in the local electric field, not direct electrical contact. A grounded conductive object (your finger via your body, or a GPIO pad relative to ground) coupling into the field is what they look for.
+- After the pulse, the firmware switches the pin back to high-impedance INPUT mode. This gives the sensor the "release" edge it needs to register a complete tap (touch → release).
+- The fingerbot itself is unmodified — it works exactly as it did out of the box, just with a "synthetic finger" instead of a real one.
+- The fob is completely untouched. When you move out, peel off the tape and the fingerbot, return the fob, and there's no trace.
+
+**Trade-offs vs the wired options:**
+- ✅ Renter-friendly. Nothing is soldered, nothing is opened.
+- ✅ Same firmware, same Android app, same authentication, same Android Auto UI.
+- ⚠️ Adds the fingerbot's battery to maintain (USB-C, recharge every few months).
+- ⚠️ Latency adds ~0.5–1 s vs the direct wired path because the fingerbot has its own internal trigger-to-arm cycle.
+
+See [docs/wiring_diagram.md](docs/wiring_diagram.md) for full diagrams, materials lists, and tuning notes for all three options.
 
 ## Hardware required
 
 - **ESP32 development board** with BLE — e.g., ESP32-DevKitC, ESP32-C3 SuperMini, XIAO ESP32C3
   _(must be ESP32, not ESP8266 — the ESP8266 has no Bluetooth)_
-- **Garage key fob** — you'll solder two wires to the button pads inside it
-- **One of the following to trigger the fob:**
-  - **NPN transistor** — e.g., 2N2222, BC547, 2N3904 (~$0.10, recommended). Just the transistor + a 1 kΩ resistor. No extra modules.
-  - **5V relay module** — familiar to beginners, provides galvanic isolation, but draws more power and costs more (~$1)
+- **Trigger mechanism** — pick one based on the table above:
+  - Option A: NPN transistor (2N2222 / BC547 / 2N3904, ~$0.10) + 1 kΩ resistor
+  - Option B: 5V relay module (~$1)
+  - Option C: Adaprox / Tuya Fingerbot Plus (model `ADFBB531` or similar, capacitive top button) + ~1 cm² of copper tape + thin wire
+- **Garage key fob** — for Options A and B you'll solder two wires to the button pads inside it. For Option C you don't open the fob at all.
 - **Power source** — pick one:
   - Wall outlet + any USB phone charger (simplest — if there's a socket nearby)
   - Solar power bank (self-sustaining, no maintenance)
   - USB power bank with always-on / low-current mode (~18 months per charge)
   - 18650 LiPo cells + TP4056 charger board (DIY, most flexible)
-
-See [docs/wiring_diagram.md](docs/wiring_diagram.md) for both wiring options with diagrams.
 
 ## Project structure
 
@@ -72,7 +127,12 @@ Connect your phone to Android Auto. Open **Garage Opener** and tap **Open Garage
 
 ## Wiring
 
-Two options — transistor (simpler, cheaper, lower power) or relay module (more familiar to beginners). See [docs/wiring_diagram.md](docs/wiring_diagram.md) for full diagrams and component notes.
+Three options:
+- **A — Transistor** (cheapest, lowest power, requires soldering)
+- **B — Relay module** (more familiar to beginners, requires soldering)
+- **C — Capacitive pulse on a fingerbot** (no soldering, fully reversible — for rented fobs)
+
+See [docs/wiring_diagram.md](docs/wiring_diagram.md) for full diagrams, materials lists, and component notes.
 
 ## Power
 
