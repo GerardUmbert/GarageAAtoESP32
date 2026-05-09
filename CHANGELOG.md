@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.0.8] - 2026-05-09
+
+### Fixed
+- Android Auto "unexpected error" on launch: removed `Toast` calls from the Car App context (not permitted by the AA framework) and fixed thread dispatch in demo mode
+
 ## [1.0.7] - 2026-05-09
 
 ### Fixed
