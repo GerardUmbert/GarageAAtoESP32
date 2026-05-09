@@ -2,6 +2,16 @@
 
 Open the garage from your car's Android Auto screen with a single button press.
 
+## Who is this for?
+
+This project exists for a specific situation: you use a **shared or communal garage** — a car park in an apartment block, a rented space, a co-owned facility — where you have **no access to the motor or the gate controller**. You can't wire into the existing system, you can't install a proper smart opener, and the management won't let you touch anything. All you have is a key fob.
+
+This gives you a hands-free way to open the door from your car's Android Auto screen without touching your phone. It works entirely over Bluetooth — no internet, no cloud, no subscription, no hub. The ESP32 sits discreetly near the entrance powered by a USB charger or battery, and it presses the fob button for you when you tap the screen.
+
+It is **not** a replacement for a proper smart garage opener — if you own the garage and have access to the motor, there are better, cleaner solutions. This is specifically for the case where you have no choice but to use the fob.
+
+---
+
 **How it works:** An ESP32 sits at the garage with two wires soldered to the button pads of a key fob. The Android app sends a BLE command from your phone directly to the ESP32, which briefly shorts those pads — exactly like pressing the button. No internet, no cloud, no Wi-Fi required.
 
 ## Hardware required
