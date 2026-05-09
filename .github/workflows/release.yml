@@ -114,31 +114,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION=${{ needs.build-android.outputs.version }}
-          LAST=$(gh release list --limit 20 --json tagName \
-            | jq -r '.[].tagName' \
-            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
-            | sed 's/^v//' \
-            | head -1 || true)
-          NOTES=$(python3 - "$VERSION" "$LAST" <<'PYEOF'
-          import sys, re
-          version, last = sys.argv[1], sys.argv[2]
-          text = open("CHANGELOG.md").read()
-          sections = re.split(r'(?=^## \[)', text, flags=re.MULTILINE)
-          collecting, parts = False, []
-          for s in sections:
-              m = re.match(r'^## \[([^\]]+)\]', s)
-              if not m:
-                  continue
-              v = m.group(1)
-              if v == version:
-                  collecting = True
-              if collecting:
-                  if last and v == last:
-                      break
-                  parts.append(s.strip().rstrip('-').strip())
-          print("\n\n---\n\n".join(parts))
-          PYEOF
-          )
+          OLDEST_KEPT=$(gh release list --limit 100 --json tagName,createdAt \
+            | jq -r 'sort_by(.createdAt) | reverse | .[9:10] | .[0].tagName // ""' \
+            | sed 's/^v//')
+          NOTES=$(python3 .github/extract_changelog.py "$VERSION" "$OLDEST_KEPT")
           echo "notes<<EOF" >> $GITHUB_OUTPUT
           echo "$NOTES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -161,10 +140,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Delete old releases (keep last 5)
+      - name: Delete old releases (keep last 10)
         run: |
           releases=$(gh release list --limit 100 --json tagName,createdAt \
-            | jq -r 'sort_by(.createdAt) | reverse | .[5:] | .[].tagName')
+            | jq -r 'sort_by(.createdAt) | reverse | .[10:] | .[].tagName')
           for tag in $releases; do
             echo "Deleting release $tag"
             gh release delete "$tag" --yes --cleanup-tag
