@@ -32,12 +32,11 @@ docs/       Wiring diagram, power budget, provisioning guide
 
 ### 1. Firmware
 
-1. Install [VS Code](https://code.visualstudio.com/) + [PlatformIO extension](https://platformio.org/).
-2. Open the `firmware/` folder in VS Code.
-3. Edit `firmware/include/config.h`:
-   - Set `USER_PIN` to your chosen passphrase.
-   - Optionally change `DEVICE_NAME` to distinguish multiple units.
-4. Connect ESP32 via USB and click **Upload** in PlatformIO.
+1. Install [VS Code](https://code.visualstudio.com/) + [PlatformIO extension](https://platformio.org/) — or just `pip install platformio` for CLI only.
+2. Connect your ESP32 via USB.
+3. **Double-click `firmware/flash.bat`** (Windows) — it will ask for your PIN, compile, and flash. PIN is never saved to disk.
+   - Or open `firmware/` in VS Code, edit `USER_PIN` in `config.h`, and click **Upload**.
+4. See [docs/provisioning.md](docs/provisioning.md) for full flashing instructions.
 
 ### 2. Android app
 
@@ -69,9 +68,13 @@ Two options — transistor (simpler, cheaper, lower power) or relay module (more
 
 See [docs/power_budget.md](docs/power_budget.md) for battery sizing and solar guidance.
 
-## Testing without a car
+## Testing without hardware
 
-Use **nRF Connect** (free on Android/iOS) to talk directly to the ESP32 and verify auth works before testing in the car. See [docs/provisioning.md](docs/provisioning.md) Step 5.
+**Test the Android Auto UI without an ESP32:**
+Enable **Demo mode** in the app's phone Settings. Tapping "Open Garage" on the AA screen will run the full UI flow (connecting → opened) and show a toast on your phone — no BLE or hardware needed. Use this with the [Android Auto Desktop Head Unit](docs/provisioning.md#step-9--test-on-android-auto) to test entirely on your PC.
+
+**Test the firmware without the Android app:**
+Use **nRF Connect** (free on Android/iOS) to talk directly to the ESP32 and verify auth works. See [docs/provisioning.md](docs/provisioning.md) for the full verification steps.
 
 ## Replicating for others
 
