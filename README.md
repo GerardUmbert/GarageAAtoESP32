@@ -2,17 +2,22 @@
 
 Open the garage from your car's Android Auto screen with a single button press.
 
-**How it works:** An ESP32 sits at the garage with a relay wired in parallel to a physical key fob button. The Android app sends a BLE command from your phone directly to the ESP32 — no internet, no cloud, no Wi-Fi required.
+**How it works:** An ESP32 sits at the garage with two wires soldered to the button pads of a key fob. The Android app sends a BLE command from your phone directly to the ESP32, which briefly shorts those pads — exactly like pressing the button. No internet, no cloud, no Wi-Fi required.
 
 ## Hardware required
 
-- ESP32 development board (e.g., ESP32-DevKitC)
-- 5V relay module (single channel)
-- Garage key fob (you'll solder two wires to the button pads)
-- Power source — pick one:
+- **ESP32 development board** with BLE — e.g., ESP32-DevKitC, ESP32-C3 SuperMini, XIAO ESP32C3
+  _(must be ESP32, not ESP8266 — the ESP8266 has no Bluetooth)_
+- **Garage key fob** — you'll solder two wires to the button pads inside it
+- **One of the following to trigger the fob:**
+  - **NPN transistor** — e.g., 2N2222, BC547, 2N3904 (~$0.10, recommended). Just the transistor + a 1 kΩ resistor. No extra modules.
+  - **5V relay module** — familiar to beginners, provides galvanic isolation, but draws more power and costs more (~$1)
+- **Power source** — pick one:
   - USB power bank with always-on / low-current mode
-  - 18650 LiPo cells + TP4056 charger board (+ optional solar panel)
+  - 18650 LiPo cells + TP4056 charger board (± solar panel)
   - Solar power bank
+
+See [docs/wiring_diagram.md](docs/wiring_diagram.md) for both wiring options with diagrams.
 
 ## Project structure
 
@@ -57,7 +62,7 @@ Connect your phone to Android Auto. Open **Garage Opener** and tap **Open Garage
 
 ## Wiring
 
-See [docs/wiring_diagram.md](docs/wiring_diagram.md).
+Two options — transistor (simpler, cheaper, lower power) or relay module (more familiar to beginners). See [docs/wiring_diagram.md](docs/wiring_diagram.md) for full diagrams and component notes.
 
 ## Power
 
