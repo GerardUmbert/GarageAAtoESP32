@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.0.5] - 2026-05-09
+
+### Changed
+- CI now builds with JDK 21 (Temurin) to match AGP 8.13.1 requirements
+
 ## [1.0.4] - 2026-05-09
 
 ### Fixed
