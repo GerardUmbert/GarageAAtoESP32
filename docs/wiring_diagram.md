@@ -45,7 +45,13 @@ When the relay closes (triggered by ESP32), it shorts the two fob pads exactly a
 
 ## Power Options
 
-### Option 1 — USB Power Bank (simplest)
+### Option 0 — Wall outlet + USB charger (easiest of all)
+```
+Wall outlet  ──▶  Any USB phone charger (5V ≥ 500mA)  ──▶  ESP32 USB port
+```
+If your communal garage has a wall outlet nearby, this is the simplest possible setup — just a phone charger and a USB cable. No batteries, no solar, no maintenance. The ESP32 draws so little power (~17 mAh/day) that any basic charger handles it with ease.
+
+### Option 1 — USB Power Bank (no outlet access)
 ```
 Power bank USB-A  ──▶  ESP32 dev board Micro-USB / USB-C
 ```

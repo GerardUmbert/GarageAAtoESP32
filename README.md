@@ -13,6 +13,7 @@ Open the garage from your car's Android Auto screen with a single button press.
   - **NPN transistor** — e.g., 2N2222, BC547, 2N3904 (~$0.10, recommended). Just the transistor + a 1 kΩ resistor. No extra modules.
   - **5V relay module** — familiar to beginners, provides galvanic isolation, but draws more power and costs more (~$1)
 - **Power source** — pick one:
+  - Wall outlet + any USB phone charger (simplest — if there's a socket nearby)
   - USB power bank with always-on / low-current mode
   - 18650 LiPo cells + TP4056 charger board (± solar panel)
   - Solar power bank
