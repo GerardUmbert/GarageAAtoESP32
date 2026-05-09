@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GarageAAtoESP32 - Privacy Policy</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    max-width: 760px;
+    margin: 2rem auto;
+    padding: 0 1.25rem;
+    line-height: 1.6;
+    color: #222;
+  }
+  h1 { border-bottom: 2px solid #333; padding-bottom: 0.4rem; }
+  h2 { margin-top: 2rem; color: #1a3a5c; }
+  code { background: #f0f0f0; padding: 0.1rem 0.35rem; border-radius: 3px; font-size: 0.95em; }
+  .meta { color: #666; font-size: 0.9rem; }
+  ul { padding-left: 1.4rem; }
+  a { color: #1a5fb4; }
+</style>
+</head>
+<body>
+
+<h1>Privacy Policy - GarageAAtoESP32</h1>
+<p class="meta">Last updated: 2026-05-09</p>
+
+<p>
+  GarageAAtoESP32 ("the app") is an open-source Android Auto app that triggers a
+  do-it-yourself ESP32-based garage door opener over Bluetooth Low Energy (BLE).
+  This policy describes what data the app handles and how it is stored.
+</p>
+
+<h2>Summary</h2>
+<ul>
+  <li><strong>The app does not send any data to any server.</strong></li>
+  <li><strong>The app does not contain any third-party analytics, tracking, advertising, or telemetry libraries.</strong></li>
+  <li>All data stays on your phone, encrypted with the Android Keystore.</li>
+  <li>The app communicates only with your own ESP32 device over local Bluetooth Low Energy.</li>
+</ul>
+
+<h2>Data the app stores on your phone</h2>
+<p>The app stores the following information locally, in
+<a href="https://developer.android.com/topic/security/data">EncryptedSharedPreferences</a>
+(AES-256, backed by the Android Keystore):</p>
+<ul>
+  <li><strong>PIN</strong> - the shared secret used to authenticate with your ESP32.
+    The PIN is never transmitted over the air; it is used only as the key for an
+    HMAC-SHA256 challenge-response.</li>
+  <li><strong>BLE device address and name</strong> - so the app can reconnect to your
+    chosen ESP32 without rescanning every time.</li>
+  <li><strong>Demo mode flag</strong> - whether you've enabled the simulated test mode.</li>
+</ul>
+
+<h2>Permissions and why they are needed</h2>
+<ul>
+  <li><code>BLUETOOTH_SCAN</code> (with <code>neverForLocation</code>) - to discover your
+    ESP32 device during one-time setup.</li>
+  <li><code>BLUETOOTH_CONNECT</code> - to connect to your ESP32 and send the open-garage
+    command.</li>
+  <li><code>ACCESS_FINE_LOCATION</code> - required by Android for BLE scanning on older
+    Android versions. The app does not access or store your location.</li>
+</ul>
+
+<h2>Data sent over Bluetooth</h2>
+<p>When you tap "Open Garage", the app exchanges a small number of bytes with your
+ESP32 over an encrypted local BLE connection:</p>
+<ul>
+  <li>Reads a random nonce from the ESP32.</li>
+  <li>Sends back an HMAC-SHA256 of that nonce, computed using your PIN as the key.</li>
+  <li>Receives a 1-byte status response.</li>
+</ul>
+<p>Your PIN is never sent over the air. No part of this exchange leaves your local
+Bluetooth radio.</p>
+
+<h2>Data sent to third parties</h2>
+<p><strong>None.</strong> The app does not contact any server, does not include any
+analytics or crash-reporting SDK, does not include advertising, and does not share any
+data with anyone. There is no network code in the app at all.</p>
+
+<h2>How to delete your data</h2>
+<p>Because all data is stored locally and only on your phone, you can remove it
+completely at any time:</p>
+<ul>
+  <li><strong>Uninstalling the app removes all stored data.</strong>
+    There is no cloud backup, no account, and no remote copy of anything.</li>
+  <li>To clear data without uninstalling: Phone Settings - Apps - GarageAAtoESP32 -
+    Storage - Clear data.</li>
+</ul>
+
+<h2>Children's privacy</h2>
+<p>The app is not directed at children and does not knowingly collect any data from
+anyone, regardless of age.</p>
+
+<h2>Changes to this policy</h2>
+<p>If this policy ever changes, the new version will be published at this URL with an
+updated "Last updated" date.</p>
+
+<h2>Contact</h2>
+<p>For privacy-related questions, contact:
+<a href="mailto:dunnow.software+privacy@gmail.com">dunnow.software+privacy@gmail.com</a></p>
+
+</body>
+</html>
