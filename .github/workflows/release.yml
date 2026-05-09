@@ -47,7 +47,7 @@ jobs:
           echo "$KEYSTORE_BASE64" | base64 -d > $HOME/.keystores/release.jks
           echo "KEYSTORE_PATH=$HOME/.keystores/release.jks" >> $GITHUB_ENV
 
-      - name: Build release APK
+      - name: Build release APK, release bundle, and debug APK
         working-directory: android
         env:
           KEYSTORE_PATH: ${{ env.KEYSTORE_PATH }}
@@ -56,23 +56,31 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease
+          ./gradlew assembleRelease bundleRelease assembleDebug
 
       - name: Get version from build.gradle.kts
         id: version
         run: |
           echo "version=$(grep 'versionName' android/app/build.gradle.kts | grep -oP '(?<=\")[^\"]+(?=\")')" >> $GITHUB_OUTPUT
 
-      - name: Rename APK
+      - name: Rename build outputs
         run: |
-          APK=$(find android/app/build/outputs/apk/release -name "*.apk" | head -1)
-          cp "$APK" GarageAAtoESP32-${{ steps.version.outputs.version }}.apk
+          VERSION=${{ steps.version.outputs.version }}
+          RELEASE_APK=$(find android/app/build/outputs/apk/release -name "*.apk" | head -1)
+          DEBUG_APK=$(find android/app/build/outputs/apk/debug -name "*.apk" | head -1)
+          AAB=$(find android/app/build/outputs/bundle/release -name "*.aab" | head -1)
+          cp "$RELEASE_APK" "GarageAAtoESP32-${VERSION}.apk"
+          cp "$DEBUG_APK"   "GarageAAtoESP32-${VERSION}-debug.apk"
+          cp "$AAB"         "GarageAAtoESP32-${VERSION}.aab"
 
-      - name: Upload APK artifact
+      - name: Upload Android artifacts
         uses: actions/upload-artifact@v4
         with:
           name: apk
-          path: GarageAAtoESP32-${{ steps.version.outputs.version }}.apk
+          path: |
+            GarageAAtoESP32-${{ steps.version.outputs.version }}.apk
+            GarageAAtoESP32-${{ steps.version.outputs.version }}-debug.apk
+            GarageAAtoESP32-${{ steps.version.outputs.version }}.aab
 
   build-firmware:
     runs-on: ubuntu-latest
@@ -149,6 +157,7 @@ jobs:
             > It is provided for testing only. To use it for real, flash from source with your own PIN set in `firmware/include/config.h`.
           files: |
             artifacts/apk/*.apk
+            artifacts/apk/*.aab
             artifacts/firmware/*.bin
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
