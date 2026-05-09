@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.0.11] - 2026-05-09
+
+### Added
+- Firmware: new `MODE_CAP_PULSE` trigger mode, alongside the existing `MODE_TRANSISTOR` and `MODE_RELAY`. Drives a small conductive pad (copper tape) taped over the capacitive top button of an Adaprox / Tuya Fingerbot Plus to fake a finger touch — the fingerbot then mechanically presses the fob. Renter-friendly: no soldering, no fob modification, fully reversible.
+- Wiring guide: full Option C section with diagram, materials list, assembly steps, tuning notes, and trade-offs vs. wired options.
+- README: rewritten "Choose your trigger mechanism" section with a comparison table and detailed explanation of why the capacitive-pulse trick works.
+
+### Changed
+- Firmware: `RELAY_ACTIVE_LOW` config flag replaced by `TRIGGER_MODE` (`MODE_TRANSISTOR` / `MODE_RELAY` / `MODE_CAP_PULSE`). `RELAY_PIN` kept as a legacy alias for the new `TRIGGER_PIN`. Existing transistor / relay setups behave identically.
+
 ## [1.0.10] - 2026-05-09
 
 ### Changed

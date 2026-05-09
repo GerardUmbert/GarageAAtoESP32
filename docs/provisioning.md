@@ -67,7 +67,7 @@ To find your COM port: Device Manager → Ports (COM & LPT) → look for "USB Se
    ```cpp
    #define DEVICE_NAME  "Garage-Main"
    ```
-4. If using a **transistor**: leave `RELAY_ACTIVE_LOW false`. If using a **relay module**: set it to `true`.
+4. Set `TRIGGER_MODE` to match your hardware: `MODE_TRANSISTOR` (Option A), `MODE_RELAY` (Option B), or `MODE_CAP_PULSE` (Option C — fingerbot, no soldering).
 5. Wait for PlatformIO to finish indexing (status bar bottom-left).
 6. Click the **→ Upload** arrow in the PlatformIO toolbar, or press `Ctrl+Alt+U`.
 7. Watch the terminal for `Leaving... Hard resetting via RTS pin...` — that means success.
@@ -266,7 +266,8 @@ The PIN never appears in the repository or the APK. Each person enters it manual
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | Serial Monitor shows nothing | Wrong baud rate or wrong port | Set 115200 baud; check port in PlatformIO |
-| Relay / transistor never clicks | `RELAY_ACTIVE_LOW` wrong | Set `false` for transistor, `true` for relay module |
+| Relay / transistor never clicks | Wrong `TRIGGER_MODE` | Set `MODE_TRANSISTOR` for transistor, `MODE_RELAY` for relay module |
+| Fingerbot never triggers (cap-pulse) | Pad coupling weak | Increase `RELAY_PULSE_MS`, enlarge pad, or add ESP32 GND wire to fingerbot chassis |
 | nRF Connect: Status always `00` | PIN mismatch | Verify `USER_PIN` in `config.h` exactly matches app PIN |
 | App not appearing in Android Auto | Unknown sources not enabled | Repeat Step 6; confirm "Unknown sources" is on |
 | BLE scan finds nothing | ESP32 not advertising | Check power; check Serial Monitor; move phone closer |
