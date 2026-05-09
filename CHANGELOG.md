@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.0.2] - 2026-05-09
+
+### Added
+- Open Garage button on the phone screen — no longer just a settings launcher. Works in both real mode (triggers BLE) and demo mode (simulated flow with toasts). Button is disabled until the app is configured or demo mode is on.
+
 ## [1.0.1] - 2026-05-09
 
 ### Added

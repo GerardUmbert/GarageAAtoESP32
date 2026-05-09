@@ -12,7 +12,15 @@
         android:layout_height="wrap_content"
         android:textSize="16sp"
         android:gravity="center"
-        android:layout_marginBottom="24dp" />
+        android:layout_marginBottom="32dp" />
+
+    <Button
+        android:id="@+id/btn_open"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:text="Open Garage"
+        android:textSize="18sp"
+        android:layout_marginBottom="16dp" />
 
     <Button
         android:id="@+id/btn_settings"
