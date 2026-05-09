@@ -37,22 +37,9 @@ jobs:
           key: gradle-${{ hashFiles('android/gradle/libs.versions.toml', 'android/**/*.gradle.kts') }}
           restore-keys: gradle-
 
-      - name: Decode keystore
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | tr -d '\r\n' | base64 -d > android/garage.jks
-
-      - name: Write key.properties
-        run: |
-          cat > android/key.properties <<EOF
-          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
-          keyPassword=${{ secrets.KEY_PASSWORD }}
-          keyAlias=${{ secrets.KEY_ALIAS }}
-          storeFile=../garage.jks
-          EOF
-          sed -i 's/^ *//' android/key.properties
-
-      - name: Build release APK
+      - name: Build debug APK
         working-directory: android
-        run: ./gradlew assembleRelease
+        run: ./gradlew assembleDebug
 
       - name: Get version from build.gradle.kts
         id: version
@@ -96,7 +83,7 @@ jobs:
 
       - name: Rename APK
         run: |
-          APK=$(find android/app/build/outputs/apk/release -name "*.apk" ! -name "*-unsigned*" | head -1)
+          APK=$(find android/app/build/outputs/apk/debug -name "*.apk" | head -1)
           echo "Found APK: $APK"
           cp "$APK" GarageAAtoESP32-${{ steps.version.outputs.version }}.apk
 
