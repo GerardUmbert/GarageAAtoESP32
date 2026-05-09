@@ -28,6 +28,11 @@ jobs:
           java-version: "17"
           distribution: "temurin"
 
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.7"
+
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
@@ -39,7 +44,7 @@ jobs:
 
       - name: Build debug APK
         working-directory: android
-        run: ./gradlew assembleDebug
+        run: gradle assembleDebug
 
       - name: Get version from build.gradle.kts
         id: version
