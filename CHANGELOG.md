@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.0.3] - 2026-05-09
+
+### Fixed
+- Android Auto: app now appears in the AA launcher
+  - Removed `android:exported="false"` from `<application>` tag which was blocking AA discovery
+  - Removed incorrect `com.google.android.gms.car.application` meta-data
+  - Added `android:label` and `androidx.car.app.minCarApiLevel` meta-data to the service (correct Car App Library pattern)
+
 ## [1.0.2] - 2026-05-09
 
 ### Added
