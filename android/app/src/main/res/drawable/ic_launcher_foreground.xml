@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Garage door body -->
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M30,72 L30,42 Q30,36 36,36 L72,36 Q78,36 78,42 L78,72 Z"/>
+    <!-- Door panel separators -->
+    <path android:fillColor="#00000000"
+        android:pathData="M33,48 L75,48"
+        android:strokeColor="#1976D2"
+        android:strokeWidth="2"/>
+    <path android:fillColor="#00000000"
+        android:pathData="M33,57 L75,57"
+        android:strokeColor="#1976D2"
+        android:strokeWidth="2"/>
+    <path android:fillColor="#00000000"
+        android:pathData="M33,66 L75,66"
+        android:strokeColor="#1976D2"
+        android:strokeWidth="2"/>
+    <!-- Ground line -->
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M27,74 L81,74 L81,77 L27,77 Z"/>
+</vector>
