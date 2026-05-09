@@ -146,7 +146,7 @@ jobs:
             | jq -r 'sort_by(.createdAt) | reverse | .[10:] | .[].tagName')
           for tag in $releases; do
             echo "Deleting release $tag"
-            gh release delete "$tag" --yes --cleanup-tag
+            gh release delete "$tag" --yes
           done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
