@@ -2,7 +2,6 @@ package com.dunnowsoftware.GarageAAtoESP32
 
 import android.os.Handler
 import android.os.Looper
-import android.widget.Toast
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.car.app.model.*
@@ -109,11 +108,9 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
                     is OpenResult.Success -> {
                         uiState = UiState.SUCCESS
                         invalidate()
-                        // Return to idle after 2 s
-                        carContext.mainExecutor.execute {
-                            android.os.Handler(android.os.Looper.getMainLooper())
-                                .postDelayed({ resetToIdle() }, 2000)
-                        }
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            carContext.mainExecutor.execute { resetToIdle() }
+                        }, 2000)
                     }
                     is OpenResult.Failure -> {
                         uiState = UiState.FAILURE
@@ -129,12 +126,14 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
         uiState = UiState.CONNECTING
         connectAttempt = 1
         invalidate()
-        Toast.makeText(carContext, "DEMO: simulating garage open…", Toast.LENGTH_SHORT).show()
         Handler(Looper.getMainLooper()).postDelayed({
-            uiState = UiState.SUCCESS
-            invalidate()
-            Toast.makeText(carContext, "DEMO: relay would trigger now", Toast.LENGTH_LONG).show()
-            Handler(Looper.getMainLooper()).postDelayed({ resetToIdle() }, 2000)
+            carContext.mainExecutor.execute {
+                uiState = UiState.SUCCESS
+                invalidate()
+                Handler(Looper.getMainLooper()).postDelayed({
+                    carContext.mainExecutor.execute { resetToIdle() }
+                }, 2000)
+            }
         }, 1500)
     }
 
