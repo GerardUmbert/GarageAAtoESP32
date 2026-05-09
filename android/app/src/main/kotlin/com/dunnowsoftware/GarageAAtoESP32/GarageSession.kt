@@ -1,4 +1,4 @@
-package com.garage.opener
+package com.dunnowsoftware.GarageAAtoESP32
 
 import androidx.car.app.Screen
 import androidx.car.app.Session

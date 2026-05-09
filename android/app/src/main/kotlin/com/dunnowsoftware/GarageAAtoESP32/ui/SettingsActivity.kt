@@ -1,4 +1,4 @@
-package com.garage.opener.ui
+package com.dunnowsoftware.GarageAAtoESP32.ui
 
 import android.Manifest
 import android.bluetooth.BluetoothManager
@@ -16,9 +16,9 @@ import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import com.garage.opener.R
-import com.garage.opener.ble.BleConstants
-import com.garage.opener.data.DevicePreferences
+import com.dunnowsoftware.GarageAAtoESP32.R
+import com.dunnowsoftware.GarageAAtoESP32.ble.BleConstants
+import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
 
 class SettingsActivity : AppCompatActivity() {
 

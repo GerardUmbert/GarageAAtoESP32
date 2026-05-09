@@ -1,4 +1,4 @@
-package com.garage.opener.data
+package com.dunnowsoftware.GarageAAtoESP32.data
 
 import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences

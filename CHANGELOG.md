@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.0.6] - 2026-05-09
+
+### Changed
+- Package renamed: `com.garage.opener` → `com.dunnowsoftware.GarageAAtoESP32`
+- CI now builds and signs a **release** APK with a proper keystore (no longer debuggable)
+- Required for the app to appear in real Android Auto head units (production cars filter out debuggable APKs)
+
+### Notes
+- Existing installs will need to be uninstalled before installing 1.0.6 (different package name and signature)
+
 ## [1.0.5] - 2026-05-09
 
 ### Changed
