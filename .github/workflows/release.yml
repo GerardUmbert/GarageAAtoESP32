@@ -114,10 +114,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION=${{ needs.build-android.outputs.version }}
-          OLDEST_KEPT=$(gh release list --limit 100 --json tagName,createdAt \
-            | jq -r 'sort_by(.createdAt) | reverse | .[9:10] | .[0].tagName // ""' \
+          LAST_RELEASED=$(gh release list --limit 100 --json tagName,createdAt \
+            | jq -r 'sort_by(.createdAt) | reverse | .[0].tagName // ""' \
             | sed 's/^v//')
-          NOTES=$(python3 .github/extract_changelog.py "$VERSION" "$OLDEST_KEPT")
+          NOTES=$(python3 .github/extract_changelog.py "$VERSION" "$LAST_RELEASED")
           echo "notes<<EOF" >> $GITHUB_OUTPUT
           echo "$NOTES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
