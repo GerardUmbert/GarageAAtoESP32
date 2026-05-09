@@ -13,6 +13,12 @@ android/key.properties
 android/*.jks
 android/*.keystore
 
+# Signing keystores (never commit)
+.keystores/
+*.jks
+*.keystore
+keystore.properties
+
 # OS
 .DS_Store
 Thumbs.db

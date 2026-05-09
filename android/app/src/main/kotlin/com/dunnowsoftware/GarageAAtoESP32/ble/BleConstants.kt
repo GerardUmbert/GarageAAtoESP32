@@ -1,4 +1,4 @@
-package com.garage.opener.ble
+package com.dunnowsoftware.GarageAAtoESP32.ble
 
 import java.util.UUID
 

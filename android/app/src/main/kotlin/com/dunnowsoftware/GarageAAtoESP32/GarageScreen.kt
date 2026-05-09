@@ -1,4 +1,4 @@
-package com.garage.opener
+package com.dunnowsoftware.GarageAAtoESP32
 
 import android.os.Handler
 import android.os.Looper
@@ -6,9 +6,9 @@ import android.widget.Toast
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.car.app.model.*
-import com.garage.opener.ble.GarageBleManager
-import com.garage.opener.ble.OpenResult
-import com.garage.opener.data.DevicePreferences
+import com.dunnowsoftware.GarageAAtoESP32.ble.GarageBleManager
+import com.dunnowsoftware.GarageAAtoESP32.ble.OpenResult
+import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
 
 class GarageScreen(carContext: CarContext) : Screen(carContext) {
 

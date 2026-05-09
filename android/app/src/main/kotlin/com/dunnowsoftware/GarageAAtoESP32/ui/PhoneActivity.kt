@@ -1,4 +1,4 @@
-package com.garage.opener.ui
+package com.dunnowsoftware.GarageAAtoESP32.ui
 
 import android.content.Intent
 import android.os.Bundle
@@ -8,10 +8,10 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.garage.opener.R
-import com.garage.opener.ble.GarageBleManager
-import com.garage.opener.ble.OpenResult
-import com.garage.opener.data.DevicePreferences
+import com.dunnowsoftware.GarageAAtoESP32.R
+import com.dunnowsoftware.GarageAAtoESP32.ble.GarageBleManager
+import com.dunnowsoftware.GarageAAtoESP32.ble.OpenResult
+import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
 
 class PhoneActivity : AppCompatActivity() {
 

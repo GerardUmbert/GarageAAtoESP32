@@ -4,21 +4,39 @@ plugins {
 }
 
 android {
-    namespace = "com.garage.opener"
+    namespace = "com.dunnowsoftware.GarageAAtoESP32"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.garage.opener"
+        applicationId = "com.dunnowsoftware.GarageAAtoESP32"
         minSdk = 29
         targetSdk = 35
-        versionCode = 6
-        versionName = "1.0.5"
+        versionCode = 7
+        versionName = "1.0.6"
+    }
+
+    signingConfigs {
+        create("release") {
+            val storeFilePath = System.getenv("KEYSTORE_PATH")
+                ?: "${rootDir}/../.keystores/garageaatoesp32.jks"
+            val storePass = System.getenv("KEYSTORE_PASSWORD")
+            val keyAliasEnv = System.getenv("KEY_ALIAS") ?: "garageaatoesp32"
+            val keyPass = System.getenv("KEY_PASSWORD")
+
+            if (storePass != null && keyPass != null && file(storeFilePath).exists()) {
+                storeFile = file(storeFilePath)
+                storePassword = storePass
+                keyAlias = keyAliasEnv
+                keyPassword = keyPass
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
