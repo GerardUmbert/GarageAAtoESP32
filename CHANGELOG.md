@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.0.10] - 2026-05-09
+
+### Changed
+- Launcher icon is now an adaptive icon (foreground + background layers), so the launcher and Android Auto can mask it into a circle / squircle properly instead of showing a square inside a circle frame
+
+### Added
+- Documentation for testing the AA flow on a PC via the Desktop Head Unit emulator (`docs/android-auto-debugging.md`)
+
 ## [1.0.9] - 2026-05-09
 
 ### Fixed
