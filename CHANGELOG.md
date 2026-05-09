@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.0.4] - 2026-05-09
+
+### Fixed
+- Android Auto app visibility: restore `com.google.android.gms.car.application` meta-data on application tag (required alongside service declaration)
+- Bump Car App Library to 1.7.0-rc01 (fixes AA launcher discovery and Android 14+ permission dialogs)
+
+### Notes
+- Sideloaded APKs must be installed via `adb install -i com.android.vending app.apk` to appear in the Android Auto launcher
+
 ## [1.0.3] - 2026-05-09
 
 ### Fixed

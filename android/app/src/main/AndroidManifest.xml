@@ -12,6 +12,10 @@
         android:roundIcon="@drawable/ic_launcher"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
 
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc" />
+
         <!-- Phone launcher -->
         <activity
             android:name=".ui.PhoneActivity"
