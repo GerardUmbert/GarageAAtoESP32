@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.0.9] - 2026-05-09
+
+### Fixed
+- Android Auto "unexpected error" on launch: `androidx.car.app.minCarApiLevel` meta-data must be on the `<application>` tag, not inside the `<service>` tag. The Car App Library reads it from the application context, and its absence caused `IllegalArgumentException` in `AppInfo.retrieveMinCarAppApiLevel`
+
 ## [1.0.8] - 2026-05-09
 
 ### Fixed
