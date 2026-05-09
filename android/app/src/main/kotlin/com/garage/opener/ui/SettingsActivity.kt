@@ -78,6 +78,14 @@ class SettingsActivity : AppCompatActivity() {
             prefs.pin = pinEdit.text.toString().trim()
             Toast.makeText(this, "PIN saved", Toast.LENGTH_SHORT).show()
         }
+
+        val demoCheckbox = findViewById<CheckBox>(R.id.cb_demo_mode)
+        demoCheckbox.isChecked = prefs.demoMode
+        demoCheckbox.setOnCheckedChangeListener { _, checked ->
+            prefs.demoMode = checked
+            val msg = if (checked) "Demo mode ON — tap Open Garage to simulate" else "Demo mode OFF"
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun startScan() {

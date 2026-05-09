@@ -1,5 +1,8 @@
 package com.garage.opener
 
+import android.os.Handler
+import android.os.Looper
+import android.widget.Toast
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.car.app.model.*
@@ -30,8 +33,11 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
 
     private fun buildMain(): Template {
         val configured = prefs.isConfigured
-        val subtitle = if (configured) prefs.deviceName ?: prefs.deviceAddress ?: ""
-                       else "Set up garage in the phone app first"
+        val subtitle = when {
+            prefs.demoMode -> "Demo mode — no ESP32 needed"
+            configured     -> prefs.deviceName ?: prefs.deviceAddress ?: ""
+            else           -> "Set up garage in the phone app first"
+        }
 
         val openAction = Action.Builder()
             .setTitle("Open Garage")
@@ -80,6 +86,10 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
     // ── BLE trigger ───────────────────────────────────────────────────────────
 
     private fun triggerOpen() {
+        if (prefs.demoMode) {
+            triggerDemo()
+            return
+        }
         val address = prefs.deviceAddress ?: return
         val pin = prefs.pin
 
@@ -113,6 +123,19 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
                 }
             }
         }
+    }
+
+    private fun triggerDemo() {
+        uiState = UiState.CONNECTING
+        connectAttempt = 1
+        invalidate()
+        Toast.makeText(carContext, "DEMO: simulating garage open…", Toast.LENGTH_SHORT).show()
+        Handler(Looper.getMainLooper()).postDelayed({
+            uiState = UiState.SUCCESS
+            invalidate()
+            Toast.makeText(carContext, "DEMO: relay would trigger now", Toast.LENGTH_LONG).show()
+            Handler(Looper.getMainLooper()).postDelayed({ resetToIdle() }, 2000)
+        }, 1500)
     }
 
     private fun resetToIdle() {

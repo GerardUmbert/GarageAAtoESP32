@@ -52,4 +52,24 @@
         android:layout_height="0dp"
         android:layout_weight="1" />
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#CCCCCC"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Testing"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp" />
+
+    <CheckBox
+        android:id="@+id/cb_demo_mode"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Demo mode (simulates open — no ESP32 needed)" />
+
 </LinearLayout>
