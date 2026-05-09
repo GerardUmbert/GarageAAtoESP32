@@ -51,27 +51,30 @@ Wall outlet  ──▶  Any USB phone charger (5V ≥ 500mA)  ──▶  ESP32 U
 ```
 If your communal garage has a wall outlet nearby, this is the simplest possible setup — just a phone charger and a USB cable. No batteries, no solar, no maintenance. The ESP32 draws so little power (~17 mAh/day) that any basic charger handles it with ease.
 
-### Option 1 — USB Power Bank (no outlet access)
+### Option 1 — Solar + USB battery pack (no outlet, low maintenance)
+```
+Solar panel  ──▶  Battery pack solar input
+Battery pack USB ──▶  ESP32 USB port
+```
+Many off-the-shelf solar battery packs (e.g., Hiluckey 25000mAh solar) accept solar in and output USB.
+Self-sustaining — the solar panel keeps the battery topped up indefinitely. Good choice for outdoor or poorly lit garages with no socket.
+
+### Option 2 — USB Power Bank (no outlet, no solar)
 ```
 Power bank USB-A  ──▶  ESP32 dev board Micro-USB / USB-C
 ```
 Choose a power bank with always-on / low-current mode (e.g., Anker A1263 or similar).
 Avoid banks that auto-shut off — they will cut power when ESP32 is in deep sleep (very low current draw).
+At ~17 mAh/day a 10 000 mAh bank lasts ~18 months before needing a recharge.
 
-### Option 2 — 18650 LiPo + TP4056 charger board
+### Option 3 — 18650 LiPo + TP4056 + solar (DIY, most flexible)
 ```
 Solar panel +/−  ──▶  TP4056 IN+/IN−
 TP4056 BAT+/BAT− ──▶  18650 cells in parallel
 TP4056 OUT+/OUT− ──▶  5V step-up boost converter IN
 Boost converter  ──▶  ESP32 5V pin + GND
 ```
-
-### Option 3 — Solar + USB battery pack
-```
-Solar panel  ──▶  Battery pack solar input
-Battery pack USB ──▶  ESP32 USB port
-```
-Many off-the-shelf solar battery packs (e.g., Hiluckey 25000mAh solar) accept solar in and output USB.
+Most control over capacity and charging. Good for custom enclosures or when you want to size the battery precisely.
 
 ## Notes
 - **Transistor option**: peak current draw drops to ~20 mA (no relay coil) — better for battery life.

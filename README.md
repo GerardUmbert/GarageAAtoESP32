@@ -14,9 +14,9 @@ Open the garage from your car's Android Auto screen with a single button press.
   - **5V relay module** — familiar to beginners, provides galvanic isolation, but draws more power and costs more (~$1)
 - **Power source** — pick one:
   - Wall outlet + any USB phone charger (simplest — if there's a socket nearby)
-  - USB power bank with always-on / low-current mode
-  - 18650 LiPo cells + TP4056 charger board (± solar panel)
-  - Solar power bank
+  - Solar power bank (self-sustaining, no maintenance)
+  - USB power bank with always-on / low-current mode (~18 months per charge)
+  - 18650 LiPo cells + TP4056 charger board (DIY, most flexible)
 
 See [docs/wiring_diagram.md](docs/wiring_diagram.md) for both wiring options with diagrams.
 
