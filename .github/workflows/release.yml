@@ -1,0 +1,122 @@
+name: Build & Release APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_notes:
+        description: "Release notes (leave blank to pull from CHANGELOG.md)"
+        required: false
+        default: ""
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('android/gradle/libs.versions.toml', 'android/**/*.gradle.kts') }}
+          restore-keys: gradle-
+
+      - name: Decode keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | tr -d '\r\n' | base64 -d > android/garage.jks
+
+      - name: Write key.properties
+        run: |
+          cat > android/key.properties <<EOF
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          storeFile=../garage.jks
+          EOF
+          sed -i 's/^ *//' android/key.properties
+
+      - name: Build release APK
+        working-directory: android
+        run: ./gradlew assembleRelease
+
+      - name: Get version from build.gradle.kts
+        id: version
+        run: |
+          echo "version=$(grep 'versionName' android/app/build.gradle.kts | grep -oP '(?<=\")[^\"]+(?=\")')" >> $GITHUB_OUTPUT
+
+      - name: Extract changelog for this version
+        id: changelog
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          LAST=$(gh release list --limit 20 --json tagName \
+            | jq -r '.[].tagName' \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+            | sed 's/^v//' \
+            | head -1 || true)
+          NOTES=$(python3 - "$VERSION" "$LAST" <<'PYEOF'
+          import sys, re
+          version, last = sys.argv[1], sys.argv[2]
+          text = open("CHANGELOG.md").read()
+          sections = re.split(r'(?=^## \[)', text, flags=re.MULTILINE)
+          collecting, parts = False, []
+          for s in sections:
+              m = re.match(r'^## \[([^\]]+)\]', s)
+              if not m:
+                  continue
+              v = m.group(1)
+              if v == version:
+                  collecting = True
+              if collecting:
+                  if last and v == last:
+                      break
+                  parts.append(s.strip().rstrip('-').strip())
+          print("\n\n---\n\n".join(parts))
+          PYEOF
+          )
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Rename APK
+        run: |
+          APK=$(find android/app/build/outputs/apk/release -name "*.apk" ! -name "*-unsigned*" | head -1)
+          echo "Found APK: $APK"
+          cp "$APK" GarageAAtoESP32-${{ steps.version.outputs.version }}.apk
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('v{0}', steps.version.outputs.version) }}
+          name: GarageAAtoESP32 ${{ steps.version.outputs.version }}
+          body: ${{ github.event.inputs.version_notes || steps.changelog.outputs.notes }}
+          files: GarageAAtoESP32-${{ steps.version.outputs.version }}.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete old releases (keep last 5)
+        run: |
+          releases=$(gh release list --limit 100 --json tagName,createdAt \
+            | jq -r 'sort_by(.createdAt) | reverse | .[5:] | .[].tagName')
+          for tag in $releases; do
+            echo "Deleting release $tag"
+            gh release delete "$tag" --yes --cleanup-tag
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

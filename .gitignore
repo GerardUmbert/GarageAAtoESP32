@@ -9,6 +9,9 @@ android/app/build/
 android/local.properties
 android/*.iml
 android/.idea/
+android/key.properties
+android/*.jks
+android/*.keystore
 
 # OS
 .DS_Store
