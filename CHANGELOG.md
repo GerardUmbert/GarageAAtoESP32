@@ -4,12 +4,21 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.0.7] - 2026-05-09
+
+### Fixed
+- Android Auto launcher now lists the app: added the `<queries>` block (`androidx.car.app.CarAppService` intent + `androidx.car.app.connection` provider authority) required on Android 11+ for the Car App Library to communicate with the AA host
+- Phone UI no longer draws underneath the camera punch-hole / status bar on Android 15 edge-to-edge displays (added `fitsSystemWindows` to phone and settings layouts)
+
 ## [1.0.6] - 2026-05-09
 
 ### Changed
 - Package renamed: `com.garage.opener` → `com.dunnowsoftware.GarageAAtoESP32`
 - CI now builds and signs a **release** APK with a proper keystore (no longer debuggable)
 - Required for the app to appear in real Android Auto head units (production cars filter out debuggable APKs)
+
+### Fixed
+- Phone UI no longer draws underneath the camera punch-hole / status bar on Android 15 edge-to-edge displays (added `fitsSystemWindows` to phone and settings layouts)
 
 ### Notes
 - Existing installs will need to be uninstalled before installing 1.0.6 (different package name and signature)
