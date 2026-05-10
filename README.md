@@ -6,11 +6,17 @@ Open the garage from your car's Android Auto screen with a single button press.
 
 This project exists for a specific situation: you use a **shared or communal garage** — a car park in an apartment block, a rented space, a co-owned facility — where you have **no access to the motor or the gate controller**. You can't wire into the existing system, you can't install a proper smart opener, and the management won't let you touch anything. All you have is a key fob.
 
-This gives you a hands-free way to open the door from your car's Android Auto screen without touching your phone. It works entirely over Bluetooth — no internet, no cloud, no subscription, no hub. The ESP32 sits discreetly near the entrance powered by a USB charger or battery, and it presses the fob button for you when you tap the screen.
+This gives you a hands-free way to open the door from your car's Android Auto screen without touching your phone. It works entirely over Bluetooth — no internet, no cloud, no subscription, no hub. The ESP32 presses the fob button for you when you tap the screen — either from a hidden spot near the entrance powered by a USB charger or battery, or riding along in the car itself powered off the car's USB / 12V socket. See [Two ways to deploy](#two-ways-to-deploy) for the trade-offs.
 
 There are **three ways** to do the actual button-press, including one that requires no soldering and doesn't modify the fob — important if you have to give it back when you move out. See [Choose your trigger mechanism](#choose-your-trigger-mechanism) below.
 
 It is **not** a replacement for a proper smart garage opener — if you own the garage and have access to the motor, there are better, cleaner solutions. This is specifically for the case where you have no choice but to use the fob.
+
+### Two ways to deploy
+
+**At the garage** *(the original use case)*: ESP32 lives near the gate, powered by a wall outlet / power bank / solar, and is hidden in or near the entrance. Your phone in the car sends the BLE command as you approach. The fob stays at the garage. This is the design the firmware is optimized for (low-power sleep, deep-sleep wake-on-BLE, etc.).
+
+**In the car**: ESP32 + fob both ride in the car, powered off the car's USB or 12V socket via a USB-A adapter. The car's display becomes a permanent "open garage" button that triggers the fob inside the glovebox. Useful if you can't leave anything at the gate (no power, no hiding spot, security cameras you'd rather not appear on, etc.) but still want the one-tap-from-AA experience instead of digging out the fob. The downside vs. the at-garage deployment: the fob has to be in BLE range of *your* phone, which it always is since both are in the car — but the range to the actual gate motor is then constrained to the fob's RF range from inside the car (usually fine for a normal-sized garage, but worth checking).
 
 ---
 
@@ -79,11 +85,12 @@ See [docs/wiring_diagram.md](docs/wiring_diagram.md) for full diagrams, material
   - Option B: 5V relay module (~$1)
   - Option C: Adaprox / Tuya Fingerbot Plus (model `ADFBB531` or similar, capacitive top button) + ~1 cm² of copper tape + thin wire
 - **Garage key fob** — for Options A and B you'll solder two wires to the button pads inside it. For Option C you don't open the fob at all.
-- **Power source** — pick one:
-  - Wall outlet + any USB phone charger (simplest — if there's a socket nearby)
-  - Solar power bank (self-sustaining, no maintenance)
+- **Power source** — pick one based on where you're deploying:
+  - Wall outlet + any USB phone charger (simplest — if there's a socket nearby at the garage)
+  - Solar power bank (self-sustaining, no maintenance — for at-garage deployments without a socket)
   - USB power bank with always-on / low-current mode (~18 months per charge)
   - 18650 LiPo cells + TP4056 charger board (DIY, most flexible)
+  - **Car USB / 12V socket** (for the in-car deployment — ESP32 + fob both stay in the car, powered whenever the car is on)
 
 ## Project structure
 
