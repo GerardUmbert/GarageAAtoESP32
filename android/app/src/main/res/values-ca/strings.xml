@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Garage Opener</string>
+
+    <string name="welcome_title">Obre el teu\ngaratge des del\nteu tauler de control.</string>
+    <string name="welcome_subtitle">Un toc des d\'Android Auto. Sense núvol, sense Wi‑Fi, sense subscripció — només Bluetooth.</string>
+    <string name="welcome_get_started">Comença</string>
+    <string name="welcome_no_account">No cal compte al núvol.</string>
+
+    <string name="status_in_range">A l\'abast</string>
+    <string name="status_out_of_range">Fora de l\'abast</string>
+    <string name="status_not_paired">No vinculat</string>
+
+    <string name="main_paired_opener">Dispositiu vinculat</string>
+    <string name="main_tap_to_open">TOCA PER OBRIR</string>
+    <string name="main_sending">ENVIANT…</string>
+    <string name="main_last_opened">Última obertura</string>
+    <string name="main_never">Mai</string>
+    <string name="main_today">Avui, %1$s</string>
+    <string name="main_not_configured">No configurat</string>
+    <string name="main_demo_mode">Mode de demostració</string>
+
+    <string name="scan_title">Cercant el teu\ndispositiu…</string>
+    <string name="scan_subtitle">Assegura\'t que l\'ESP32 estigui encès. Situa\'t a uns quants metres.</string>
+    <string name="scan_permission_error">Cal permís de Bluetooth per trobar el teu dispositiu.</string>
+    <string name="scan_error">No s\'ha pogut iniciar l\'escaneig Bluetooth: %1$s</string>
+    <string name="scan_unknown_error">error desconegut</string>
+    <string name="scan_scanning">Cercant dispositius…</string>
+    <string name="scan_tap_to_pair">Toca per vincular</string>
+    <string name="scan_skip">Ometre de moment</string>
+
+    <string name="pair_title">Vincular aquest dispositiu?</string>
+    <string name="pair_subtitle">El recordarem en aquest dispositiu. Introdueix la contrasenya que coincideixi amb la configurada al firmware de l\'ESP32.</string>
+    <string name="pair_password_label">CONTRASENYA</string>
+    <string name="pair_password_hint">Introdueix la contrasenya</string>
+    <string name="pair_show_password">Mostra la contrasenya</string>
+    <string name="pair_hide_password">Amaga la contrasenya</string>
+    <string name="pair_confirm">Vincular</string>
+    <string name="pair_cancel">Cancel·lar</string>
+
+    <string name="settings_title">Configuració</string>
+    <string name="settings_paired_badge">VINCULAT</string>
+    <string name="settings_device_default_name">ESP32 del garatge</string>
+    <string name="settings_repairbutton">Revincular</string>
+    <string name="settings_password_button">Contrasenya</string>
+    <string name="settings_pair_another">Vincular un altre dispositiu</string>
+    <string name="settings_no_device_title">Cap dispositiu vinculat</string>
+    <string name="settings_no_device_subtitle">Vincula un ESP32 per començar.</string>
+    <string name="settings_pair_opener">Vincular un dispositiu</string>
+    <string name="settings_testing_header">Proves</string>
+    <string name="settings_demo_label">Mode de demostració</string>
+    <string name="settings_demo_description">Simula l\'obertura sense ESP32</string>
+    <string name="settings_about_header">Quant a</string>
+    <string name="settings_version_label">Versió</string>
+    <string name="settings_language_header">Llengua</string>
+    <string name="settings_language_system">Per defecte del sistema</string>
+
+    <string name="password_screen_set_title">Estableix una contrasenya</string>
+    <string name="password_screen_set_description">Necessària per obrir la porta des del telèfon o el cotxe. Emmagatzemada només en aquest dispositiu. Ha de coincidir amb la contrasenya configurada al firmware de l\'ESP32.</string>
+    <string name="password_screen_save">Desa</string>
+    <string name="password_screen_change_title">Canvia la contrasenya</string>
+    <string name="password_screen_change_description">Actualitza la contrasenya d\'aquest dispositiu vinculat. Ha de coincidir amb la configurada al firmware de l\'ESP32.</string>
+    <string name="password_screen_change_save">Actualitza la contrasenya</string>
+    <string name="password_screen_hint">Introdueix la contrasenya</string>
+    <string name="password_screen_show">Mostra la contrasenya</string>
+    <string name="password_screen_hide">Amaga la contrasenya</string>
+    <string name="password_screen_cancel">Cancel·lar</string>
+
+    <string name="toast_password_updated">Contrasenya actualitzada</string>
+</resources>

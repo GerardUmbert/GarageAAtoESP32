@@ -14,8 +14,8 @@ android {
         applicationId = "com.dunnowsoftware.GarageAAtoESP32"
         minSdk = 29
         targetSdk = 35
-        versionCode = 16
-        versionName = "1.1.3"
+        versionCode = 17
+        versionName = "1.2.0"
     }
 
     buildFeatures {
@@ -78,6 +78,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.appcompat)
     implementation(libs.car.app)
     implementation(libs.security.crypto)
     implementation(libs.coroutines.android)
@@ -91,5 +92,6 @@ dependencies {
     implementation(libs.compose.ui.graphics)
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
+    implementation(libs.compose.material.icons.extended)
     debugImplementation(libs.compose.ui.tooling)
 }

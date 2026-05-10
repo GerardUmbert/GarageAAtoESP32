@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Garage Opener</string>
+
+    <string name="welcome_title">Abre a tua\ngaragem a partir\ndo teu painel.</string>
+    <string name="welcome_subtitle">Um toque no Android Auto. Sem cloud, sem Wi‑Fi, sem subscrição — apenas Bluetooth.</string>
+    <string name="welcome_get_started">Começar</string>
+    <string name="welcome_no_account">Não é necessária conta cloud.</string>
+
+    <string name="status_in_range">Ao alcance</string>
+    <string name="status_out_of_range">Fora de alcance</string>
+    <string name="status_not_paired">Não emparelhado</string>
+
+    <string name="main_paired_opener">Abridor emparelhado</string>
+    <string name="main_tap_to_open">TOCA PARA ABRIR</string>
+    <string name="main_sending">A ENVIAR…</string>
+    <string name="main_last_opened">Última abertura</string>
+    <string name="main_never">Nunca</string>
+    <string name="main_today">Hoje, %1$s</string>
+    <string name="main_not_configured">Não configurado</string>
+    <string name="main_demo_mode">Modo de demonstração</string>
+
+    <string name="scan_title">À procura do teu\nabridor…</string>
+    <string name="scan_subtitle">Certifica-te de que o ESP32 está ligado. Fica a poucos metros dele.</string>
+    <string name="scan_permission_error">É necessária permissão de Bluetooth para encontrar o teu abridor.</string>
+    <string name="scan_error">Não foi possível iniciar a pesquisa Bluetooth: %1$s</string>
+    <string name="scan_unknown_error">erro desconhecido</string>
+    <string name="scan_scanning">A pesquisar abridores…</string>
+    <string name="scan_tap_to_pair">Toca para emparelhar</string>
+    <string name="scan_skip">Ignorar por agora</string>
+
+    <string name="pair_title">Emparelhar este abridor?</string>
+    <string name="pair_subtitle">Será memorizado neste dispositivo. Introduz a palavra-passe que corresponde à configurada no firmware deste ESP32.</string>
+    <string name="pair_password_label">PALAVRA-PASSE</string>
+    <string name="pair_password_hint">Introduz a palavra-passe</string>
+    <string name="pair_show_password">Mostrar palavra-passe</string>
+    <string name="pair_hide_password">Ocultar palavra-passe</string>
+    <string name="pair_confirm">Emparelhar</string>
+    <string name="pair_cancel">Cancelar</string>
+
+    <string name="settings_title">Definições</string>
+    <string name="settings_paired_badge">EMPARELHADO</string>
+    <string name="settings_device_default_name">ESP32 da garagem</string>
+    <string name="settings_repairbutton">Re-emparelhar</string>
+    <string name="settings_password_button">Palavra-passe</string>
+    <string name="settings_pair_another">Emparelhar outro dispositivo</string>
+    <string name="settings_no_device_title">Nenhum abridor emparelhado</string>
+    <string name="settings_no_device_subtitle">Emparelha um ESP32 para começar.</string>
+    <string name="settings_pair_opener">Emparelhar um abridor</string>
+    <string name="settings_testing_header">Testes</string>
+    <string name="settings_demo_label">Modo de demonstração</string>
+    <string name="settings_demo_description">Simular abertura sem ESP32</string>
+    <string name="settings_about_header">Sobre</string>
+    <string name="settings_version_label">Versão</string>
+    <string name="settings_language_header">Idioma</string>
+    <string name="settings_language_system">Predefinição do sistema</string>
+
+    <string name="password_screen_set_title">Definir uma palavra-passe</string>
+    <string name="password_screen_set_description">Necessária para abrir a porta a partir do telemóvel ou do carro. Guardada apenas neste dispositivo. Deve corresponder à palavra-passe configurada no firmware do ESP32.</string>
+    <string name="password_screen_save">Guardar</string>
+    <string name="password_screen_change_title">Alterar palavra-passe</string>
+    <string name="password_screen_change_description">Atualiza a palavra-passe deste abridor emparelhado. Deve corresponder à configurada no firmware do ESP32.</string>
+    <string name="password_screen_change_save">Atualizar palavra-passe</string>
+    <string name="password_screen_hint">Introduz a palavra-passe</string>
+    <string name="password_screen_show">Mostrar palavra-passe</string>
+    <string name="password_screen_hide">Ocultar palavra-passe</string>
+    <string name="password_screen_cancel">Cancelar</string>
+
+    <string name="toast_password_updated">Palavra-passe atualizada</string>
+</resources>

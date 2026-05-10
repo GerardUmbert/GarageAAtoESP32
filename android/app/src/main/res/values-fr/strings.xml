@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Garage Opener</string>
+
+    <string name="welcome_title">Ouvrez votre\ngarage depuis\nvotre tableau de bord.</string>
+    <string name="welcome_subtitle">Un seul geste depuis Android Auto. Sans cloud, sans Wi‑Fi, sans abonnement — juste le Bluetooth.</string>
+    <string name="welcome_get_started">Commencer</string>
+    <string name="welcome_no_account">Aucun compte cloud nécessaire.</string>
+
+    <string name="status_in_range">À portée</string>
+    <string name="status_out_of_range">Hors de portée</string>
+    <string name="status_not_paired">Non couplé</string>
+
+    <string name="main_paired_opener">Ouvre-porte couplé</string>
+    <string name="main_tap_to_open">APPUYER POUR OUVRIR</string>
+    <string name="main_sending">ENVOI…</string>
+    <string name="main_last_opened">Dernière ouverture</string>
+    <string name="main_never">Jamais</string>
+    <string name="main_today">Aujourd\'hui, %1$s</string>
+    <string name="main_not_configured">Non configuré</string>
+    <string name="main_demo_mode">Mode démo</string>
+
+    <string name="scan_title">Recherche de votre\nouvre-porte…</string>
+    <string name="scan_subtitle">Assurez-vous que l\'ESP32 est allumé. Restez à quelques mètres.</string>
+    <string name="scan_permission_error">L\'autorisation Bluetooth est requise pour trouver votre ouvre-porte.</string>
+    <string name="scan_error">Impossible de démarrer le scan Bluetooth : %1$s</string>
+    <string name="scan_unknown_error">erreur inconnue</string>
+    <string name="scan_scanning">Recherche d\'ouvre-portes…</string>
+    <string name="scan_tap_to_pair">Appuyer pour coupler</string>
+    <string name="scan_skip">Ignorer pour l\'instant</string>
+
+    <string name="pair_title">Coupler cet ouvre-porte ?</string>
+    <string name="pair_subtitle">Il sera mémorisé sur cet appareil. Entrez le mot de passe correspondant à celui configuré dans le firmware de l\'ESP32.</string>
+    <string name="pair_password_label">MOT DE PASSE</string>
+    <string name="pair_password_hint">Entrer le mot de passe</string>
+    <string name="pair_show_password">Afficher le mot de passe</string>
+    <string name="pair_hide_password">Masquer le mot de passe</string>
+    <string name="pair_confirm">Coupler</string>
+    <string name="pair_cancel">Annuler</string>
+
+    <string name="settings_title">Paramètres</string>
+    <string name="settings_paired_badge">COUPLÉ</string>
+    <string name="settings_device_default_name">ESP32 du garage</string>
+    <string name="settings_repairbutton">Recoupler</string>
+    <string name="settings_password_button">Mot de passe</string>
+    <string name="settings_pair_another">Coupler un autre appareil</string>
+    <string name="settings_no_device_title">Aucun ouvre-porte couplé</string>
+    <string name="settings_no_device_subtitle">Couplez un ESP32 pour commencer.</string>
+    <string name="settings_pair_opener">Coupler un ouvre-porte</string>
+    <string name="settings_testing_header">Tests</string>
+    <string name="settings_demo_label">Mode démo</string>
+    <string name="settings_demo_description">Simuler une ouverture sans ESP32</string>
+    <string name="settings_about_header">À propos</string>
+    <string name="settings_version_label">Version</string>
+    <string name="settings_language_header">Langue</string>
+    <string name="settings_language_system">Par défaut du système</string>
+
+    <string name="password_screen_set_title">Définir un mot de passe</string>
+    <string name="password_screen_set_description">Nécessaire pour ouvrir la porte depuis votre téléphone ou voiture. Stocké uniquement sur cet appareil. Doit correspondre au mot de passe configuré dans le firmware de l\'ESP32.</string>
+    <string name="password_screen_save">Enregistrer</string>
+    <string name="password_screen_change_title">Modifier le mot de passe</string>
+    <string name="password_screen_change_description">Mettez à jour le mot de passe de cet ouvre-porte couplé. Il doit correspondre à celui configuré dans le firmware de l\'ESP32.</string>
+    <string name="password_screen_change_save">Mettre à jour le mot de passe</string>
+    <string name="password_screen_hint">Entrer le mot de passe</string>
+    <string name="password_screen_show">Afficher le mot de passe</string>
+    <string name="password_screen_hide">Masquer le mot de passe</string>
+    <string name="password_screen_cancel">Annuler</string>
+
+    <string name="toast_password_updated">Mot de passe mis à jour</string>
+</resources>

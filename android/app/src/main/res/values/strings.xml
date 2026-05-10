@@ -1,4 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Garage Opener</string>
+
+    <!-- Welcome -->
+    <string name="welcome_title">Open your\ngarage from\nyour dashboard.</string>
+    <string name="welcome_subtitle">A single tap from Android Auto. No cloud, no Wi‑Fi, no subscription — just Bluetooth.</string>
+    <string name="welcome_get_started">Get started</string>
+    <string name="welcome_no_account">No cloud account needed.</string>
+
+    <!-- Status bar -->
+    <string name="status_in_range">In range</string>
+    <string name="status_out_of_range">Out of range</string>
+    <string name="status_not_paired">Not paired</string>
+
+    <!-- Main screen -->
+    <string name="main_paired_opener">Paired opener</string>
+    <string name="main_tap_to_open">TAP TO OPEN</string>
+    <string name="main_sending">SENDING…</string>
+    <string name="main_last_opened">Last opened</string>
+    <string name="main_never">Never</string>
+    <string name="main_today">Today, %1$s</string>
+    <string name="main_not_configured">Not configured</string>
+    <string name="main_demo_mode">Demo mode</string>
+
+    <!-- Scan screen -->
+    <string name="scan_title">Looking for your\nopener…</string>
+    <string name="scan_subtitle">Make sure the ESP32 is powered on. Stand within a few metres of it.</string>
+    <string name="scan_permission_error">Bluetooth permission is required to find your opener.</string>
+    <string name="scan_error">Couldn\'t start Bluetooth scan: %1$s</string>
+    <string name="scan_unknown_error">unknown error</string>
+    <string name="scan_scanning">Scanning for openers…</string>
+    <string name="scan_tap_to_pair">Tap to pair</string>
+    <string name="scan_skip">Skip for now</string>
+
+    <!-- Pair screen -->
+    <string name="pair_title">Pair this opener?</string>
+    <string name="pair_subtitle">We\'ll remember it on this device. Enter the password that matches the one configured in this ESP32\'s firmware.</string>
+    <string name="pair_password_label">PASSWORD</string>
+    <string name="pair_password_hint">Enter password</string>
+    <string name="pair_show_password">Show password</string>
+    <string name="pair_hide_password">Hide password</string>
+    <string name="pair_confirm">Pair</string>
+    <string name="pair_cancel">Cancel</string>
+
+    <!-- Settings screen -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_paired_badge">PAIRED</string>
+    <string name="settings_device_default_name">ESP32 Garage</string>
+    <string name="settings_repairbutton">Re-pair</string>
+    <string name="settings_password_button">Password</string>
+    <string name="settings_pair_another">Pair another device</string>
+    <string name="settings_no_device_title">No opener paired</string>
+    <string name="settings_no_device_subtitle">Pair an ESP32 to get started.</string>
+    <string name="settings_pair_opener">Pair an opener</string>
+    <string name="settings_testing_header">Testing</string>
+    <string name="settings_demo_label">Demo mode</string>
+    <string name="settings_demo_description">Simulate open without an ESP32</string>
+    <string name="settings_about_header">About</string>
+    <string name="settings_version_label">Version</string>
+    <string name="settings_language_header">Language</string>
+    <string name="settings_language_system">System default</string>
+
+    <!-- Password screen (set / change) -->
+    <string name="password_screen_set_title">Set a password</string>
+    <string name="password_screen_set_description">Required to open the door from your phone or car. Stored only on this device. Must match the password configured in the ESP32 firmware.</string>
+    <string name="password_screen_save">Save</string>
+    <string name="password_screen_change_title">Change password</string>
+    <string name="password_screen_change_description">Update the password for this paired opener. Must match the password configured in the ESP32 firmware.</string>
+    <string name="password_screen_change_save">Update password</string>
+    <string name="password_screen_hint">Enter password</string>
+    <string name="password_screen_show">Show password</string>
+    <string name="password_screen_hide">Hide password</string>
+    <string name="password_screen_cancel">Cancel</string>
+
+    <!-- Toasts -->
+    <string name="toast_password_updated">Password updated</string>
 </resources>

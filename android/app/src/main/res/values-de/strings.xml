@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Garage Opener</string>
+
+    <string name="welcome_title">Öffne deine\nGarage von\ndeinem Armaturenbrett.</string>
+    <string name="welcome_subtitle">Ein Tipp in Android Auto. Keine Cloud, kein WLAN, kein Abo — nur Bluetooth.</string>
+    <string name="welcome_get_started">Loslegen</string>
+    <string name="welcome_no_account">Kein Cloud-Konto erforderlich.</string>
+
+    <string name="status_in_range">In Reichweite</string>
+    <string name="status_out_of_range">Außer Reichweite</string>
+    <string name="status_not_paired">Nicht gekoppelt</string>
+
+    <string name="main_paired_opener">Gekoppelter Öffner</string>
+    <string name="main_tap_to_open">TIPPEN ZUM ÖFFNEN</string>
+    <string name="main_sending">WIRD GESENDET…</string>
+    <string name="main_last_opened">Zuletzt geöffnet</string>
+    <string name="main_never">Nie</string>
+    <string name="main_today">Heute, %1$s</string>
+    <string name="main_not_configured">Nicht konfiguriert</string>
+    <string name="main_demo_mode">Demo-Modus</string>
+
+    <string name="scan_title">Suche nach deinem\nÖffner…</string>
+    <string name="scan_subtitle">Stelle sicher, dass der ESP32 eingeschaltet ist. Bleib in wenigen Metern Entfernung.</string>
+    <string name="scan_permission_error">Bluetooth-Berechtigung erforderlich, um deinen Öffner zu finden.</string>
+    <string name="scan_error">Bluetooth-Scan konnte nicht gestartet werden: %1$s</string>
+    <string name="scan_unknown_error">unbekannter Fehler</string>
+    <string name="scan_scanning">Suche nach Öffnern…</string>
+    <string name="scan_tap_to_pair">Tippen zum Koppeln</string>
+    <string name="scan_skip">Vorerst überspringen</string>
+
+    <string name="pair_title">Diesen Öffner koppeln?</string>
+    <string name="pair_subtitle">Er wird auf diesem Gerät gespeichert. Gib das Passwort ein, das mit dem in der ESP32-Firmware übereinstimmt.</string>
+    <string name="pair_password_label">PASSWORT</string>
+    <string name="pair_password_hint">Passwort eingeben</string>
+    <string name="pair_show_password">Passwort anzeigen</string>
+    <string name="pair_hide_password">Passwort ausblenden</string>
+    <string name="pair_confirm">Koppeln</string>
+    <string name="pair_cancel">Abbrechen</string>
+
+    <string name="settings_title">Einstellungen</string>
+    <string name="settings_paired_badge">GEKOPPELT</string>
+    <string name="settings_device_default_name">ESP32 in der Garage</string>
+    <string name="settings_repairbutton">Neu koppeln</string>
+    <string name="settings_password_button">Passwort</string>
+    <string name="settings_pair_another">Weiteres Gerät koppeln</string>
+    <string name="settings_no_device_title">Kein Öffner gekoppelt</string>
+    <string name="settings_no_device_subtitle">Koppel einen ESP32, um zu beginnen.</string>
+    <string name="settings_pair_opener">Öffner koppeln</string>
+    <string name="settings_testing_header">Tests</string>
+    <string name="settings_demo_label">Demo-Modus</string>
+    <string name="settings_demo_description">Öffnen ohne ESP32 simulieren</string>
+    <string name="settings_about_header">Über</string>
+    <string name="settings_version_label">Version</string>
+    <string name="settings_language_header">Sprache</string>
+    <string name="settings_language_system">Systemstandard</string>
+
+    <string name="password_screen_set_title">Passwort festlegen</string>
+    <string name="password_screen_set_description">Erforderlich, um die Tür vom Telefon oder Auto zu öffnen. Nur auf diesem Gerät gespeichert. Muss mit dem in der ESP32-Firmware übereinstimmen.</string>
+    <string name="password_screen_save">Speichern</string>
+    <string name="password_screen_change_title">Passwort ändern</string>
+    <string name="password_screen_change_description">Aktualisiere das Passwort für diesen gekoppelten Öffner. Muss mit dem in der ESP32-Firmware übereinstimmen.</string>
+    <string name="password_screen_change_save">Passwort aktualisieren</string>
+    <string name="password_screen_hint">Passwort eingeben</string>
+    <string name="password_screen_show">Passwort anzeigen</string>
+    <string name="password_screen_hide">Passwort ausblenden</string>
+    <string name="password_screen_cancel">Abbrechen</string>
+
+    <string name="toast_password_updated">Passwort aktualisiert</string>
+</resources>

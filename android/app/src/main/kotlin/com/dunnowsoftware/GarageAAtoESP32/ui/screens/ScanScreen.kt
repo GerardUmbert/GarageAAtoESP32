@@ -29,6 +29,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.compose.ui.res.stringResource
+import com.dunnowsoftware.GarageAAtoESP32.R
 import com.dunnowsoftware.GarageAAtoESP32.ble.BleScanner
 import com.dunnowsoftware.GarageAAtoESP32.ble.FoundDevice
 import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageColors
@@ -37,6 +39,8 @@ import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageColors
 fun ScanScreen(
     onPicked: (FoundDevice) -> Unit,
     onBack: (() -> Unit)? = null,
+    onSkip: (() -> Unit)? = null,
+    excludeAddress: String? = null,
 ) {
     val ctx = LocalContext.current
     val scanner = remember { BleScanner(ctx) }
@@ -55,6 +59,7 @@ fun ScanScreen(
 
     LaunchedEffect(hasPermission) {
         if (!hasPermission) {
+            scanError = ctx.getString(R.string.scan_permission_error)
             permissionLauncher.launch(blePermissions())
             return@LaunchedEffect
         }
@@ -62,10 +67,10 @@ fun ScanScreen(
         devices.clear()
         try {
             scanner.start { dev ->
-                if (devices.none { it.address == dev.address }) devices.add(dev)
+                if (devices.none { it.address == dev.address } && dev.address != excludeAddress) devices.add(dev)
             }
         } catch (t: Throwable) {
-            scanError = "Couldn't start Bluetooth scan: ${t.message ?: "unknown error"}"
+            scanError = ctx.getString(R.string.scan_error, t.message ?: ctx.getString(R.string.scan_unknown_error))
         }
     }
 
@@ -83,7 +88,7 @@ fun ScanScreen(
         TopBar(onBack = onBack, parentHorizontalPadding = 32.dp)
 
         Text(
-            text = "Looking for your\nopener…",
+            text = stringResource(R.string.scan_title),
             color = GarageColors.Text,
             fontSize = 28.sp,
             lineHeight = 32.sp,
@@ -92,10 +97,7 @@ fun ScanScreen(
         )
         Spacer(Modifier.height(10.dp))
         Text(
-            text = if (scanError != null)
-                scanError!!
-            else
-                "Make sure the ESP32 is powered on. Stand within a few metres of it.",
+            text = if (scanError != null) scanError!! else stringResource(R.string.scan_subtitle),
             color = if (scanError != null) GarageColors.Danger else GarageColors.TextDim,
             fontSize = 15.sp,
             lineHeight = 22.sp,
@@ -107,18 +109,36 @@ fun ScanScreen(
                 .fillMaxWidth(),
             contentAlignment = Alignment.Center,
         ) {
-            Radar()
+            Radar(devices = devices)
         }
 
         FoundDeviceCard(
             devices = devices,
             onPicked = onPicked,
         )
+
+        if (onSkip != null) {
+            Spacer(Modifier.height(16.dp))
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = stringResource(R.string.scan_skip),
+                    color = GarageColors.TextDim,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier
+                        .clickable { onSkip() }
+                        .padding(8.dp),
+                )
+            }
+        }
     }
 }
 
 @Composable
-private fun Radar() {
+private fun Radar(devices: List<FoundDevice> = emptyList()) {
     val infinite = rememberInfiniteTransition(label = "radar")
     val angle by infinite.animateFloat(
         initialValue = 0f,
@@ -162,6 +182,13 @@ private fun Radar() {
             drawCircle(brush = brush, radius = size.minDimension / 2f)
         }
 
+        // Device blips — one accent dot per discovered device, placed at a
+        // radius driven by RSSI (stronger → closer to centre) and a stable
+        // random angle per address.
+        devices.forEach { dev ->
+            DeviceBlip(rssi = dev.rssi, addressSeed = dev.address)
+        }
+
         // Innermost green dot — fills the 48dp slot, sharing the same spacing
         // cadence as the four outer rings.
         Box(
@@ -183,6 +210,35 @@ private fun Radar() {
 }
 
 @Composable
+private fun DeviceBlip(rssi: Int, addressSeed: String) {
+    // Radar is 240dp diameter → 120dp radius. Keep blips between the inner
+    // green indicator and the outermost ring.
+    val minRadiusDp = 32f   // just outside the centre indicator
+    val maxRadiusDp = 112f  // a hair inside the outer ring
+
+    // RSSI clamp: -40 dBm is very close, -90 dBm is far. Anything outside
+    // those bounds saturates at the edges.
+    val clamped = rssi.coerceIn(-90, -40)
+    val t = (-40 - clamped) / 50f  // 0f at -40 (strong), 1f at -90 (weak)
+    val radiusDp = minRadiusDp + t * (maxRadiusDp - minRadiusDp)
+
+    // Deterministic angle from the MAC so the dot doesn't dance on every
+    // recomposition.
+    val angleRad = (addressSeed.hashCode().toLong() and 0xFFFF) / 65535.0 * 2 * Math.PI
+    val xDp = (radiusDp * kotlin.math.cos(angleRad)).toFloat()
+    val yDp = (radiusDp * kotlin.math.sin(angleRad)).toFloat()
+
+    Box(
+        modifier = Modifier
+            .offset(x = xDp.dp, y = yDp.dp)
+            .size(10.dp)
+            .clip(CircleShape)
+            .background(GarageColors.Accent)
+            .border(1.dp, GarageColors.AccentLine, CircleShape),
+    )
+}
+
+@Composable
 private fun FoundDeviceCard(
     devices: List<FoundDevice>,
     onPicked: (FoundDevice) -> Unit,
@@ -196,7 +252,7 @@ private fun FoundDeviceCard(
                 .padding(horizontal = 16.dp, vertical = 14.dp),
         ) {
             Text(
-                text = "Scanning for openers…",
+                text = stringResource(R.string.scan_scanning),
                 color = GarageColors.TextDim,
                 fontSize = 14.sp,
             )
@@ -244,7 +300,7 @@ private fun FoundDeviceCard(
                         fontWeight = FontWeight.SemiBold,
                     )
                     Text(
-                        text = "Tap to pair",
+                        text = stringResource(R.string.scan_tap_to_pair),
                         color = GarageColors.TextDim,
                         fontSize = 13.sp,
                     )

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Garage Opener</string>
+
+    <string name="welcome_title">Apri il tuo\ngarage dal\ntuo cruscotto.</string>
+    <string name="welcome_subtitle">Un tocco da Android Auto. Nessun cloud, nessun Wi‑Fi, nessun abbonamento — solo Bluetooth.</string>
+    <string name="welcome_get_started">Inizia</string>
+    <string name="welcome_no_account">Nessun account cloud necessario.</string>
+
+    <string name="status_in_range">Nel raggio</string>
+    <string name="status_out_of_range">Fuori dal raggio</string>
+    <string name="status_not_paired">Non abbinato</string>
+
+    <string name="main_paired_opener">Apriporta abbinato</string>
+    <string name="main_tap_to_open">TOCCA PER APRIRE</string>
+    <string name="main_sending">INVIO IN CORSO…</string>
+    <string name="main_last_opened">Ultima apertura</string>
+    <string name="main_never">Mai</string>
+    <string name="main_today">Oggi, %1$s</string>
+    <string name="main_not_configured">Non configurato</string>
+    <string name="main_demo_mode">Modalità demo</string>
+
+    <string name="scan_title">Ricerca del tuo\napriporta…</string>
+    <string name="scan_subtitle">Assicurati che l\'ESP32 sia acceso. Posizionati a pochi metri.</string>
+    <string name="scan_permission_error">L\'autorizzazione Bluetooth è necessaria per trovare il tuo apriporta.</string>
+    <string name="scan_error">Impossibile avviare la scansione Bluetooth: %1$s</string>
+    <string name="scan_unknown_error">errore sconosciuto</string>
+    <string name="scan_scanning">Ricerca apriporte…</string>
+    <string name="scan_tap_to_pair">Tocca per abbinare</string>
+    <string name="scan_skip">Salta per ora</string>
+
+    <string name="pair_title">Abbinare questo apriporta?</string>
+    <string name="pair_subtitle">Lo ricorderemo su questo dispositivo. Inserisci la password corrispondente a quella configurata nel firmware di questo ESP32.</string>
+    <string name="pair_password_label">PASSWORD</string>
+    <string name="pair_password_hint">Inserisci la password</string>
+    <string name="pair_show_password">Mostra password</string>
+    <string name="pair_hide_password">Nascondi password</string>
+    <string name="pair_confirm">Abbina</string>
+    <string name="pair_cancel">Annulla</string>
+
+    <string name="settings_title">Impostazioni</string>
+    <string name="settings_paired_badge">ABBINATO</string>
+    <string name="settings_device_default_name">ESP32 del garage</string>
+    <string name="settings_repairbutton">Ri-abbina</string>
+    <string name="settings_password_button">Password</string>
+    <string name="settings_pair_another">Abbina un altro dispositivo</string>
+    <string name="settings_no_device_title">Nessun apriporta abbinato</string>
+    <string name="settings_no_device_subtitle">Abbina un ESP32 per iniziare.</string>
+    <string name="settings_pair_opener">Abbina un apriporta</string>
+    <string name="settings_testing_header">Test</string>
+    <string name="settings_demo_label">Modalità demo</string>
+    <string name="settings_demo_description">Simula l\'apertura senza ESP32</string>
+    <string name="settings_about_header">Informazioni</string>
+    <string name="settings_version_label">Versione</string>
+    <string name="settings_language_header">Lingua</string>
+    <string name="settings_language_system">Predefinita del sistema</string>
+
+    <string name="password_screen_set_title">Imposta una password</string>
+    <string name="password_screen_set_description">Necessaria per aprire la porta dal telefono o dall\'auto. Salvata solo su questo dispositivo. Deve corrispondere alla password configurata nel firmware dell\'ESP32.</string>
+    <string name="password_screen_save">Salva</string>
+    <string name="password_screen_change_title">Cambia password</string>
+    <string name="password_screen_change_description">Aggiorna la password per questo apriporta abbinato. Deve corrispondere a quella configurata nel firmware dell\'ESP32.</string>
+    <string name="password_screen_change_save">Aggiorna password</string>
+    <string name="password_screen_hint">Inserisci la password</string>
+    <string name="password_screen_show">Mostra password</string>
+    <string name="password_screen_hide">Nascondi password</string>
+    <string name="password_screen_cancel">Annulla</string>
+
+    <string name="toast_password_updated">Password aggiornata</string>
+</resources>

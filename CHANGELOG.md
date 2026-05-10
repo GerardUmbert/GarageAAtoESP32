@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] - 2026-05-11
+
+### Added
+- Full i18n: all user-visible strings extracted to `strings.xml` and translated into 8 languages — Spanish, French, German, Catalan, Finnish, Portuguese (Portugal), and Italian — in addition to English
+- Language selector in Settings: tappable row shows the active language and opens a dedicated Language screen listing all supported languages plus "System default"
+- Per-app language switching via `AppCompatDelegate.setApplicationLocales` (API 29+), independent of the system locale. Selected language persists across app restarts
+- `res/xml/locales_config.xml` declared and referenced in the manifest so Android 13+ shows the language picker in App Info → Language
+- "Pair another device" button below the paired-device card in Settings — opens a BLE scan that excludes the currently paired device, so replacing an opener doesn't show the old one in the list
+- Paired-device card in Settings now contains the "Re-pair" and "Password" actions inline; unpair moved to a small `×` icon button in the top-right corner of the card
+- App version displayed at the bottom of the Settings screen
+
+### Changed
+- Language section moved above the Testing (demo mode) section in Settings
+- Version info moved from its own card to a subtle footer at the bottom of the Settings screen
+- Scan screen accepts an `excludeAddress` parameter so "Pair another" correctly hides the already-paired device
+- "Last opened" timestamp on the main screen is now fully localised — "Today" is translated and the time format uses the active app locale via `DateFormat.getTimeFormat`
+- Paired device icon on the pairing screen replaced with a custom hairline chip SVG drawable (thinner strokes than the Material `Outlined.Memory` icon)
+
+### Removed
+- Standalone "About" section card — version is now shown as a plain footer
+
 ## [1.1.3] - 2026-05-10
 
 ### Added

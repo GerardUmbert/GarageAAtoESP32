@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Garage Opener</string>
+
+    <string name="welcome_title">Avaa autotallisi\nkojelaudaltasi.</string>
+    <string name="welcome_subtitle">Yksi napautus Android Autosta. Ei pilveä, ei Wi‑Fiä, ei tilausta — vain Bluetooth.</string>
+    <string name="welcome_get_started">Aloita</string>
+    <string name="welcome_no_account">Ei pilvitilin tarvetta.</string>
+
+    <string name="status_in_range">Kantaman sisällä</string>
+    <string name="status_out_of_range">Kantaman ulkopuolella</string>
+    <string name="status_not_paired">Ei yhdistetty</string>
+
+    <string name="main_paired_opener">Yhdistetty avaaja</string>
+    <string name="main_tap_to_open">AVAA NAPAUTTAMALLA</string>
+    <string name="main_sending">LÄHETETÄÄN…</string>
+    <string name="main_last_opened">Viimeksi avattu</string>
+    <string name="main_never">Ei koskaan</string>
+    <string name="main_today">Tänään, %1$s</string>
+    <string name="main_not_configured">Ei määritetty</string>
+    <string name="main_demo_mode">Demotila</string>
+
+    <string name="scan_title">Etsitään avaajaa…</string>
+    <string name="scan_subtitle">Varmista, että ESP32 on päällä. Seiso muutaman metrin päässä siitä.</string>
+    <string name="scan_permission_error">Bluetooth-lupa vaaditaan avaajan löytämiseen.</string>
+    <string name="scan_error">Bluetooth-skannauksen käynnistys epäonnistui: %1$s</string>
+    <string name="scan_unknown_error">tuntematon virhe</string>
+    <string name="scan_scanning">Etsitään avaajia…</string>
+    <string name="scan_tap_to_pair">Yhdistä napauttamalla</string>
+    <string name="scan_skip">Ohita toistaiseksi</string>
+
+    <string name="pair_title">Yhdistetäänkö tämä avaaja?</string>
+    <string name="pair_subtitle">Muistamme sen tällä laitteella. Syötä salasana, joka vastaa ESP32-laiteohjelmiston salasanaa.</string>
+    <string name="pair_password_label">SALASANA</string>
+    <string name="pair_password_hint">Syötä salasana</string>
+    <string name="pair_show_password">Näytä salasana</string>
+    <string name="pair_hide_password">Piilota salasana</string>
+    <string name="pair_confirm">Yhdistä</string>
+    <string name="pair_cancel">Peruuta</string>
+
+    <string name="settings_title">Asetukset</string>
+    <string name="settings_paired_badge">YHDISTETTY</string>
+    <string name="settings_device_default_name">ESP32 autotallissa</string>
+    <string name="settings_repairbutton">Yhdistä uudelleen</string>
+    <string name="settings_password_button">Salasana</string>
+    <string name="settings_pair_another">Yhdistä toinen laite</string>
+    <string name="settings_no_device_title">Ei yhdistettyä avaajaa</string>
+    <string name="settings_no_device_subtitle">Yhdistä ESP32 aloittaaksesi.</string>
+    <string name="settings_pair_opener">Yhdistä avaaja</string>
+    <string name="settings_testing_header">Testaus</string>
+    <string name="settings_demo_label">Demotila</string>
+    <string name="settings_demo_description">Simuloi avaamista ilman ESP32:ta</string>
+    <string name="settings_about_header">Tietoja</string>
+    <string name="settings_version_label">Versio</string>
+    <string name="settings_language_header">Kieli</string>
+    <string name="settings_language_system">Järjestelmän oletus</string>
+
+    <string name="password_screen_set_title">Aseta salasana</string>
+    <string name="password_screen_set_description">Tarvitaan oven avaamiseen puhelimesta tai autosta. Tallennetaan vain tälle laitteelle. Sen on vastattava ESP32-laiteohjelmistossa määritettyä salasanaa.</string>
+    <string name="password_screen_save">Tallenna</string>
+    <string name="password_screen_change_title">Vaihda salasana</string>
+    <string name="password_screen_change_description">Päivitä yhdistetyn avaajan salasana. Sen on vastattava ESP32-laiteohjelmistossa määritettyä salasanaa.</string>
+    <string name="password_screen_change_save">Päivitä salasana</string>
+    <string name="password_screen_hint">Syötä salasana</string>
+    <string name="password_screen_show">Näytä salasana</string>
+    <string name="password_screen_hide">Piilota salasana</string>
+    <string name="password_screen_cancel">Peruuta</string>
+
+    <string name="toast_password_updated">Salasana päivitetty</string>
+</resources>

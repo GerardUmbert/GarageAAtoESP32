@@ -25,6 +25,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.dunnowsoftware.GarageAAtoESP32.R
 import com.dunnowsoftware.GarageAAtoESP32.ui.components.GMark
 import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageColors
 
@@ -57,9 +59,9 @@ fun MainScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             val (dotColor, statusText) = when (presence) {
-                PresenceStatus.InRange    -> GarageColors.Accent  to "In range"
-                PresenceStatus.OutOfRange -> GarageColors.TextFaint to "Out of range"
-                PresenceStatus.NotPaired  -> GarageColors.TextFaint to "Not paired"
+                PresenceStatus.InRange    -> GarageColors.Accent    to stringResource(R.string.status_in_range)
+                PresenceStatus.OutOfRange -> GarageColors.TextFaint to stringResource(R.string.status_out_of_range)
+                PresenceStatus.NotPaired  -> GarageColors.TextFaint to stringResource(R.string.status_not_paired)
             }
             Box(
                 modifier = Modifier
@@ -93,7 +95,7 @@ fun MainScreen(
                 .padding(horizontal = 32.dp),
         ) {
             Text(
-                text = "Paired opener",
+                text = stringResource(R.string.main_paired_opener),
                 color = GarageColors.TextFaint,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
@@ -171,7 +173,7 @@ private fun HeroButton(state: OpenState, onClick: () -> Unit) {
                     )
                     Spacer(Modifier.height(14.dp))
                     Text(
-                        text = if (state == OpenState.Sending) "SENDING…" else "TAP TO OPEN",
+                        text = if (state == OpenState.Sending) stringResource(R.string.main_sending) else stringResource(R.string.main_tap_to_open),
                         color = if (state == OpenState.Sending) GarageColors.Accent else GarageColors.Text,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -274,13 +276,13 @@ private fun LastOpenedRow(lastOpenedLabel: String?) {
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "Last opened",
+                text = stringResource(R.string.main_last_opened),
                 color = GarageColors.TextDim,
                 fontSize = 13.sp,
             )
             Spacer(Modifier.height(2.dp))
             Text(
-                text = lastOpenedLabel ?: "Never",
+                text = lastOpenedLabel ?: stringResource(R.string.main_never),
                 color = GarageColors.Text,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,

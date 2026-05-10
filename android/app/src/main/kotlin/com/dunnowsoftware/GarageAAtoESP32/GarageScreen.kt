@@ -46,7 +46,7 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
         override fun run() {
             // If the saved device address has changed since we started the
             // scan (re-pair on the phone), restart the scan with the new MAC.
-            val currentAddress = prefs().deviceAddress
+            val currentAddress = prefs().pairedDevice?.address
             if (currentAddress != scanStartedForAddress) {
                 stopPresenceScan()
                 startPresenceScan()
@@ -74,7 +74,7 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
 
     private fun startPresenceScan() {
         val p = prefs()
-        val address = p.deviceAddress ?: return
+        val address = p.pairedDevice?.address ?: return
         if (p.demoMode) return
         try {
             presenceScanner.startPresence(address) { _ ->
@@ -115,10 +115,11 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
     private fun buildMain(): Template {
         val p = prefs()
         val configured = p.isConfigured
+        val paired = p.pairedDevice
         val deviceName = when {
-            p.demoMode -> "Demo mode — no ESP32 needed"
-            configured -> p.deviceName ?: p.deviceAddress ?: ""
-            else       -> "Set up garage in the phone app first"
+            p.demoMode    -> "Demo mode — no ESP32 needed"
+            paired != null -> paired.name
+            else          -> "Set up garage in the phone app first"
         }
         val presenceTag = when {
             !configured -> null
@@ -183,13 +184,12 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
             triggerDemo()
             return
         }
-        val address = p.deviceAddress ?: return
-        val pin = p.pin
+        val paired = p.pairedDevice ?: return
 
         uiState = UiState.CONNECTING
         invalidate()
 
-        bleManager.connectAndOpen(address, pin,
+        bleManager.connectAndOpen(paired.address, paired.password,
             onAttempt = { n ->
                 carContext.mainExecutor.execute {
                     connectAttempt = n

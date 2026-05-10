@@ -3,6 +3,19 @@ package com.dunnowsoftware.GarageAAtoESP32.data
 import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import org.json.JSONObject
+
+/**
+ * Per-device pairing record. One ESP32 ↔ one password, bundled together so
+ * the password can never get out of sync with the device it belongs to. Stored
+ * inside EncryptedSharedPreferences so the password is at-rest encrypted and
+ * unreadable from other apps.
+ */
+data class PairedDevice(
+    val address: String,
+    val name: String,
+    val password: String,
+)
 
 class DevicePreferences(context: Context) {
 
@@ -14,17 +27,32 @@ class DevicePreferences(context: Context) {
         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
     )
 
-    var deviceAddress: String?
-        get() = prefs.getString(KEY_ADDRESS, null)
-        set(value) = prefs.edit().putString(KEY_ADDRESS, value).apply()
-
-    var deviceName: String?
-        get() = prefs.getString(KEY_NAME, null)
-        set(value) = prefs.edit().putString(KEY_NAME, value).apply()
-
-    var pin: String
-        get() = prefs.getString(KEY_PIN, "") ?: ""
-        set(value) = prefs.edit().putString(KEY_PIN, value).apply()
+    var pairedDevice: PairedDevice?
+        get() {
+            val raw = prefs.getString(KEY_PAIRED_DEVICE, null) ?: return null
+            return try {
+                val o = JSONObject(raw)
+                PairedDevice(
+                    address = o.getString("address"),
+                    name = o.getString("name"),
+                    password = o.getString("password"),
+                )
+            } catch (_: Throwable) {
+                null
+            }
+        }
+        set(value) {
+            if (value == null) {
+                prefs.edit().remove(KEY_PAIRED_DEVICE).apply()
+            } else {
+                val json = JSONObject().apply {
+                    put("address", value.address)
+                    put("name", value.name)
+                    put("password", value.password)
+                }.toString()
+                prefs.edit().putString(KEY_PAIRED_DEVICE, json).apply()
+            }
+        }
 
     var demoMode: Boolean
         get() = prefs.getBoolean(KEY_DEMO, false)
@@ -34,21 +62,22 @@ class DevicePreferences(context: Context) {
         get() = prefs.getLong(KEY_LAST_OPENED, 0L)
         set(value) = prefs.edit().putLong(KEY_LAST_OPENED, value).apply()
 
-    val hasPassword: Boolean
-        get() = pin.isNotEmpty()
-
     val hasPairedDevice: Boolean
-        get() = !deviceAddress.isNullOrEmpty()
+        get() = pairedDevice != null
 
     val isConfigured: Boolean
-        get() = demoMode || (hasPairedDevice && hasPassword)
+        get() = demoMode || hasPairedDevice
 
     fun unpairDevice() {
         prefs.edit()
-            .remove(KEY_ADDRESS)
-            .remove(KEY_NAME)
+            .remove(KEY_PAIRED_DEVICE)
             .remove(KEY_LAST_OPENED)
             .apply()
+    }
+
+    fun updatePairedPassword(newPassword: String) {
+        val current = pairedDevice ?: return
+        pairedDevice = current.copy(password = newPassword)
     }
 
     fun clear() {
@@ -56,10 +85,8 @@ class DevicePreferences(context: Context) {
     }
 
     companion object {
-        private const val KEY_ADDRESS     = "device_address"
-        private const val KEY_NAME        = "device_name"
-        private const val KEY_PIN         = "pin"
-        private const val KEY_DEMO        = "demo_mode"
-        private const val KEY_LAST_OPENED = "last_opened_at"
+        private const val KEY_PAIRED_DEVICE = "paired_device"
+        private const val KEY_DEMO          = "demo_mode"
+        private const val KEY_LAST_OPENED   = "last_opened_at"
     }
 }

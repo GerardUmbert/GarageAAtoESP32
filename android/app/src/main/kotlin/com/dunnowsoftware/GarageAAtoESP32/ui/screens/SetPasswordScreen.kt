@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -25,6 +26,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.dunnowsoftware.GarageAAtoESP32.R
 import com.dunnowsoftware.GarageAAtoESP32.ui.components.GhostButton
 import com.dunnowsoftware.GarageAAtoESP32.ui.components.PrimaryButton
 import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageColors
@@ -34,7 +36,14 @@ fun SetPasswordScreen(
     initialPassword: String,
     onSave: (String) -> Unit,
     onBack: (() -> Unit)? = null,
+    title: String = "",
+    description: String = "",
+    saveLabel: String = "",
 ) {
+    val resolvedTitle = title.ifEmpty { stringResource(R.string.password_screen_set_title) }
+    val resolvedDescription = description.ifEmpty { stringResource(R.string.password_screen_set_description) }
+    val resolvedSaveLabel = saveLabel.ifEmpty { stringResource(R.string.password_screen_save) }
+
     var password by rememberSaveable { mutableStateOf(initialPassword) }
     var showPassword by rememberSaveable { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
@@ -49,7 +58,7 @@ fun SetPasswordScreen(
         TopBar(onBack = onBack, parentHorizontalPadding = 32.dp)
 
         Text(
-            text = "Set a password",
+            text = resolvedTitle,
             color = GarageColors.Text,
             fontSize = 28.sp,
             lineHeight = 32.sp,
@@ -58,7 +67,7 @@ fun SetPasswordScreen(
         )
         Spacer(Modifier.height(10.dp))
         Text(
-            text = "Required to open the door from your phone or car. Stored only on this device. Must match the password configured in the ESP32 firmware.",
+            text = resolvedDescription,
             color = GarageColors.TextDim,
             fontSize = 15.sp,
             lineHeight = 22.sp,
@@ -66,6 +75,7 @@ fun SetPasswordScreen(
 
         Spacer(Modifier.height(48.dp))
 
+        val hint = stringResource(R.string.password_screen_hint)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -96,7 +106,7 @@ fun SetPasswordScreen(
                     .focusRequester(focusRequester),
                 decorationBox = { inner ->
                     if (password.isEmpty()) {
-                        Text("Enter password", color = GarageColors.TextFaint, fontSize = 18.sp)
+                        Text(hint, color = GarageColors.TextFaint, fontSize = 18.sp)
                     }
                     inner()
                 },
@@ -105,7 +115,7 @@ fun SetPasswordScreen(
 
         Spacer(Modifier.height(12.dp))
         Text(
-            text = if (showPassword) "Hide password" else "Show password",
+            text = if (showPassword) stringResource(R.string.password_screen_hide) else stringResource(R.string.password_screen_show),
             color = GarageColors.Accent,
             fontSize = 14.sp,
             fontWeight = FontWeight.Medium,
@@ -118,13 +128,13 @@ fun SetPasswordScreen(
         Spacer(Modifier.weight(1f))
 
         PrimaryButton(
-            text = "Save",
+            text = resolvedSaveLabel,
             onClick = { onSave(password.trim()) },
             enabled = password.trim().isNotEmpty(),
         )
         if (onBack != null) {
             Spacer(Modifier.height(8.dp))
-            GhostButton(text = "Cancel", onClick = onBack)
+            GhostButton(text = stringResource(R.string.password_screen_cancel), onClick = onBack)
         }
     }
 
@@ -137,10 +147,6 @@ internal fun TopBar(
     parentHorizontalPadding: androidx.compose.ui.unit.Dp = 24.dp,
     right: (@Composable () -> Unit)? = null,
 ) {
-    // Anchor the chevron's hit-area box to 16dp from the actual screen edge
-    // regardless of how much horizontal padding the caller's column applies.
-    // The 40dp box's left edge sits at `parentPadding + offset` from the
-    // screen edge, so offset = 16 - parentPadding.
     val chevronOffset = 16.dp - parentHorizontalPadding
 
     Row(
