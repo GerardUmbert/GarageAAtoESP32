@@ -205,10 +205,12 @@ private fun MainHost(
         }
     }
 
+    val presence = rememberPresence(prefs, stateBust)
+
     MainScreen(
         deviceLabel = deviceLabel,
         state = openState,
-        connected = prefs.isConfigured,
+        presence = presence,
         lastOpenedLabel = lastOpened.takeIf { it > 0 }?.let { formatTime(it) },
         onSettings = onSettings,
         onOpen = {
@@ -229,6 +231,57 @@ private fun MainHost(
             }
         },
     )
+}
+
+/**
+ * Background presence scan: listens for advertisements from the paired MAC.
+ * Returns InRange while the device is heard, OutOfRange after a few seconds
+ * of silence. Demo mode short-circuits to InRange (no actual scan). Stops
+ * scanning when the composable leaves composition (screen off / route change).
+ */
+@Composable
+private fun rememberPresence(prefs: DevicePreferences, stateBust: Int): PresenceStatus {
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val demo = remember(stateBust) { prefs.demoMode }
+    val address = remember(stateBust) { prefs.deviceAddress }
+
+    if (demo) return PresenceStatus.InRange
+    if (address.isNullOrEmpty()) return PresenceStatus.NotPaired
+
+    var lastSeenMs by remember(address) { mutableLongStateOf(0L) }
+    var nowMs by remember(address) { mutableLongStateOf(System.currentTimeMillis()) }
+
+    DisposableEffect(address) {
+        val scanner = com.dunnowsoftware.GarageAAtoESP32.ble.BleScanner(ctx)
+        try {
+            scanner.startPresence(address) { _ ->
+                lastSeenMs = System.currentTimeMillis()
+            }
+        } catch (_: Throwable) {
+            // Permissions not granted / BT off — leave lastSeenMs at 0 so
+            // the UI shows OutOfRange. Don't crash the screen.
+        }
+        onDispose { scanner.stop() }
+    }
+
+    // Tick the clock every second so the staleness window evaluates without
+    // needing a scan callback.
+    LaunchedEffect(address) {
+        while (true) {
+            nowMs = System.currentTimeMillis()
+            delay(1000)
+        }
+    }
+
+    // 15s is generous: covers Android's LOW_POWER scan duty cycle (~5s on,
+    // ~5s off) and the worst-case adv interval. Smaller windows cause the
+    // dot to flicker between callbacks even when the device is stably in
+    // range.
+    val staleAfterMs = 15_000L
+    return if (lastSeenMs > 0 && (nowMs - lastSeenMs) < staleAfterMs)
+        PresenceStatus.InRange
+    else
+        PresenceStatus.OutOfRange
 }
 
 private fun initialStack(prefs: DevicePreferences): List<Route> = when {
