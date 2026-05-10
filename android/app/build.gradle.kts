@@ -1,6 +1,9 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
@@ -11,17 +14,41 @@ android {
         applicationId = "com.dunnowsoftware.GarageAAtoESP32"
         minSdk = 29
         targetSdk = 35
-        versionCode = 12
-        versionName = "1.0.11"
+        versionCode = 13
+        versionName = "1.1.0"
+    }
+
+    buildFeatures {
+        compose = true
     }
 
     signingConfigs {
         create("release") {
-            val storeFilePath = System.getenv("KEYSTORE_PATH")
-                ?: "${rootDir}/../.keystores/garageaatoesp32.jks"
-            val storePass = System.getenv("KEYSTORE_PASSWORD")
-            val keyAliasEnv = System.getenv("KEY_ALIAS") ?: "garageaatoesp32"
-            val keyPass = System.getenv("KEY_PASSWORD")
+            // Resolution order for each value:
+            //   1. environment variable
+            //   2. android/keystore.properties (gitignored, project-local)
+            //   3. Gradle property (e.g. ~/.gradle/gradle.properties)
+            //   4. default
+            val keystorePropsFile = rootProject.file("keystore.properties")
+            val keystoreProps = Properties().apply {
+                if (keystorePropsFile.exists()) {
+                    keystorePropsFile.inputStream().use { load(it) }
+                }
+            }
+            fun secret(envName: String, propName: String): String? {
+                val fromEnv: String? = System.getenv(envName)
+                val fromFile: String? = keystoreProps.getProperty(propName)
+                val fromGradle: String? = project.findProperty(propName) as String?
+                return (fromEnv ?: fromFile ?: fromGradle)?.takeIf { it.isNotBlank() }
+            }
+
+            // Default: keystore lives at <repo-root>/.keystores/. rootDir is
+            // the Gradle root (android/), so step up one level to the repo root.
+            val storeFilePath = secret("KEYSTORE_PATH", "GARAGE_KEYSTORE_PATH")
+                ?: "${rootDir.parentFile}/.keystores/garageaatoesp32.jks"
+            val storePass = secret("KEYSTORE_PASSWORD", "GARAGE_KEYSTORE_PASSWORD")
+            val keyAliasEnv = secret("KEY_ALIAS", "GARAGE_KEY_ALIAS") ?: "garageaatoesp32"
+            val keyPass = secret("KEY_PASSWORD", "GARAGE_KEY_PASSWORD")
 
             if (storePass != null && keyPass != null && file(storeFilePath).exists()) {
                 storeFile = file(storeFilePath)
@@ -57,4 +84,12 @@ dependencies {
     implementation(libs.preference.ktx)
     implementation(libs.lifecycle.viewmodel)
     implementation(libs.core.ktx)
+
+    implementation(libs.activity.compose)
+    implementation(platform(libs.compose.bom))
+    implementation(libs.compose.ui)
+    implementation(libs.compose.ui.graphics)
+    implementation(libs.compose.ui.tooling.preview)
+    implementation(libs.compose.material3)
+    debugImplementation(libs.compose.ui.tooling)
 }

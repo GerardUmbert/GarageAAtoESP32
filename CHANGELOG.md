@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] - 2026-05-10
+
+### Added
+- Phone app: full UI rewrite in Jetpack Compose. New onboarding (Welcome → Set password → Scan/pair), redesigned main screen with hero open button, redesigned settings screen with paired-device hero card and grouped rows
+- Main screen `Sending` state animates with three concentric expanding pulses radiating from the hero button
+- Main screen `Opened` state: ring fills green with a check glyph, settles back to idle after 2s
+- Main screen `Failed` state: ring fills pastel red with an X glyph, settles back to idle after 2s — same celebration cadence as `Opened`, so failures are unmistakable in a one-second peripheral glance
+- Demo mode now randomly fails on ~30% of opens with one of three demo error reasons, so both success and failure animations are exercised without an ESP32
+- "Last opened" timestamp persisted on each successful open and shown on the main screen
+- Pairing flow: real BLE scan with a five-ring radar visual, scrollable list of found devices in the bottom sheet, tap-to-pair (no 6-digit code — the ESP32 doesn't have a display)
+- Release signing: `app/build.gradle.kts` now reads keystore credentials from a gitignored `android/keystore.properties` (in addition to env vars and `~/.gradle/gradle.properties`), so `./gradlew assembleRelease` works in any fresh shell without exporting env vars
+
+### Changed
+- Phone app theme is now dark with a single warm-green accent, matching the launcher icon's color story
+- Launcher icon: redesigned as a white "G" donut + tongue mark on the app's near-black background, replacing the previous teal-on-green-with-orange-badge icon. Adaptive icon foreground sized for the safe zone so it isn't clipped on circle/squircle masks
+- "PIN" terminology in the UI is now "password" everywhere (the underlying storage was always a free-form string; this just aligns the wording with reality)
+- Settings: "Demo mode" moved into a Testing section with a clear toggle and description; "Unpair" moved into a Danger zone section
+
+### Removed
+- Standalone `SettingsActivity` and its XML layout — settings are now an in-app route inside the Compose host activity
+- AppCompat dependency (the rewrite uses `ComponentActivity` + Compose Material3)
+
 ## [1.0.11] - 2026-05-09
 
 ### Added
