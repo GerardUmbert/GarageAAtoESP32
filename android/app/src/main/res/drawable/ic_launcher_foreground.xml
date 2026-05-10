@@ -4,23 +4,18 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Garage door body -->
-    <path android:fillColor="#FFFFFF"
-        android:pathData="M30,72 L30,42 Q30,36 36,36 L72,36 Q78,36 78,42 L78,72 Z"/>
-    <!-- Door panel separators -->
-    <path android:fillColor="#00000000"
-        android:pathData="M33,48 L75,48"
-        android:strokeColor="#1976D2"
-        android:strokeWidth="2"/>
-    <path android:fillColor="#00000000"
-        android:pathData="M33,57 L75,57"
-        android:strokeColor="#1976D2"
-        android:strokeWidth="2"/>
-    <path android:fillColor="#00000000"
-        android:pathData="M33,66 L75,66"
-        android:strokeColor="#1976D2"
-        android:strokeWidth="2"/>
-    <!-- Ground line -->
-    <path android:fillColor="#FFFFFF"
-        android:pathData="M27,74 L81,74 L81,77 L27,77 Z"/>
+    <!-- Donut (outer ring with inner hole) via even-odd fill.
+         Center (54,54), outer r=26, inner r=15.2. Sized to sit comfortably
+         inside the 66dp adaptive-icon safe zone. -->
+    <path
+        android:fillColor="#F3F5F7"
+        android:fillType="evenOdd"
+        android:pathData="M54,28 a26,26 0 1,0 0.001,0 z M54,38.8 a15.2,15.2 0 1,1 -0.001,0 z"/>
+    <!-- Tongue: 8.7 thick rectangle extending from center (54) to outer edge
+         + 2 (=82). Drawn over the donut + hole; its overlap with the ring is
+         a no-op (already filled), and it carves the visible 'tongue' through
+         the inner hole. -->
+    <path
+        android:fillColor="#F3F5F7"
+        android:pathData="M54,49.65 H82 V58.35 H54 Z"/>
 </vector>

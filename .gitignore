@@ -13,11 +13,15 @@ android/key.properties
 android/*.jks
 android/*.keystore
 
-# Signing keystores (never commit)
+# Signing keystores & secrets (never commit)
 .keystores/
 *.jks
 *.keystore
 keystore.properties
+secrets.properties
+signing.properties
+.env
+.env.*
 
 # OS
 .DS_Store

@@ -1,45 +1,53 @@
 package com.dunnowsoftware.GarageAAtoESP32.ui
 
-import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.widget.Button
-import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-import com.dunnowsoftware.GarageAAtoESP32.R
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Modifier
 import com.dunnowsoftware.GarageAAtoESP32.ble.GarageBleManager
 import com.dunnowsoftware.GarageAAtoESP32.ble.OpenResult
 import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
+import com.dunnowsoftware.GarageAAtoESP32.ui.screens.*
+import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageTheme
+import kotlinx.coroutines.delay
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
-class PhoneActivity : AppCompatActivity() {
+class PhoneActivity : ComponentActivity() {
 
     private lateinit var prefs: DevicePreferences
-    private lateinit var statusText: TextView
-    private lateinit var openBtn: Button
     private val bleManager by lazy { GarageBleManager(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_phone)
-
         prefs = DevicePreferences(this)
-        statusText = findViewById(R.id.tv_status)
-        openBtn = findViewById(R.id.btn_open)
-
-        openBtn.setOnClickListener { triggerOpen() }
-
-        findViewById<Button>(R.id.btn_settings).setOnClickListener {
-            startActivity(Intent(this, SettingsActivity::class.java))
+        setContent {
+            GarageTheme {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageColors.Bg)
+                        .windowInsetsPadding(WindowInsets.systemBars),
+                ) {
+                    AppRoot(
+                        prefs = prefs,
+                        onTriggerOpen = ::triggerOpen,
+                    )
+                }
+            }
         }
-
-        refreshUi()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        refreshUi()
     }
 
     override fun onDestroy() {
@@ -47,51 +55,221 @@ class PhoneActivity : AppCompatActivity() {
         bleManager.cleanup()
     }
 
-    private fun refreshUi() {
-        when {
-            prefs.demoMode -> {
-                statusText.text = "Demo mode on"
-                openBtn.isEnabled = true
-            }
-            prefs.isConfigured -> {
-                statusText.text = "Garage: ${prefs.deviceName ?: prefs.deviceAddress}"
-                openBtn.isEnabled = true
-            }
-            else -> {
-                statusText.text = "Not configured yet.\nTap Settings to set up your garage."
-                openBtn.isEnabled = false
-            }
-        }
-    }
-
-    private fun triggerOpen() {
+    private fun triggerOpen(onResult: (OpenResult) -> Unit) {
         if (prefs.demoMode) {
-            openBtn.isEnabled = false
-            openBtn.text = "Connecting…"
-            Toast.makeText(this, "DEMO: simulating garage open…", Toast.LENGTH_SHORT).show()
-            Handler(Looper.getMainLooper()).postDelayed({
-                Toast.makeText(this, "DEMO: relay would trigger now", Toast.LENGTH_LONG).show()
-                openBtn.text = "Open Garage"
-                openBtn.isEnabled = true
-            }, 1500)
+            // Simulate either success or failure after a short delay.
+            // ~30% failure rate so the user can see both branches.
+            val willFail = kotlin.random.Random.nextFloat() < 0.30f
+            val reasons = listOf(
+                "Demo: connection timed out",
+                "Demo: auth failed — check password",
+                "Demo: garage didn't respond",
+            )
+            android.os.Handler(mainLooper).postDelayed({
+                onResult(
+                    if (willFail) OpenResult.Failure(reasons.random())
+                    else          OpenResult.Success
+                )
+            }, 1200)
             return
         }
-
-        val address = prefs.deviceAddress ?: return
-        openBtn.isEnabled = false
-        openBtn.text = "Connecting…"
-
+        val address = prefs.deviceAddress
+        if (address == null) {
+            onResult(OpenResult.Failure("No paired device"))
+            return
+        }
         bleManager.connectAndOpen(address, prefs.pin) { result ->
-            runOnUiThread {
-                openBtn.text = "Open Garage"
-                openBtn.isEnabled = true
-                when (result) {
-                    is OpenResult.Success ->
-                        Toast.makeText(this, "Opened!", Toast.LENGTH_SHORT).show()
-                    is OpenResult.Failure ->
-                        Toast.makeText(this, "Failed: ${result.reason}", Toast.LENGTH_LONG).show()
-                }
-            }
+            runOnUiThread { onResult(result) }
         }
     }
+}
+
+private sealed interface Route {
+    data object Welcome      : Route
+    data object SetPassword  : Route
+    data object Scan         : Route
+    data object Main         : Route
+    data object Settings     : Route
+    data object ChangePassword : Route
+}
+
+@Composable
+private fun AppRoot(
+    prefs: DevicePreferences,
+    onTriggerOpen: ((OpenResult) -> Unit) -> Unit,
+) {
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+
+    // Re-snapshot pref state into Compose state on each route change so the UI
+    // reflects edits made on other screens.
+    var routeStack by rememberSaveable(stateSaver = routeStackSaver) {
+        mutableStateOf(initialStack(prefs))
+    }
+    var stateBust by remember { mutableIntStateOf(0) }
+    val current = routeStack.last()
+
+    fun push(r: Route) { routeStack = routeStack + r }
+    fun pop() {
+        if (routeStack.size > 1) routeStack = routeStack.dropLast(1)
+    }
+    fun replaceAll(r: Route) { routeStack = listOf(r) }
+    fun bust() { stateBust++ }
+
+    when (current) {
+        Route.Welcome -> WelcomeScreen(
+            onGetStarted = { push(Route.SetPassword) },
+        )
+
+        Route.SetPassword -> SetPasswordScreen(
+            initialPassword = prefs.pin,
+            onSave = { pwd ->
+                prefs.pin = pwd
+                bust()
+                if (prefs.hasPairedDevice) replaceAll(Route.Main) else push(Route.Scan)
+            },
+            onBack = if (routeStack.size > 1) ({ pop() }) else null,
+        )
+
+        Route.ChangePassword -> SetPasswordScreen(
+            initialPassword = prefs.pin,
+            onSave = { pwd ->
+                prefs.pin = pwd
+                bust()
+                pop()
+                Toast.makeText(ctx, "Password updated", Toast.LENGTH_SHORT).show()
+            },
+            onBack = { pop() },
+        )
+
+        Route.Scan -> ScanScreen(
+            onPicked = { dev ->
+                prefs.deviceAddress = dev.address
+                prefs.deviceName = dev.name
+                bust()
+                replaceAll(Route.Main)
+            },
+            onBack = if (routeStack.size > 1) ({ pop() }) else null,
+        )
+
+        Route.Main -> MainHost(
+            prefs = prefs,
+            stateBust = stateBust,
+            onTriggerOpen = onTriggerOpen,
+            onSettings = { push(Route.Settings) },
+        )
+
+        Route.Settings -> SettingsScreen(
+            deviceName = remember(stateBust) { prefs.deviceName },
+            deviceAddress = remember(stateBust) { prefs.deviceAddress },
+            demoMode = remember(stateBust) { prefs.demoMode },
+            onBack = { pop() },
+            onChangePassword = { push(Route.ChangePassword) },
+            onRepair = { push(Route.Scan) },
+            onUnpair = {
+                prefs.unpairDevice()
+                bust()
+                replaceAll(Route.Scan)
+            },
+            onToggleDemo = { v ->
+                prefs.demoMode = v
+                bust()
+            },
+        )
+    }
+}
+
+@Composable
+private fun MainHost(
+    prefs: DevicePreferences,
+    stateBust: Int,
+    onTriggerOpen: ((OpenResult) -> Unit) -> Unit,
+    onSettings: () -> Unit,
+) {
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    var openState by remember { mutableStateOf(OpenState.Idle) }
+    var lastOpened by remember(stateBust) { mutableLongStateOf(prefs.lastOpenedAt) }
+
+    // After a terminal celebration state (Opened/Failed), settle back to Idle.
+    LaunchedEffect(openState) {
+        if (openState == OpenState.Opened || openState == OpenState.Failed) {
+            delay(2000)
+            openState = OpenState.Idle
+        }
+    }
+
+    val deviceLabel = remember(stateBust) {
+        when {
+            prefs.demoMode               -> "Demo mode"
+            prefs.deviceName != null     -> "ESP32 · ${prefs.deviceName}"
+            prefs.deviceAddress != null  -> "ESP32 · ${prefs.deviceAddress}"
+            else                         -> "Not configured"
+        }
+    }
+
+    MainScreen(
+        deviceLabel = deviceLabel,
+        state = openState,
+        connected = prefs.isConfigured,
+        lastOpenedLabel = lastOpened.takeIf { it > 0 }?.let { formatTime(it) },
+        onSettings = onSettings,
+        onOpen = {
+            if (openState != OpenState.Idle) return@MainScreen
+            openState = OpenState.Sending
+            onTriggerOpen { result ->
+                when (result) {
+                    is OpenResult.Success -> {
+                        prefs.lastOpenedAt = System.currentTimeMillis()
+                        lastOpened = prefs.lastOpenedAt
+                        openState = OpenState.Opened
+                    }
+                    is OpenResult.Failure -> {
+                        openState = OpenState.Failed
+                        Toast.makeText(ctx, result.reason, Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+        },
+    )
+}
+
+private fun initialStack(prefs: DevicePreferences): List<Route> = when {
+    prefs.isConfigured     -> listOf(Route.Main)
+    !prefs.hasPassword     -> listOf(Route.Welcome)
+    else                   -> listOf(Route.Welcome, Route.SetPassword, Route.Scan)
+}
+
+private fun formatTime(epochMs: Long): String {
+    val now = System.currentTimeMillis()
+    val sameDay = SimpleDateFormat("yyyyMMdd", Locale.US).run {
+        format(Date(now)) == format(Date(epochMs))
+    }
+    val timeFmt = SimpleDateFormat("h:mm a", Locale.getDefault())
+    return if (sameDay) {
+        "Today, ${timeFmt.format(Date(epochMs))}"
+    } else {
+        SimpleDateFormat("MMM d, h:mm a", Locale.getDefault()).format(Date(epochMs))
+    }
+}
+
+private val routeStackSaver = androidx.compose.runtime.saveable.listSaver<List<Route>, String>(
+    save = { it.map(::routeKey) },
+    restore = { it.map(::keyRoute) },
+)
+
+private fun routeKey(r: Route): String = when (r) {
+    Route.Welcome        -> "welcome"
+    Route.SetPassword    -> "set_pwd"
+    Route.ChangePassword -> "chg_pwd"
+    Route.Scan           -> "scan"
+    Route.Main           -> "main"
+    Route.Settings       -> "settings"
+}
+
+private fun keyRoute(k: String): Route = when (k) {
+    "welcome"  -> Route.Welcome
+    "set_pwd"  -> Route.SetPassword
+    "chg_pwd"  -> Route.ChangePassword
+    "scan"     -> Route.Scan
+    "settings" -> Route.Settings
+    else       -> Route.Main
 }
