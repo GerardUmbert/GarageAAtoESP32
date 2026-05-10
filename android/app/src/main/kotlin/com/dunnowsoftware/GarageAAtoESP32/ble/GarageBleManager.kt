@@ -19,6 +19,12 @@ class GarageBleManager(private val context: Context) {
     companion object {
         const val MAX_ATTEMPTS = 3
         private const val RETRY_DELAY_MS = 2000L
+        // Per-attempt deadline. Covers the entire connect → discover →
+        // read-nonce → write-command → status-notify chain. Real ESP32
+        // round-trips are well under 1s; 5s gives slack for weak signal /
+        // retransmissions without leaving the UI hung indefinitely if the
+        // peer accepts the connection but never responds.
+        private const val ATTEMPT_TIMEOUT_MS = 5000L
     }
 
     private val _state = MutableStateFlow<OpenResult?>(null)
@@ -33,6 +39,7 @@ class GarageBleManager(private val context: Context) {
     private var resultCallback: ((OpenResult) -> Unit)? = null
     private var attemptCallback: ((Int) -> Unit)? = null
     private var attempt = 0
+    private var attemptTimeout: Runnable? = null
 
     private val gattCallback = object : BluetoothGattCallback() {
 
@@ -99,8 +106,8 @@ class GarageBleManager(private val context: Context) {
             if (ok) {
                 deliver(OpenResult.Success)
             } else {
-                // Auth failure — wrong PIN. Do NOT retry; retrying won't fix a bad PIN.
-                deliver(OpenResult.Failure("Auth failed — check PIN", isAuthFailure = true))
+                // Auth failure — wrong password. Do NOT retry; retrying won't fix a bad password.
+                deliver(OpenResult.Failure("Auth failed — check password", isAuthFailure = true))
             }
         }
 
@@ -138,6 +145,7 @@ class GarageBleManager(private val context: Context) {
 
     fun cleanup() {
         handler.removeCallbacksAndMessages(null)
+        attemptTimeout = null
         closeGatt()
         nonce = null
         attempt = 0
@@ -150,12 +158,30 @@ class GarageBleManager(private val context: Context) {
     private fun startAttempt() {
         attempt++
         attemptCallback?.invoke(attempt)
+        // Arm a per-attempt deadline. If the entire connect/discover/read/
+        // write/notify chain doesn't complete in time (e.g. peer accepts the
+        // connection but never sends the status notification, or any callback
+        // silently never fires), treat the attempt as failed and let the
+        // existing retry path take over.
+        cancelAttemptTimeout()
+        attemptTimeout = Runnable {
+            attemptTimeout = null
+            closeGatt()
+            scheduleRetryOrFail("Timed out — no response from opener")
+        }.also { handler.postDelayed(it, ATTEMPT_TIMEOUT_MS) }
+
         val adapter = (context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager).adapter
         val device = adapter.getRemoteDevice(deviceAddress)
         gatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
     }
 
+    private fun cancelAttemptTimeout() {
+        attemptTimeout?.let { handler.removeCallbacks(it) }
+        attemptTimeout = null
+    }
+
     private fun scheduleRetryOrFail(reason: String) {
+        cancelAttemptTimeout()
         val cb = resultCallback ?: return
         if (attempt >= MAX_ATTEMPTS) {
             resultCallback = null
@@ -195,6 +221,7 @@ class GarageBleManager(private val context: Context) {
     }
 
     private fun deliver(result: OpenResult) {
+        cancelAttemptTimeout()
         val cb = resultCallback ?: return
         resultCallback = null
         _state.value = result
