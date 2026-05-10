@@ -127,6 +127,14 @@ Connect your phone to Android Auto. Open **Garage Opener** and tap **Open Garage
 
 Tap once to send. The screen shows a spinner while the BLE round-trip runs (typically &lt;1s) and a confirmation when the door receives the open command. Failures show a "Try Again" button instead of auto-resetting, so you don't have to scramble to react while driving.
 
+### What it looks like on the phone
+
+| Main (idle) | Sending | Pairing scan | Settings |
+|---|---|---|---|
+| ![Phone main idle](docs/screenshots/phone-main-idle.jpg) | ![Phone sending](docs/screenshots/phone-main-sending.jpg) | ![Phone scan](docs/screenshots/phone-scan.jpg) | ![Phone settings](docs/screenshots/phone-settings.jpg) |
+
+The phone app mirrors the in-car flow but is the primary surface for setup. The hero open button doubles as a status indicator — concentric pulses while sending, fills green on success, fills pastel red on failure. The pairing screen runs a real BLE scan with a sweeping radar visual; tap the device that appears in the bottom sheet to pair it. Settings is grouped by Security / Testing / (Danger zone, when paired).
+
 ## Security
 
 - The PIN never travels over the air — only an HMAC-SHA256 hash of a fresh random nonce.

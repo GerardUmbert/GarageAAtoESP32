@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.1.1] - 2026-05-10
+
+### Added
+- Android Auto car screen now also exercises the failure path in demo mode (~30% of opens, same demo error reasons as the phone) — both branches are visible in the car UI without needing a real ESP32
+- README: "What it looks like in the car" section with the three AA states (idle / sending / opened) captured from the Desktop Head Unit
+- README: "What it looks like on the phone" section with four phone screenshots — main idle, main sending (with pulses), pairing scan (with radar), settings
+- `docs/android-auto-ux-ideas.md`: parking-lot doc for a possible future AA UX redesign (auto-trigger on launch, spinner pane, result pane). Noted as not-implemented and the why
+- `scripts/`: Python generators + outputs for the Play Store launcher icon (512×512) and feature graphic (1024×500) — white G mark on dark bg, supersampled and downsampled with LANCZOS for crisp edges
+
+### Changed
+- Demo-mode open simulation consolidated into a single `DemoOpener` helper used by both the phone activity and the AA car screen, so failure rate / timing / error messages stay in sync across surfaces
+- AA car screen demo timing aligned with the phone (1.2s instead of 1.5s)
+
+### Fixed
+- Status bar icons on the phone forced to light style so they stay visible against the dark app background regardless of the system's light/dark theme. Previously dark icons rendered on dark bg and were invisible
+
 ## [1.1.0] - 2026-05-10
 
 ### Added
