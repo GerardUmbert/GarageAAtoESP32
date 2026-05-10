@@ -119,6 +119,14 @@ docs/       Wiring diagram, power budget, provisioning guide
 
 Connect your phone to Android Auto. Open **Garage Opener** and tap **Open Garage**.
 
+### What it looks like in the car
+
+| Idle | Sending | Opened |
+|---|---|---|
+| ![Idle](docs/screenshots/aa-idle.png) | ![Sending](docs/screenshots/aa-sending.png) | ![Opened](docs/screenshots/aa-opened.png) |
+
+Tap once to send. The screen shows a spinner while the BLE round-trip runs (typically &lt;1s) and a confirmation when the door receives the open command. Failures show a "Try Again" button instead of auto-resetting, so you don't have to scramble to react while driving.
+
 ## Security
 
 - The PIN never travels over the air — only an HMAC-SHA256 hash of a fresh random nonce.

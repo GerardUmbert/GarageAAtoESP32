@@ -128,13 +128,22 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
         invalidate()
         Handler(Looper.getMainLooper()).postDelayed({
             carContext.mainExecutor.execute {
-                uiState = UiState.SUCCESS
-                invalidate()
-                Handler(Looper.getMainLooper()).postDelayed({
-                    carContext.mainExecutor.execute { resetToIdle() }
-                }, 2000)
+                when (val result = DemoOpener.nextResult()) {
+                    is OpenResult.Success -> {
+                        uiState = UiState.SUCCESS
+                        invalidate()
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            carContext.mainExecutor.execute { resetToIdle() }
+                        }, 2000)
+                    }
+                    is OpenResult.Failure -> {
+                        uiState = UiState.FAILURE
+                        failureReason = result.reason
+                        invalidate()
+                    }
+                }
             }
-        }, 1500)
+        }, DemoOpener.DELAY_MS)
     }
 
     private fun resetToIdle() {

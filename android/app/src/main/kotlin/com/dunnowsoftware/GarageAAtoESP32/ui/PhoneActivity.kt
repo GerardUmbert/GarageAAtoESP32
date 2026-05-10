@@ -1,8 +1,10 @@
 package com.dunnowsoftware.GarageAAtoESP32.ui
 
+import android.graphics.Color as AndroidColor
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
@@ -14,6 +16,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import com.dunnowsoftware.GarageAAtoESP32.DemoOpener
 import com.dunnowsoftware.GarageAAtoESP32.ble.GarageBleManager
 import com.dunnowsoftware.GarageAAtoESP32.ble.OpenResult
 import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
@@ -30,7 +33,13 @@ class PhoneActivity : ComponentActivity() {
     private val bleManager by lazy { GarageBleManager(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
+        // Force the system bars (status + nav) to light icons against our
+        // dark app background. Defaults follow system theme, which renders
+        // dark icons on light-mode devices and makes them invisible.
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(AndroidColor.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(AndroidColor.TRANSPARENT),
+        )
         super.onCreate(savedInstanceState)
         prefs = DevicePreferences(this)
         setContent {
@@ -57,20 +66,10 @@ class PhoneActivity : ComponentActivity() {
 
     private fun triggerOpen(onResult: (OpenResult) -> Unit) {
         if (prefs.demoMode) {
-            // Simulate either success or failure after a short delay.
-            // ~30% failure rate so the user can see both branches.
-            val willFail = kotlin.random.Random.nextFloat() < 0.30f
-            val reasons = listOf(
-                "Demo: connection timed out",
-                "Demo: auth failed — check password",
-                "Demo: garage didn't respond",
+            android.os.Handler(mainLooper).postDelayed(
+                { onResult(DemoOpener.nextResult()) },
+                DemoOpener.DELAY_MS,
             )
-            android.os.Handler(mainLooper).postDelayed({
-                onResult(
-                    if (willFail) OpenResult.Failure(reasons.random())
-                    else          OpenResult.Success
-                )
-            }, 1200)
             return
         }
         val address = prefs.deviceAddress
