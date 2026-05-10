@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.1.3] - 2026-05-10
+
+### Added
+- Presence indicator on both the phone main screen and the Android Auto car screen. A low-power BLE scan filtered to the paired device's MAC runs while the screen is foreground; the dot shows `● In range` when the opener has been heard within the last 15s, `○ Out of range` otherwise. Tells the user whether they're actually near their garage before they tap Open instead of always optimistically saying "Ready"
+- AA car screen renders the presence indicator on the same line as the device name (`● In range - ESP32-Garage`) so it reads at a glance from the driver's seat
+
+### Changed
+- BLE presence scan uses `CALLBACK_TYPE_ALL_MATCHES` and a 15s staleness window so the indicator stays steady on a stably-advertising peer instead of flickering between scan callbacks
+- `GarageScreen` (AA) now reads `DevicePreferences` fresh on every access and watches for re-pair events on its 1.5s presence ticker, restarting the scan with the new MAC. Previously, re-pairing on the phone left AA scanning for the old MAC until the user backed out and re-entered the AA screen
+
 ## [1.1.2] - 2026-05-10
 
 ### Fixed

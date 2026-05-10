@@ -30,11 +30,14 @@ import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageColors
 
 enum class OpenState { Idle, Sending, Opened, Failed }
 
+/** Top-of-screen status pill — reflects whether the paired opener is in range. */
+enum class PresenceStatus { InRange, OutOfRange, NotPaired }
+
 @Composable
 fun MainScreen(
     deviceLabel: String,
     state: OpenState,
-    connected: Boolean,
+    presence: PresenceStatus,
     lastOpenedLabel: String?,
     onOpen: () -> Unit,
     onSettings: () -> Unit,
@@ -53,15 +56,20 @@ fun MainScreen(
                 .padding(horizontal = 24.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            val (dotColor, statusText) = when (presence) {
+                PresenceStatus.InRange    -> GarageColors.Accent  to "In range"
+                PresenceStatus.OutOfRange -> GarageColors.TextFaint to "Out of range"
+                PresenceStatus.NotPaired  -> GarageColors.TextFaint to "Not paired"
+            }
             Box(
                 modifier = Modifier
                     .size(8.dp)
                     .clip(CircleShape)
-                    .background(if (connected) GarageColors.Accent else GarageColors.TextFaint),
+                    .background(dotColor),
             )
             Spacer(Modifier.width(10.dp))
             Text(
-                text = if (connected) "Ready" else "Disconnected",
+                text = statusText,
                 color = GarageColors.TextDim,
                 fontSize = 14.sp,
             )

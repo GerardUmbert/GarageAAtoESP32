@@ -42,6 +42,38 @@ class BleScanner(context: Context) {
         scanner.startScan(listOf(filter), settings, cb)
     }
 
+    /**
+     * Background presence scan: low-power, filtered to a single MAC.
+     * Used by the main screen to tell whether the paired opener is in range
+     * right now without spending battery on full-throttle scanning.
+     *
+     * CALLBACK_TYPE_ALL_MATCHES disables Android's duplicate-filtering so we
+     * get a callback for every advertisement, not just the first one until
+     * the device "ages out" of the BT stack's internal cache. Without it,
+     * presence flickers in/out of range as our staleness check fires
+     * between callbacks.
+     */
+    fun startPresence(deviceAddress: String, onSeen: (FoundDevice) -> Unit) {
+        stop()
+        val cb = object : ScanCallback() {
+            override fun onScanResult(callbackType: Int, result: ScanResult) {
+                val name = result.device.name ?: "Unknown"
+                onSeen(FoundDevice(name, result.device.address, result.rssi))
+            }
+        }
+        callback = cb
+
+        val filter = ScanFilter.Builder()
+            .setDeviceAddress(deviceAddress)
+            .build()
+        val settings = ScanSettings.Builder()
+            .setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
+            .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
+            .build()
+
+        scanner.startScan(listOf(filter), settings, cb)
+    }
+
     fun stop() {
         callback?.let { scanner.stopScan(it) }
         callback = null
