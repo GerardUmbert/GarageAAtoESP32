@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.1.2] - 2026-05-10
+
+### Fixed
+- BLE manager now enforces a 5-second per-attempt deadline covering the entire connect → discover → read-nonce → write-command → status-notify chain. If the peer accepts the connection but never responds (or any of the GATT callbacks silently never fires), the attempt is treated as failed and falls into the existing 3-attempt retry path. After three timeouts, the user sees `"Timed out — no response from opener (tried 3 times)"` instead of the UI hanging on `Sending…` forever. Surfaces identically on the phone main screen and the Android Auto car screen
+- Auth-failure message renamed from `"Auth failed — check PIN"` to `"Auth failed — check password"` to match the rest of the UI (the underlying credential has always been a free-form string, not a numeric PIN)
+
+### Added
+- `docs/testing-with-nrf-connect.md`: step-by-step guide for testing the full BLE flow end-to-end without an ESP32, using nRF Connect for Android on a second phone as a virtual peripheral. Covers UUIDs, GATT-server config, advertiser setup, and walking through the success / auth-failure / connection-failure / timeout paths
+
 ## [1.1.1] - 2026-05-10
 
 ### Added

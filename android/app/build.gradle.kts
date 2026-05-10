@@ -14,8 +14,8 @@ android {
         applicationId = "com.dunnowsoftware.GarageAAtoESP32"
         minSdk = 29
         targetSdk = 35
-        versionCode = 14
-        versionName = "1.1.1"
+        versionCode = 15
+        versionName = "1.1.2"
     }
 
     buildFeatures {
