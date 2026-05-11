@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dunnowsoftware.GarageAAtoESP32.R
 import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageColors
+import com.dunnowsoftware.GarageAAtoESP32.ui.screens.PresenceStatus
 
 internal data class LangOption(val tag: String?, val nativeName: String)
 
@@ -44,6 +45,7 @@ fun SettingsScreen(
     deviceAddress: String?,
     demoMode: Boolean,
     currentLocaleTag: String?,
+    presence: PresenceStatus = PresenceStatus.OutOfRange,
     onBack: () -> Unit,
     onChangePassword: () -> Unit,
     onRepair: () -> Unit,
@@ -82,16 +84,20 @@ fun SettingsScreen(
                         .padding(20.dp),
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        val dotColor = if (presence == PresenceStatus.InRange) GarageColors.Accent else GarageColors.TextFaint
                         Box(
                             modifier = Modifier
                                 .size(8.dp)
                                 .clip(CircleShape)
-                                .background(GarageColors.Accent),
+                                .background(dotColor),
                         )
-                        Spacer(Modifier.width(12.dp))
+                        Spacer(Modifier.width(8.dp))
+                        val badgeText = stringResource(R.string.settings_paired_badge) +
+                            if (presence == PresenceStatus.InRange) " · " + stringResource(R.string.status_in_range)
+                            else ""
                         Text(
-                            text = stringResource(R.string.settings_paired_badge),
-                            color = GarageColors.TextDim,
+                            text = badgeText,
+                            color = if (presence == PresenceStatus.InRange) GarageColors.Accent else GarageColors.TextDim,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
                             letterSpacing = 1.2.sp,

@@ -204,6 +204,7 @@ private fun AppRoot(
             deviceAddress = remember(stateBust) { prefs.pairedDevice?.address },
             demoMode = remember(stateBust) { prefs.demoMode },
             currentLocaleTag = remember(stateBust) { getSavedLocaleTag(ctx) },
+            presence = rememberPresence(prefs, stateBust),
             onBack = { pop() },
             onChangePassword = { push(Route.ChangePassword) },
             onRepair = { push(Route.Scan) },

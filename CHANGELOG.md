@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.2.2] - 2026-05-11
+
+### Fixed
+- Presence scan on the main screen and settings now uses `SCAN_MODE_LOW_LATENCY` so the in-range indicator appears within ~1s of opening the screen instead of the 5–6s worst-case under `LOW_POWER`; acceptable battery cost given the scan only runs while the screen is foreground
+- Radar dot in the scan screen now updates RSSI on every scan callback instead of freezing at the first reading — the dot moves inward/outward as you walk toward or away from the device
+
+### Added
+- Settings paired-device card shows presence inline: dot and badge turn green and read "PAIRED · In range" when the opener is detected nearby, grey otherwise
+
 ## [1.2.1] - 2026-05-11
 
 ### Fixed

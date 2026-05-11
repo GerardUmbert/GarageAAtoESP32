@@ -67,7 +67,9 @@ fun ScanScreen(
         devices.clear()
         try {
             scanner.start { dev ->
-                if (devices.none { it.address == dev.address } && dev.address != excludeAddress) devices.add(dev)
+                if (dev.address == excludeAddress) return@start
+                val idx = devices.indexOfFirst { it.address == dev.address }
+                if (idx == -1) devices.add(dev) else devices[idx] = dev
             }
         } catch (t: Throwable) {
             scanError = ctx.getString(R.string.scan_error, t.message ?: ctx.getString(R.string.scan_unknown_error))
