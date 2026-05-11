@@ -28,6 +28,7 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
     private var uiState = UiState.IDLE
     private var failureReason = ""
     private var connectAttempt = 0
+    private var hasAutoFired = false
 
     // Presence: matches the phone main screen. lastSeenMs=0 + inRange=false
     // means we've never heard from the paired device this session.
@@ -58,7 +59,12 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
                 (System.currentTimeMillis() - lastSeenMs) < presenceStaleAfterMs
             if (nowInRange != inRange) {
                 inRange = nowInRange
-                if (uiState == UiState.IDLE) invalidate()
+                if (inRange && !hasAutoFired && uiState == UiState.IDLE && prefs().isConfigured) {
+                    hasAutoFired = true
+                    triggerOpen()
+                } else if (uiState == UiState.IDLE) {
+                    invalidate()
+                }
             }
             presenceHandler.postDelayed(this, presenceCheckIntervalMs)
         }
@@ -69,7 +75,10 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
         // don't burn the BT radio when the AA UI isn't showing this screen.
         lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStart(owner: LifecycleOwner) = startPresenceScan()
-            override fun onStop(owner: LifecycleOwner)  = stopPresenceScan()
+            override fun onStop(owner: LifecycleOwner) {
+                stopPresenceScan()
+                hasAutoFired = false
+            }
         })
     }
 
@@ -80,10 +89,6 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
         try {
             presenceScanner.startPresence(address) { _ ->
                 lastSeenMs = System.currentTimeMillis()
-                if (!inRange) {
-                    inRange = true
-                    if (uiState == UiState.IDLE) invalidate()
-                }
             }
             scanStartedForAddress = address
         } catch (_: Throwable) {
