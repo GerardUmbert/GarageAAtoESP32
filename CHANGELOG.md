@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.2.1] - 2026-05-11
+
+### Fixed
+- Android Auto car screen now respects the per-app language selected in Settings. The AA service runs in a separate process (`gearhead:car`) unaffected by `AppCompatDelegate.setApplicationLocales`; fixed by applying the saved locale directly to the `CarContext` resources configuration in `GarageSession.onCreateScreen` before `GarageScreen` is constructed
+- AA screen strings translated into all 8 supported languages (was hardcoded English)
+
 ## [1.2.0] - 2026-05-11
 
 ### Added

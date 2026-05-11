@@ -73,6 +73,19 @@
     <string name="password_screen_hide">Hide password</string>
     <string name="password_screen_cancel">Cancel</string>
 
+    <!-- Android Auto car screen -->
+    <string name="aa_demo_mode">Demo mode — no ESP32 needed</string>
+    <string name="aa_not_configured">Set up garage in the phone app first</string>
+    <string name="aa_in_range">● In range</string>
+    <string name="aa_out_of_range">○ Out of range</string>
+    <string name="aa_open_garage">Open Garage</string>
+    <string name="aa_garage_door">Garage Door</string>
+    <string name="aa_connecting">Connecting…</string>
+    <string name="aa_connecting_attempt">Connecting… (attempt %1$d / %2$d)</string>
+    <string name="aa_opened">Opened!</string>
+    <string name="aa_failed">Failed: %1$s</string>
+    <string name="aa_try_again">Try Again</string>
+
     <!-- Toasts -->
     <string name="toast_password_updated">Password updated</string>
 </resources>

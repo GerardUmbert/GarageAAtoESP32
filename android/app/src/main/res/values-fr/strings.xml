@@ -67,4 +67,16 @@
     <string name="password_screen_cancel">Annuler</string>
 
     <string name="toast_password_updated">Mot de passe mis à jour</string>
+
+    <string name="aa_demo_mode">Mode démo — sans ESP32</string>
+    <string name="aa_not_configured">Configurez le garage depuis l\'app téléphone</string>
+    <string name="aa_in_range">● À portée</string>
+    <string name="aa_out_of_range">○ Hors de portée</string>
+    <string name="aa_open_garage">Ouvrir le garage</string>
+    <string name="aa_garage_door">Porte de garage</string>
+    <string name="aa_connecting">Connexion…</string>
+    <string name="aa_connecting_attempt">Connexion… (tentative %1$d / %2$d)</string>
+    <string name="aa_opened">Ouvert&#160;!</string>
+    <string name="aa_failed">Échec : %1$s</string>
+    <string name="aa_try_again">Réessayer</string>
 </resources>

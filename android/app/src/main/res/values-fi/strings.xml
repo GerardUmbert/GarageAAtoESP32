@@ -67,4 +67,16 @@
     <string name="password_screen_cancel">Peruuta</string>
 
     <string name="toast_password_updated">Salasana päivitetty</string>
+
+    <string name="aa_demo_mode">Demotila — ei ESP32:ta tarvita</string>
+    <string name="aa_not_configured">Määritä autotalli puhelinsovelluksessa</string>
+    <string name="aa_in_range">● Kantaman sisällä</string>
+    <string name="aa_out_of_range">○ Kantaman ulkopuolella</string>
+    <string name="aa_open_garage">Avaa autotalli</string>
+    <string name="aa_garage_door">Autotallin ovi</string>
+    <string name="aa_connecting">Yhdistetään…</string>
+    <string name="aa_connecting_attempt">Yhdistetään… (yritys %1$d / %2$d)</string>
+    <string name="aa_opened">Avattu!</string>
+    <string name="aa_failed">Epäonnistui: %1$s</string>
+    <string name="aa_try_again">Yritä uudelleen</string>
 </resources>

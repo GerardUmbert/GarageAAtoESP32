@@ -67,4 +67,16 @@
     <string name="password_screen_cancel">Cancel·lar</string>
 
     <string name="toast_password_updated">Contrasenya actualitzada</string>
+
+    <string name="aa_demo_mode">Mode de demostració — sense ESP32</string>
+    <string name="aa_not_configured">Configura el garatge des de l\'app del mòbil</string>
+    <string name="aa_in_range">● A l\'abast</string>
+    <string name="aa_out_of_range">○ Fora de l\'abast</string>
+    <string name="aa_open_garage">Obrir garatge</string>
+    <string name="aa_garage_door">Porta del garatge</string>
+    <string name="aa_connecting">Connectant…</string>
+    <string name="aa_connecting_attempt">Connectant… (intent %1$d / %2$d)</string>
+    <string name="aa_opened">Obert!</string>
+    <string name="aa_failed">Error: %1$s</string>
+    <string name="aa_try_again">Torna-ho a provar</string>
 </resources>

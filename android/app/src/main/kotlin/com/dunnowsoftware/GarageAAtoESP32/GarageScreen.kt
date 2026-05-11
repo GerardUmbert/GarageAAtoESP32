@@ -7,6 +7,7 @@ import androidx.car.app.Screen
 import androidx.car.app.model.*
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import com.dunnowsoftware.GarageAAtoESP32.R
 import com.dunnowsoftware.GarageAAtoESP32.ble.BleScanner
 import com.dunnowsoftware.GarageAAtoESP32.ble.GarageBleManager
 import com.dunnowsoftware.GarageAAtoESP32.ble.OpenResult
@@ -104,8 +105,8 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
     override fun onGetTemplate(): Template {
         return when (uiState) {
             UiState.CONNECTING -> buildLoading()
-            UiState.SUCCESS    -> buildMessage("Opened!", false)
-            UiState.FAILURE    -> buildMessage("Failed: $failureReason", true)
+            UiState.SUCCESS    -> buildMessage(carContext.getString(R.string.aa_opened), false)
+            UiState.FAILURE    -> buildMessage(carContext.getString(R.string.aa_failed, failureReason), true)
             UiState.IDLE       -> buildMain()
         }
     }
@@ -117,15 +118,15 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
         val configured = p.isConfigured
         val paired = p.pairedDevice
         val deviceName = when {
-            p.demoMode    -> "Demo mode — no ESP32 needed"
+            p.demoMode     -> carContext.getString(R.string.aa_demo_mode)
             paired != null -> paired.name
-            else          -> "Set up garage in the phone app first"
+            else           -> carContext.getString(R.string.aa_not_configured)
         }
         val presenceTag = when {
             !configured -> null
-            p.demoMode  -> "● In range"
-            inRange     -> "● In range"
-            else        -> "○ Out of range"
+            p.demoMode  -> carContext.getString(R.string.aa_in_range)
+            inRange     -> carContext.getString(R.string.aa_in_range)
+            else        -> carContext.getString(R.string.aa_out_of_range)
         }
         // Merge presence + device name on the same body line, with the
         // presence tag in front so the dot is the first thing the eye
@@ -133,14 +134,14 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
         val deviceLine = if (presenceTag != null) "$presenceTag - $deviceName" else deviceName
 
         val openAction = Action.Builder()
-            .setTitle("Open Garage")
+            .setTitle(carContext.getString(R.string.aa_open_garage))
             .setOnClickListener { if (configured) triggerOpen() }
             .build()
 
         val pane = Pane.Builder()
             .addRow(
                 Row.Builder()
-                    .setTitle("Garage Door")
+                    .setTitle(carContext.getString(R.string.aa_garage_door))
                     .addText(deviceLine)
                     .build()
             )
@@ -153,8 +154,10 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
     }
 
     private fun buildLoading(): Template {
-        val msg = if (connectAttempt <= 1) "Connecting…"
-                  else "Connecting… (attempt $connectAttempt / ${GarageBleManager.MAX_ATTEMPTS})"
+        val msg = if (connectAttempt <= 1)
+            carContext.getString(R.string.aa_connecting)
+        else
+            carContext.getString(R.string.aa_connecting_attempt, connectAttempt, GarageBleManager.MAX_ATTEMPTS)
         return MessageTemplate.Builder(msg)
             .setHeaderAction(Action.APP_ICON)
             .setLoading(true)
@@ -168,7 +171,7 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
         if (isError) {
             template.addAction(
                 Action.Builder()
-                    .setTitle("Try Again")
+                    .setTitle(carContext.getString(R.string.aa_try_again))
                     .setOnClickListener { resetToIdle() }
                     .build()
             )
