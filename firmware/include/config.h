@@ -25,7 +25,9 @@
 
 // ── Hardware ──────────────────────────────────────────────────────────────────
 // Pin used to drive the load (transistor base, relay coil, or capacitive pad).
-#define TRIGGER_PIN        26
+// GPIO 8 is a safe general-purpose output on ESP32-C3 (no strapping function,
+// not shared with USB serial, available on all common dev boards).
+#define TRIGGER_PIN        8
 
 // Pulse duration. For MODE_TRANSISTOR / MODE_RELAY this is how long the fob
 // button is held "pressed". For MODE_CAP_PULSE this is how long the conductive

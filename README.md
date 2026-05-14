@@ -78,8 +78,8 @@ See [docs/wiring_diagram.md](docs/wiring_diagram.md) for full diagrams, material
 
 ## Hardware required
 
-- **ESP32 development board** with BLE — e.g., ESP32-DevKitC, ESP32-C3 SuperMini, XIAO ESP32C3
-  _(must be ESP32, not ESP8266 — the ESP8266 has no Bluetooth)_
+- **ESP32-C3 development board** — e.g., ESP32-C3 SuperMini, XIAO ESP32C3, ESP32-C3-DevKitM-1 (default build target)
+  _(must be an ESP32 variant with BLE — the ESP8266 has no Bluetooth. Standard ESP32-DevKitC also works but requires changing `board` in `platformio.ini` and setting `TRIGGER_PIN` to a valid GPIO on that board, e.g. 26.)_
 - **Trigger mechanism** — pick one based on the table above:
   - Option A: NPN transistor (2N2222 / BC547 / 2N3904, ~$0.10) + 1 kΩ resistor
   - Option B: 5V relay module (~$1)

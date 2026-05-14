@@ -76,13 +76,13 @@ To find your COM port: Device Manager → Ports (COM & LPT) → look for "USB Se
 
 ```bash
 cd firmware
-pio run -e esp32 --target upload
+pio run -e esp32c3 --target upload
 ```
 
 If you get a port error, specify it manually:
 ```bash
-pio run -e esp32 --target upload --upload-port COM3        # Windows
-pio run -e esp32 --target upload --upload-port /dev/ttyUSB0  # Linux/macOS
+pio run -e esp32c3 --target upload --upload-port COM3        # Windows
+pio run -e esp32c3 --target upload --upload-port /dev/ttyUSB0  # Linux/macOS
 ```
 
 ### Verify firmware is running

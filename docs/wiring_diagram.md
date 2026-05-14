@@ -5,19 +5,19 @@
 A single NPN transistor (e.g., 2N2222, BC547, or 2N3904) shorts the fob button pads when triggered by the ESP32. No relay module needed.
 
 ```
-ESP32 GPIO 26 ──[1 kΩ]──▶ Base (B)
+ESP32 GPIO 8 ──[1 kΩ]──▶ Base (B)
                            Collector (C) ──▶ Fob button pad A
 ESP32 GND     ─────────▶ Emitter (E)
                            Emitter (E)  ──▶ Fob button pad B
 ```
 
-When GPIO 26 goes HIGH, the transistor saturates and shorts the two fob pads — identical to pressing the button.
+When GPIO 8 goes HIGH the transistor saturates and shorts the two fob pads — identical to pressing the button.
 
 **Component notes:**
 - Any small-signal NPN BJT works. 2N2222 and BC547 are common and cheap (~$0.10).
 - 1 kΩ base resistor limits base current to ~3 mA from the 3.3 V GPIO pin.
 - Fob button pads carry only microamps at ~3 V — well within any small-signal transistor's ratings.
-- In `config.h`, set `TRIGGER_MODE MODE_TRANSISTOR` and `TRIGGER_PIN 26`.
+- In `config.h`, set `TRIGGER_MODE MODE_TRANSISTOR` and `TRIGGER_PIN 8`.
 
 ## Option B — Relay module
 
@@ -26,7 +26,7 @@ Provides galvanic isolation between the ESP32 and fob circuits. Overkill for a 3
 ### Relay to ESP32
 
 ```
-ESP32 GPIO 26  ──────▶  Relay module IN
+ESP32 GPIO 8  ──────▶  Relay module IN
 ESP32 GND      ──────▶  Relay module GND
 ESP32 3.3V/5V  ──────▶  Relay module VCC
 ```
@@ -52,7 +52,7 @@ If you can't or don't want to open the fob — for instance, the fob is rented f
 The ESP32 doesn't talk to the fingerbot over BLE. Instead it fakes a finger touch on the fingerbot's capacitive top button by briefly driving a small conductive pad pressed against the button. The fingerbot then mechanically presses the fob.
 
 ```
-ESP32 GPIO 26  ──────▶  Conductive pad (1 cm² copper tape or foil)
+ESP32 GPIO 8  ──────▶  Conductive pad (1 cm² copper tape or foil)
                                 │
                                 │  pressed firmly against
                                 ▼
@@ -73,7 +73,7 @@ Fingerbot arm ──▶  physically presses the fob button
 1. Stick the fingerbot to the wall over the fob's button using the included double-sided tape, exactly as the fingerbot's own manual describes.
 2. Solder or twist a thin wire to a ~1 cm² piece of copper tape. The pad is the electrode; the wire is just the lead — no transistor or resistor needed.
 3. Stick the copper pad **directly on top of the fingerbot's capacitive top button**, pressed flat with no air gap. A thin layer of tape on top is fine; an air gap kills the coupling.
-4. Run the wire from the pad to ESP32 GPIO 26.
+4. Run the wire from the pad to ESP32 GPIO 8.
 5. In `config.h`, set `TRIGGER_MODE MODE_CAP_PULSE`.
 
 **Tuning:**

@@ -36,9 +36,9 @@ Write-Host ""
 
 try {
     if ($Port -ne "") {
-        pio run -e esp32 --target upload --upload-port $Port
+        pio run -e esp32c3 --target upload --upload-port $Port
     } else {
-        pio run -e esp32 --target upload
+        pio run -e esp32c3 --target upload
     }
 } finally {
     # Always restore placeholder so the PIN never stays in the file
