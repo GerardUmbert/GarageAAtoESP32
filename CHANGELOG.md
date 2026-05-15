@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.3.1] - 2026-05-15
+
+### Fixed
+- In-app language list now correctly highlights the language set via Android's system App Info → Language screen, instead of always showing "System default" when the language was changed outside the app
+
 ## [1.3.0] - 2026-05-15
 
 ### Added
