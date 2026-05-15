@@ -79,7 +79,7 @@ See [docs/wiring_diagram.md](docs/wiring_diagram.md) for full diagrams, material
 ## Hardware required
 
 - **ESP32-C3 development board** — e.g., ESP32-C3 SuperMini, XIAO ESP32C3, ESP32-C3-DevKitM-1 (default build target)
-  _(must be an ESP32 variant with BLE — the ESP8266 has no Bluetooth. Standard ESP32-DevKitC also works but requires changing `board` in `platformio.ini` and setting `TRIGGER_PIN` to a valid GPIO on that board, e.g. 26.)_
+  _(must be an ESP32 variant with BLE — the ESP8266 has no Bluetooth. Other ESP32 variants such as the classic ESP32-DevKitC also work; see [Building for a different board](#building-for-a-different-board) below.)_
 - **Trigger mechanism** — pick one based on the table above:
   - Option A: NPN transistor (2N2222 / BC547 / 2N3904, ~$0.10) + 1 kΩ resistor
   - Option B: 5V relay module (~$1)
@@ -168,6 +168,26 @@ Enable **Demo mode** in the app's phone Settings. Tapping "Open Garage" on the A
 
 **Test the firmware without the Android app:**
 Use **nRF Connect** (free on Android/iOS) to talk directly to the ESP32 and verify auth works. See [docs/provisioning.md](docs/provisioning.md) for the full verification steps.
+
+## Building for a different board
+
+The default build target is `esp32c3` (ESP32-C3-DevKitM-1 pinout). To build for a different ESP32 variant:
+
+1. Open `firmware/platformio.ini` and add a new env block, e.g. for a classic ESP32-DevKitC:
+   ```ini
+   [env:esp32devkit]
+   platform = espressif32
+   board = esp32dev
+   framework = arduino
+   lib_deps =
+       h2zero/NimBLE-Arduino @ ^1.4.2
+   monitor_speed = 115200
+   build_flags = -DCORE_DEBUG_LEVEL=0
+   ```
+2. Open `firmware/include/config.h` and set `TRIGGER_PIN` to a valid GPIO for your board (e.g. `26` for ESP32-DevKitC).
+3. Flash with `pio run -e esp32devkit --target upload` (or select the env in VS Code's PlatformIO sidebar).
+
+The pre-built `.bin` attached to each release is ESP32-C3 only. For any other board you must build from source.
 
 ## Replicating for others
 

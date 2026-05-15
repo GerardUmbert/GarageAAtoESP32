@@ -153,7 +153,7 @@ jobs:
 
             ---
 
-            > **Firmware note:** The `.bin` file is built with the placeholder PIN `change-me-before-flashing`.
+            > **Firmware note:** The `.bin` file targets **ESP32-C3** only and is built with the placeholder PIN `change-me-before-flashing`.
             > It is provided for testing only. To use it for real, flash from source with your own PIN set in `firmware/include/config.h`.
           files: |
             artifacts/apk/*.apk
