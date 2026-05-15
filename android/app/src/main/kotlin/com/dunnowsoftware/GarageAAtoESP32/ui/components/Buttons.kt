@@ -11,9 +11,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.dunnowsoftware.GarageAAtoESP32.ui.HAPTIC_TAP
+import com.dunnowsoftware.GarageAAtoESP32.ui.vibrate
 import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageColors
 
 @Composable
@@ -23,6 +26,7 @@ fun PrimaryButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
+    val ctx = LocalContext.current
     val bg = if (enabled) GarageColors.Text else GarageColors.Surface2
     val fg = if (enabled) Color(0xFF0B0D0F) else GarageColors.TextDim
     Box(
@@ -31,7 +35,10 @@ fun PrimaryButton(
             .height(56.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(bg)
-            .clickable(enabled = enabled, onClick = onClick),
+            .clickable(enabled = enabled) {
+                vibrate(ctx, HAPTIC_TAP)
+                onClick()
+            },
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -50,6 +57,7 @@ fun GhostButton(
     modifier: Modifier = Modifier,
     danger: Boolean = false,
 ) {
+    val ctx = LocalContext.current
     val color = if (danger) GarageColors.Danger else GarageColors.Text
     Box(
         modifier = modifier
@@ -57,7 +65,10 @@ fun GhostButton(
             .height(56.dp)
             .clip(RoundedCornerShape(16.dp))
             .border(1.dp, GarageColors.HairlineStrong, RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick),
+            .clickable {
+                vibrate(ctx, HAPTIC_TAP)
+                onClick()
+            },
         contentAlignment = Alignment.Center,
     ) {
         Text(

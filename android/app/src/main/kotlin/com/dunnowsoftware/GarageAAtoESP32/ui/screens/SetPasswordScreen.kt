@@ -1,5 +1,6 @@
 package com.dunnowsoftware.GarageAAtoESP32.ui.screens
 
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,6 +28,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dunnowsoftware.GarageAAtoESP32.R
+import com.dunnowsoftware.GarageAAtoESP32.ui.HAPTIC_TAP
+import com.dunnowsoftware.GarageAAtoESP32.ui.vibrate
 import com.dunnowsoftware.GarageAAtoESP32.ui.components.GhostButton
 import com.dunnowsoftware.GarageAAtoESP32.ui.components.PrimaryButton
 import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageColors
@@ -114,6 +117,7 @@ fun SetPasswordScreen(
         }
 
         Spacer(Modifier.height(12.dp))
+        val ctxPwd = LocalContext.current
         Text(
             text = if (showPassword) stringResource(R.string.password_screen_hide) else stringResource(R.string.password_screen_show),
             color = GarageColors.Accent,
@@ -121,7 +125,10 @@ fun SetPasswordScreen(
             fontWeight = FontWeight.Medium,
             modifier = Modifier
                 .clip(RoundedCornerShape(8.dp))
-                .clickable { showPassword = !showPassword }
+                .clickable {
+                    vibrate(ctxPwd, HAPTIC_TAP)
+                    showPassword = !showPassword
+                }
                 .padding(horizontal = 6.dp, vertical = 4.dp),
         )
 
@@ -156,12 +163,16 @@ internal fun TopBar(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (onBack != null) {
+            val ctx = LocalContext.current
             Box(
                 modifier = Modifier
                     .size(40.dp)
                     .offset(x = chevronOffset)
                     .clip(RoundedCornerShape(20.dp))
-                    .clickable(onClick = onBack),
+                    .clickable {
+                        vibrate(ctx, HAPTIC_TAP)
+                        onBack()
+                    },
                 contentAlignment = Alignment.Center,
             ) {
                 Text("‹", color = GarageColors.Text, fontSize = 28.sp, fontWeight = FontWeight.Light)

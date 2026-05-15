@@ -11,11 +11,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dunnowsoftware.GarageAAtoESP32.R
+import com.dunnowsoftware.GarageAAtoESP32.ui.HAPTIC_TAP
+import com.dunnowsoftware.GarageAAtoESP32.ui.vibrate
 import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageColors
 
 @Composable
@@ -42,6 +45,7 @@ fun LanguageScreen(
             modifier = Modifier.padding(start = 8.dp, top = 4.dp, bottom = 24.dp),
         )
 
+        val ctx = LocalContext.current
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -55,7 +59,10 @@ fun LanguageScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onLanguageChange(lang.tag) }
+                        .clickable {
+                            vibrate(ctx, HAPTIC_TAP)
+                            onLanguageChange(lang.tag)
+                        }
                         .padding(horizontal = 18.dp, vertical = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {

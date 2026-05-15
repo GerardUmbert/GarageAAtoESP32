@@ -25,8 +25,11 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.dunnowsoftware.GarageAAtoESP32.R
+import com.dunnowsoftware.GarageAAtoESP32.ui.HAPTIC_TAP
+import com.dunnowsoftware.GarageAAtoESP32.ui.vibrate
 import com.dunnowsoftware.GarageAAtoESP32.ui.components.GMark
 import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageColors
 
@@ -76,12 +79,16 @@ fun MainScreen(
                 fontSize = 14.sp,
             )
             Spacer(Modifier.weight(1f))
+            val ctx = LocalContext.current
             Box(
                 modifier = Modifier
                     .size(36.dp)
                     .clip(CircleShape)
                     .border(1.dp, GarageColors.HairlineStrong, CircleShape)
-                    .clickable(onClick = onSettings),
+                    .clickable {
+                        vibrate(ctx, HAPTIC_TAP)
+                        onSettings()
+                    },
                 contentAlignment = Alignment.Center,
             ) {
                 Text("⚙", color = GarageColors.Text, fontSize = 16.sp)

@@ -27,10 +27,13 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dunnowsoftware.GarageAAtoESP32.R
 import com.dunnowsoftware.GarageAAtoESP32.ble.FoundDevice
+import com.dunnowsoftware.GarageAAtoESP32.ui.HAPTIC_TAP
+import com.dunnowsoftware.GarageAAtoESP32.ui.vibrate
 import com.dunnowsoftware.GarageAAtoESP32.ui.components.GhostButton
 import com.dunnowsoftware.GarageAAtoESP32.ui.components.PrimaryButton
 import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageColors
@@ -84,6 +87,7 @@ fun PairScreen(
         )
 
         Spacer(Modifier.height(12.dp))
+        val ctx = LocalContext.current
         Text(
             text = if (showPassword) stringResource(R.string.pair_hide_password) else stringResource(R.string.pair_show_password),
             color = GarageColors.Accent,
@@ -91,7 +95,10 @@ fun PairScreen(
             fontWeight = FontWeight.Medium,
             modifier = Modifier
                 .clip(RoundedCornerShape(8.dp))
-                .clickable { showPassword = !showPassword }
+                .clickable {
+                    vibrate(ctx, HAPTIC_TAP)
+                    showPassword = !showPassword
+                }
                 .padding(horizontal = 6.dp, vertical = 4.dp),
         )
 

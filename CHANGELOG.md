@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.3.2] - 2026-05-15
+
+### Added
+- Haptic feedback on all interactive elements throughout the app: device list rows, skip link, settings gear icon, language picker rows, demo mode toggle, repair/unpair/pair buttons, and password show/hide toggles
+
 ## [1.3.1] - 2026-05-15
 
 ### Fixed

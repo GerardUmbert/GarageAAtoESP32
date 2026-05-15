@@ -22,6 +22,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dunnowsoftware.GarageAAtoESP32.R
+import com.dunnowsoftware.GarageAAtoESP32.ui.HAPTIC_TAP
+import com.dunnowsoftware.GarageAAtoESP32.ui.vibrate
 import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageColors
 import com.dunnowsoftware.GarageAAtoESP32.ui.screens.PresenceStatus
 
@@ -133,6 +135,7 @@ fun SettingsScreen(
                     }
                 }
                 // Unpair icon button — top-right corner of the card
+                val ctxUnpair = LocalContext.current
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
@@ -140,7 +143,10 @@ fun SettingsScreen(
                         .size(28.dp)
                         .clip(CircleShape)
                         .background(GarageColors.DangerSoft)
-                        .clickable(onClick = onUnpair),
+                        .clickable {
+                            vibrate(ctxUnpair, HAPTIC_TAP)
+                            onUnpair()
+                        },
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
@@ -193,10 +199,14 @@ fun SettingsScreen(
         SectionHeader(stringResource(R.string.settings_language_header))
         Card {
             val currentLangLabel = resolvedLanguageLabel(currentLocaleTag)
+            val ctxLang = LocalContext.current
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable(onClick = onLanguageScreen)
+                    .clickable {
+                        vibrate(ctxLang, HAPTIC_TAP)
+                        onLanguageScreen()
+                    }
                     .padding(horizontal = 18.dp, vertical = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -290,6 +300,7 @@ private fun ToggleRow(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
 ) {
+    val ctx = LocalContext.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -302,7 +313,10 @@ private fun ToggleRow(
         }
         Switch(
             checked = checked,
-            onCheckedChange = onCheckedChange,
+            onCheckedChange = {
+                vibrate(ctx, HAPTIC_TAP)
+                onCheckedChange(it)
+            },
             colors = SwitchDefaults.colors(
                 checkedThumbColor = GarageColors.AccentDeep,
                 checkedTrackColor = GarageColors.Accent,
@@ -320,12 +334,16 @@ private fun SecondaryAction(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val ctx = LocalContext.current
     Box(
         modifier = modifier
             .height(40.dp)
             .clip(RoundedCornerShape(12.dp))
             .border(1.dp, GarageColors.HairlineStrong, RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick),
+            .clickable {
+                vibrate(ctx, HAPTIC_TAP)
+                onClick()
+            },
         contentAlignment = Alignment.Center,
     ) {
         Text(text = text, color = GarageColors.Text, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)

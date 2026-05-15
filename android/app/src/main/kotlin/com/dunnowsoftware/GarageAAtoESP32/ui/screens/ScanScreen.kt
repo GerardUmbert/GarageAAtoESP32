@@ -31,6 +31,8 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.compose.ui.res.stringResource
 import com.dunnowsoftware.GarageAAtoESP32.R
+import com.dunnowsoftware.GarageAAtoESP32.ui.HAPTIC_TAP
+import com.dunnowsoftware.GarageAAtoESP32.ui.vibrate
 import com.dunnowsoftware.GarageAAtoESP32.ble.BleScanner
 import com.dunnowsoftware.GarageAAtoESP32.ble.FoundDevice
 import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageColors
@@ -120,6 +122,7 @@ fun ScanScreen(
         )
 
         if (onSkip != null) {
+            val ctxSkip = LocalContext.current
             Spacer(Modifier.height(16.dp))
             Box(
                 modifier = Modifier.fillMaxWidth(),
@@ -131,7 +134,10 @@ fun ScanScreen(
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier
-                        .clickable { onSkip() }
+                        .clickable {
+                            vibrate(ctxSkip, HAPTIC_TAP)
+                            onSkip()
+                        }
                         .padding(8.dp),
                 )
             }
@@ -269,13 +275,17 @@ private fun FoundDeviceCard(
             .heightIn(max = 240.dp)
             .verticalScroll(rememberScrollState()),
     ) {
+        val ctx = LocalContext.current
         devices.forEachIndexed { idx, dev ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(14.dp))
                     .background(GarageColors.Surface)
-                    .clickable { onPicked(dev) }
+                    .clickable {
+                        vibrate(ctx, HAPTIC_TAP)
+                        onPicked(dev)
+                    }
                     .padding(horizontal = 16.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
