@@ -92,6 +92,9 @@
     <string name="tile_opened">Opened</string>
     <string name="tile_failed">Failed</string>
 
+    <!-- Voice / App Actions -->
+    <string name="voice_shortcut_label">Open Garage</string>
+
     <!-- Toasts -->
     <string name="toast_password_updated">Password updated</string>
 </resources>

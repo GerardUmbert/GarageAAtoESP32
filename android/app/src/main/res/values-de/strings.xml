@@ -71,6 +71,8 @@
     <string name="tile_opened">Geöffnet</string>
     <string name="tile_failed">Fehler</string>
 
+    <string name="voice_shortcut_label">Garage öffnen</string>
+
     <string name="toast_password_updated">Passwort aktualisiert</string>
 
     <string name="aa_demo_mode">Demo-Modus — kein ESP32 nötig</string>

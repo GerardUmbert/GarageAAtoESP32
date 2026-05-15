@@ -71,6 +71,8 @@
     <string name="tile_opened">Aperto</string>
     <string name="tile_failed">Errore</string>
 
+    <string name="voice_shortcut_label">Apri garage</string>
+
     <string name="toast_password_updated">Password aggiornata</string>
 
     <string name="aa_demo_mode">Modalità demo — senza ESP32</string>

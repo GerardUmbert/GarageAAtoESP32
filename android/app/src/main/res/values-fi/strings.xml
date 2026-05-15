@@ -71,6 +71,8 @@
     <string name="tile_opened">Avattu</string>
     <string name="tile_failed">Epäonnistui</string>
 
+    <string name="voice_shortcut_label">Avaa autotalli</string>
+
     <string name="toast_password_updated">Salasana päivitetty</string>
 
     <string name="aa_demo_mode">Demotila — ei ESP32:ta tarvita</string>

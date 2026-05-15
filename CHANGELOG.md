@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] - 2026-05-15
+
+### Added
+- Voice command support via Google Assistant / Gemini: say "Open the garage" through the car mic or AA screen mic button to trigger the opener without touching the screen. Implemented as an App Action (`OPEN_APP_FEATURE` BII) — Google routes the matched intent directly to the running AA service, which fires the BLE open immediately. No cloud dependency beyond the voice trigger itself; the actual open command is fully local BLE as always. Phrase matching works in all 8 supported languages.
+
+### Changed
+- CI firmware build target updated to `esp32c3` to match the default board (was `esp32`, which no longer exists as a named environment in `platformio.ini`)
+
 ## [1.2.3] - 2026-05-15
 
 ### Added

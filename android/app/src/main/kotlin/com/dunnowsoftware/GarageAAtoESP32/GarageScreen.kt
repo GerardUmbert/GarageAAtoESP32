@@ -184,6 +184,14 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
         return template.build()
     }
 
+    // ── Voice entry point ─────────────────────────────────────────────────────
+
+    fun onVoiceOpen() {
+        if (uiState == UiState.IDLE && prefs().isConfigured) {
+            carContext.mainExecutor.execute { triggerOpen() }
+        }
+    }
+
     // ── BLE trigger ───────────────────────────────────────────────────────────
 
     private fun triggerOpen() {
