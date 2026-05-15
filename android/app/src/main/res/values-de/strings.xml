@@ -66,6 +66,11 @@
     <string name="password_screen_hide">Passwort ausblenden</string>
     <string name="password_screen_cancel">Abbrechen</string>
 
+    <string name="tile_label">Garage öffnen</string>
+    <string name="tile_sending">Wird gesendet…</string>
+    <string name="tile_opened">Geöffnet</string>
+    <string name="tile_failed">Fehler</string>
+
     <string name="toast_password_updated">Passwort aktualisiert</string>
 
     <string name="aa_demo_mode">Demo-Modus — kein ESP32 nötig</string>

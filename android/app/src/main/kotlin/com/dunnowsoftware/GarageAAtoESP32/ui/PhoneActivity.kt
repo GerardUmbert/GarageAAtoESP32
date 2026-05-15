@@ -2,7 +2,11 @@ package com.dunnowsoftware.GarageAAtoESP32.ui
 
 import android.content.Context
 import android.graphics.Color as AndroidColor
+import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -15,6 +19,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
@@ -130,6 +135,8 @@ private fun AppRoot(
     fun replaceAll(r: Route) { routeStack = listOf(r) }
     fun bust() { stateBust++ }
 
+    BackHandler(enabled = routeStack.size > 1) { pop() }
+
     when (current) {
         Route.Welcome -> WelcomeScreen(
             onGetStarted = { push(Route.Scan) },
@@ -243,6 +250,12 @@ private fun MainHost(
     var lastOpened by remember(stateBust) { mutableLongStateOf(prefs.lastOpenedAt) }
 
     LaunchedEffect(openState) {
+        when (openState) {
+            OpenState.Sending -> vibrate(ctx, longArrayOf(0, 30))
+            OpenState.Opened  -> vibrate(ctx, longArrayOf(0, 60))
+            OpenState.Failed  -> vibrate(ctx, longArrayOf(0, 40, 80, 40))
+            OpenState.Idle    -> Unit
+        }
         if (openState == OpenState.Opened || openState == OpenState.Failed) {
             delay(2000)
             openState = OpenState.Idle
@@ -338,6 +351,18 @@ private fun formatTime(ctx: android.content.Context, epochMs: Long): String {
         ctx.getString(R.string.main_today, timeFmt.format(Date(epochMs)))
     } else {
         SimpleDateFormat("MMM d, ", locale).format(Date(epochMs)) + timeFmt.format(Date(epochMs))
+    }
+}
+
+private fun vibrate(ctx: android.content.Context, pattern: LongArray) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val mgr = ctx.getSystemService(VibratorManager::class.java)
+        mgr?.defaultVibrator?.vibrate(VibrationEffect.createWaveform(pattern, -1))
+    } else {
+        @Suppress("DEPRECATION")
+        val vib = ctx.getSystemService(Vibrator::class.java)
+        @Suppress("DEPRECATION")
+        vib?.vibrate(pattern, -1)
     }
 }
 

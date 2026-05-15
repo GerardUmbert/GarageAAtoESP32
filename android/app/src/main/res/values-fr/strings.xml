@@ -66,6 +66,11 @@
     <string name="password_screen_hide">Masquer le mot de passe</string>
     <string name="password_screen_cancel">Annuler</string>
 
+    <string name="tile_label">Ouvrir le garage</string>
+    <string name="tile_sending">Envoi…</string>
+    <string name="tile_opened">Ouvert</string>
+    <string name="tile_failed">Échec</string>
+
     <string name="toast_password_updated">Mot de passe mis à jour</string>
 
     <string name="aa_demo_mode">Mode démo — sans ESP32</string>

@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.2.3] - 2026-05-15
+
+### Added
+- Quick Settings tile — add the app to the notification shade for one-swipe access to open the garage without unlocking the phone or opening the app. Add it via long-press on the shade → Edit tiles. The tile subtitle shows the current state: Sending… → Opened / Failed, then clears after 2 seconds
+- Haptic feedback on the phone open button: short tick when the command is sent, solid bump on success, double tap on failure
+
+### Fixed
+- Android Auto "Try Again" button on the failure screen now immediately retries the BLE connection instead of returning to the idle screen
+- Edge swipe (predictive back gesture) now navigates back within the app instead of exiting — works from Settings, Change Password, and all other secondary screens
+
 ## [1.2.2] - 2026-05-11
 
 ### Added

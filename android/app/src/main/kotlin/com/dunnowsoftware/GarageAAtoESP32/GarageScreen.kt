@@ -177,7 +177,7 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
             template.addAction(
                 Action.Builder()
                     .setTitle(carContext.getString(R.string.aa_try_again))
-                    .setOnClickListener { resetToIdle() }
+                    .setOnClickListener { triggerOpen() }
                     .build()
             )
         }

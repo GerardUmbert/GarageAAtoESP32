@@ -86,6 +86,12 @@
     <string name="aa_failed">Failed: %1$s</string>
     <string name="aa_try_again">Try Again</string>
 
+    <!-- Quick Settings tile -->
+    <string name="tile_label">Open Garage</string>
+    <string name="tile_sending">Sending…</string>
+    <string name="tile_opened">Opened</string>
+    <string name="tile_failed">Failed</string>
+
     <!-- Toasts -->
     <string name="toast_password_updated">Password updated</string>
 </resources>
