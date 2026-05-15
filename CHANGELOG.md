@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.3.3] - 2026-05-15
+
+### Added
+- Launcher long-press shortcut: long-press the app icon on the home screen to get an "Open garage" action that launches the app and triggers the opener immediately, without navigating any screen
+
 ## [1.3.2] - 2026-05-15
 
 ### Added

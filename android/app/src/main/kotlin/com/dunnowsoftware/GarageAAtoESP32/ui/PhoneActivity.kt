@@ -1,8 +1,10 @@
 package com.dunnowsoftware.GarageAAtoESP32.ui
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color as AndroidColor
 import android.os.Bundle
+import androidx.compose.runtime.mutableStateOf
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -39,6 +41,7 @@ class PhoneActivity : AppCompatActivity() {
 
     private lateinit var prefs: DevicePreferences
     private val bleManager by lazy { GarageBleManager(this) }
+    private val shortcutOpenPending = mutableStateOf(false)
 
     override fun attachBaseContext(newBase: Context) {
         val tag = getSavedLocaleTag(newBase)
@@ -53,6 +56,7 @@ class PhoneActivity : AppCompatActivity() {
         )
         super.onCreate(savedInstanceState)
         prefs = DevicePreferences(this)
+        if (intent?.getBooleanExtra("voice_open", false) == true) shortcutOpenPending.value = true
         setContent {
             GarageTheme {
                 Box(
@@ -64,6 +68,7 @@ class PhoneActivity : AppCompatActivity() {
                     AppRoot(
                         prefs = prefs,
                         onTriggerOpen = ::triggerOpen,
+                        shortcutOpenPending = shortcutOpenPending,
                         onApplyLocale = { tag ->
                             saveLocaleTag(this@PhoneActivity, tag)
                             AppCompatDelegate.setApplicationLocales(localeListFromTag(tag))
@@ -72,6 +77,11 @@ class PhoneActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        if (intent.getBooleanExtra("voice_open", false)) shortcutOpenPending.value = true
     }
 
     override fun onDestroy() {
@@ -113,6 +123,7 @@ private sealed interface Route {
 private fun AppRoot(
     prefs: DevicePreferences,
     onTriggerOpen: ((OpenResult) -> Unit) -> Unit,
+    shortcutOpenPending: androidx.compose.runtime.MutableState<Boolean>,
     onApplyLocale: (String?) -> Unit,
 ) {
     val ctx = androidx.compose.ui.platform.LocalContext.current
@@ -199,6 +210,7 @@ private fun AppRoot(
             prefs = prefs,
             stateBust = stateBust,
             onTriggerOpen = onTriggerOpen,
+            shortcutOpenPending = shortcutOpenPending,
             onSettings = { push(Route.Settings) },
         )
 
@@ -239,6 +251,7 @@ private fun MainHost(
     prefs: DevicePreferences,
     stateBust: Int,
     onTriggerOpen: ((OpenResult) -> Unit) -> Unit,
+    shortcutOpenPending: androidx.compose.runtime.MutableState<Boolean>,
     onSettings: () -> Unit,
 ) {
     val ctx = androidx.compose.ui.platform.LocalContext.current
@@ -255,6 +268,23 @@ private fun MainHost(
         if (openState == OpenState.Opened || openState == OpenState.Failed) {
             delay(2000)
             openState = OpenState.Idle
+        }
+    }
+
+    val triggerFromShortcut by shortcutOpenPending
+    LaunchedEffect(triggerFromShortcut) {
+        if (triggerFromShortcut && openState == OpenState.Idle && prefs.isConfigured) {
+            shortcutOpenPending.value = false
+            openState = OpenState.Sending
+            onTriggerOpen { result ->
+                when (result) {
+                    is OpenResult.Success -> {
+                        prefs.lastOpenedAt = System.currentTimeMillis()
+                        openState = OpenState.Opened
+                    }
+                    is OpenResult.Failure -> openState = OpenState.Failed
+                }
+            }
         }
     }
 

@@ -95,6 +95,11 @@
     <!-- Voice / App Actions -->
     <string name="voice_shortcut_label">Open Garage</string>
 
+    <!-- Launcher long-press shortcut -->
+    <string name="shortcut_open_short">Open</string>
+    <string name="shortcut_open_long">Open garage</string>
+    <string name="shortcut_open_disabled">Set up the app first</string>
+
     <!-- Toasts -->
     <string name="toast_password_updated">Password updated</string>
 </resources>

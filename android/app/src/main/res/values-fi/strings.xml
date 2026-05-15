@@ -86,4 +86,7 @@
     <string name="aa_opened">Avattu!</string>
     <string name="aa_failed">Epäonnistui: %1$s</string>
     <string name="aa_try_again">Yritä uudelleen</string>
+    <string name="shortcut_open_short">Avaa</string>
+    <string name="shortcut_open_long">Avaa autotalli</string>
+    <string name="shortcut_open_disabled">Määritä sovellus ensin</string>
 </resources>

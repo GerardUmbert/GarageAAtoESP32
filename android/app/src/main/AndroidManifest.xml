@@ -28,21 +28,21 @@
             android:resource="@xml/automotive_app_desc" />
 
         <meta-data
-            android:name="android.app.shortcuts"
-            android:resource="@xml/shortcuts" />
-
-        <meta-data
             android:name="androidx.car.app.minCarApiLevel"
             android:value="1" />
 
         <!-- Phone launcher -->
         <activity
             android:name=".ui.PhoneActivity"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
         </activity>
 
         <!-- Quick Settings tile -->
@@ -65,12 +65,6 @@
             <intent-filter>
                 <action android:name="androidx.car.app.CarAppService" />
                 <category android:name="androidx.car.app.category.IOT" />
-            </intent-filter>
-            <!-- App Actions deep link: Google Assistant fires this intent
-                 when the user triggers the open-garage voice command. -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </service>
 

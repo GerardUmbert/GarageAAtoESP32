@@ -1,13 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!--
-        App Action: OPEN_APP_FEATURE built-in intent (BII).
-        Google Assistant / Gemini matches natural-language variants of the
-        declared phrases and fires the intent into MainCarAppService.
-        GarageSession.onNewIntent() detects voice_open=true and calls
-        GarageScreen.onVoiceOpen() → triggerOpen().
-    -->
+    <!-- App Action: OPEN_APP_FEATURE BII → AA service -->
     <capability android:name="actions.intent.OPEN_APP_FEATURE">
         <intent
             android:action="android.intent.action.VIEW"
@@ -17,21 +11,21 @@
         </intent>
     </capability>
 
-    <!--
-        Static shortcut backing the capability.
-        shortcutShortLabel is what the Assistant may speak back as confirmation.
-    -->
+    <!-- Visible launcher long-press shortcut → phone UI -->
     <shortcut
         android:shortcutId="open_garage"
-        android:shortcutShortLabel="@string/voice_shortcut_label"
+        android:shortcutShortLabel="@string/shortcut_open_short"
+        android:shortcutLongLabel="@string/shortcut_open_long"
+        android:shortcutDisabledMessage="@string/shortcut_open_disabled"
+        android:icon="@drawable/ic_shortcut_open"
         android:enabled="true">
         <intent
-            android:action="android.intent.action.VIEW"
+            android:action="android.intent.action.MAIN"
             android:targetPackage="com.dunnowsoftware.GarageAAtoESP32"
-            android:targetClass="com.dunnowsoftware.GarageAAtoESP32.MainCarAppService">
+            android:targetClass="com.dunnowsoftware.GarageAAtoESP32.ui.PhoneActivity">
             <extra android:name="voice_open" android:value="true" />
         </intent>
-        <categories android:name="android.shortcut.conversation" />
     </shortcut>
+
 
 </shortcuts>

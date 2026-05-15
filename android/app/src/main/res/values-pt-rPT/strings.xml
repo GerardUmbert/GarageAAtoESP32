@@ -86,4 +86,7 @@
     <string name="aa_opened">Aberto!</string>
     <string name="aa_failed">Erro: %1$s</string>
     <string name="aa_try_again">Tentar novamente</string>
+    <string name="shortcut_open_short">Abrir</string>
+    <string name="shortcut_open_long">Abrir garagem</string>
+    <string name="shortcut_open_disabled">Configure a aplicação primeiro</string>
 </resources>

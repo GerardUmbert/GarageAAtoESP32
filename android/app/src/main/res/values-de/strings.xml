@@ -86,4 +86,7 @@
     <string name="aa_opened">Geöffnet!</string>
     <string name="aa_failed">Fehler: %1$s</string>
     <string name="aa_try_again">Erneut versuchen</string>
+    <string name="shortcut_open_short">Öffnen</string>
+    <string name="shortcut_open_long">Garage öffnen</string>
+    <string name="shortcut_open_disabled">App zuerst einrichten</string>
 </resources>
