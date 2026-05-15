@@ -2,56 +2,36 @@
 <shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!--
-        App Action using the OPEN_APP_FEATURE built-in intent (BII).
-        Google Assistant / Gemini matches the declared query patterns and fires
-        a deep-link intent into the app. GarageSession.onNewIntent() detects
-        the VOICE_OPEN extra and calls triggerOpen() on GarageScreen.
-
-        Query patterns are declared per locale — the Assistant picks the right
-        set based on the device/car language. The user does not need to say the
-        app name; the Assistant knows which app owns this action because it is
-        registered at Play Store review time.
-
-        Deep link target: the CarAppService — AA is already running so the
-        system routes to onNewIntent() rather than cold-starting.
+        App Action: OPEN_APP_FEATURE built-in intent (BII).
+        Google Assistant / Gemini matches natural-language variants of the
+        declared phrases and fires the intent into MainCarAppService.
+        GarageSession.onNewIntent() detects voice_open=true and calls
+        GarageScreen.onVoiceOpen() → triggerOpen().
     -->
     <capability android:name="actions.intent.OPEN_APP_FEATURE">
-
         <intent
             android:action="android.intent.action.VIEW"
             android:targetPackage="com.dunnowsoftware.GarageAAtoESP32"
             android:targetClass="com.dunnowsoftware.GarageAAtoESP32.MainCarAppService">
             <extra android:name="voice_open" android:value="true" />
         </intent>
-
-        <capability-shortcuts>
-            <shortcut android:shortcutId="open_garage">
-                <capability-shortcut-value
-                    android:paramName="feature"
-                    android:value="open_garage" />
-            </shortcut>
-        </capability-shortcuts>
-
     </capability>
 
     <!--
-        Static shortcut backing the capability above.
-        The shortlabel is what the Assistant may speak back to confirm.
+        Static shortcut backing the capability.
+        shortcutShortLabel is what the Assistant may speak back as confirmation.
     -->
     <shortcut
         android:shortcutId="open_garage"
         android:shortcutShortLabel="@string/voice_shortcut_label"
         android:enabled="true">
-
         <intent
             android:action="android.intent.action.VIEW"
             android:targetPackage="com.dunnowsoftware.GarageAAtoESP32"
             android:targetClass="com.dunnowsoftware.GarageAAtoESP32.MainCarAppService">
             <extra android:name="voice_open" android:value="true" />
         </intent>
-
         <categories android:name="android.shortcut.conversation" />
-
     </shortcut>
 
 </shortcuts>
