@@ -57,9 +57,7 @@ See [docs/provisioning.md](docs/provisioning.md) for full flashing instructions 
 
 ### 3. Configure the app (one-time setup on phone)
 
-1. Open **Garage Opener** on your phone and tap **Settings**.
-2. Enter your PIN (must match `USER_PIN` in `config.h`).
-3. Tap **Scan for Garage** and select your ESP32 from the list.
+Open **Garage Opener** — it will walk you through scanning for your ESP32 and entering your PIN on first launch.
 
 ### 4. Use in car
 
