@@ -143,6 +143,9 @@ jobs:
           echo "$NOTES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
+      - name: Package flash scripts
+        run: zip GarageAAtoESP32-flash-tool.zip firmware/flash.bat firmware/flash.ps1
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -154,11 +157,12 @@ jobs:
             ---
 
             > **Firmware note:** The `.bin` file targets **ESP32-C3** only and is built with the placeholder PIN `change-me-before-flashing`.
-            > It is provided for testing only. To use it for real, flash from source with your own PIN set in `firmware/include/config.h`.
+            > It is provided for testing only. To flash with your own PIN, download `GarageAAtoESP32-flash-tool.zip`, extract it, and run `flash.bat` — it handles everything automatically.
           files: |
             artifacts/apk/*.apk
             artifacts/apk/*.aab
             artifacts/firmware/*.bin
+            GarageAAtoESP32-flash-tool.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
