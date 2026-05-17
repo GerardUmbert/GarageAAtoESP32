@@ -1,6 +1,24 @@
 # GarageAAtoESP32
 
-Open the garage from your car's Android Auto screen with a single button press.
+Pull into your garage and it opens itself — triggered from your car's screen, no phone fumbling, no cloud, no subscription.
+
+### What it looks like in the car
+
+| Idle | Sending | Opened |
+|---|---|---|
+| ![Idle](docs/screenshots/aa-idle.png) | ![Sending](docs/screenshots/aa-sending.png) | ![Opened](docs/screenshots/aa-opened.png) |
+
+Tap once to send. The screen shows a spinner while the BLE round-trip runs (typically &lt;1s) and a confirmation when the door receives the open command. Failures show a "Try Again" button instead of auto-resetting, so you don't have to scramble to react while driving.
+
+### What it looks like on the phone
+
+| Main (idle) | Sending | Pairing scan | Settings |
+|---|---|---|---|
+| ![Phone main idle](docs/screenshots/phone-main-idle.jpg) | ![Phone sending](docs/screenshots/phone-main-sending.jpg) | ![Phone scan](docs/screenshots/phone-scan.jpg) | ![Phone settings](docs/screenshots/phone-settings.jpg) |
+
+The phone app mirrors the in-car flow but is the primary surface for setup. The hero open button doubles as a status indicator — concentric pulses while sending, fills green on success, fills pastel red on failure. The pairing screen runs a real BLE scan with a sweeping radar visual; tap the device that appears in the bottom sheet to pair it. Settings is grouped by Security / Testing / (Danger zone, when paired).
+
+---
 
 ## Who is this for?
 
@@ -21,6 +39,34 @@ It is **not** a replacement for a proper smart garage opener — if you own the 
 ---
 
 **How it works:** An ESP32 sits at the garage and is connected to a fob trigger mechanism (see the three options below). The Android app sends a BLE command from your phone directly to the ESP32, which then triggers the fob — exactly as if someone had pressed the button. No internet, no cloud, no Wi-Fi required.
+
+## Quick start
+
+### 1. Firmware
+
+1. Install [VS Code](https://code.visualstudio.com/) + [PlatformIO extension](https://platformio.org/) — or just `pip install platformio` for CLI only.
+2. Connect your ESP32 via USB.
+3. **Double-click `firmware/flash.bat`** (Windows) — it will ask for your PIN, compile, and flash. PIN is never saved to disk.
+   - Or open `firmware/` in VS Code, edit `USER_PIN` in `config.h`, and click **Upload**.
+4. See [docs/provisioning.md](docs/provisioning.md) for full flashing instructions.
+
+### 2. Android app
+
+1. Open `android/` in [Android Studio](https://developer.android.com/studio).
+2. Connect your Android phone via USB with USB debugging enabled.
+3. Click **Run**.
+
+### 3. Configure the app (one-time setup on phone)
+
+1. Open **Garage Opener** on your phone and tap **Settings**.
+2. Enter your PIN (must match `USER_PIN` in `config.h`).
+3. Tap **Scan for Garage** and select your ESP32 from the list.
+
+### 4. Use in car
+
+Connect your phone to Android Auto. Open **Garage Opener** and tap **Open Garage**.
+
+---
 
 ## Choose your trigger mechanism
 
@@ -79,7 +125,7 @@ See [docs/wiring_diagram.md](docs/wiring_diagram.md) for full diagrams, material
 ## Hardware required
 
 - **ESP32-C3 development board** — e.g., ESP32-C3 SuperMini, XIAO ESP32C3, ESP32-C3-DevKitM-1 (default build target)
-  _(must be an ESP32 variant with BLE — the ESP8266 has no Bluetooth. Other ESP32 variants such as the classic ESP32-DevKitC also work; see [Building for a different board](#building-for-a-different-board) below.)_
+  _(must be an ESP32 variant with BLE — the ESP8266 has no Bluetooth. Other ESP32 variants such as the classic ESP32-DevKitC also work; see [docs/advanced.md](docs/advanced.md) for instructions.)_
 - **Trigger mechanism** — pick one based on the table above:
   - Option A: NPN transistor (2N2222 / BC547 / 2N3904, ~$0.10) + 1 kΩ resistor
   - Option B: 5V relay module (~$1)
@@ -99,48 +145,6 @@ firmware/   ESP32 firmware (PlatformIO + Arduino framework)
 android/    Android app (Kotlin + Car App Library)
 docs/       Wiring diagram, power budget, provisioning guide
 ```
-
-## Quick start
-
-### 1. Firmware
-
-1. Install [VS Code](https://code.visualstudio.com/) + [PlatformIO extension](https://platformio.org/) — or just `pip install platformio` for CLI only.
-2. Connect your ESP32 via USB.
-3. **Double-click `firmware/flash.bat`** (Windows) — it will ask for your PIN, compile, and flash. PIN is never saved to disk.
-   - Or open `firmware/` in VS Code, edit `USER_PIN` in `config.h`, and click **Upload**.
-4. See [docs/provisioning.md](docs/provisioning.md) for full flashing instructions.
-
-### 2. Android app
-
-1. Open `android/` in [Android Studio](https://developer.android.com/studio).
-2. Connect your Android phone via USB with USB debugging enabled.
-3. Click **Run**.
-
-### 3. Configure the app (one-time setup on phone)
-
-1. Open **Garage Opener** on your phone and tap **Settings**.
-2. Enter your PIN (must match `USER_PIN` in `config.h`).
-3. Tap **Scan for Garage** and select your ESP32 from the list.
-
-### 4. Use in car
-
-Connect your phone to Android Auto. Open **Garage Opener** and tap **Open Garage**.
-
-### What it looks like in the car
-
-| Idle | Sending | Opened |
-|---|---|---|
-| ![Idle](docs/screenshots/aa-idle.png) | ![Sending](docs/screenshots/aa-sending.png) | ![Opened](docs/screenshots/aa-opened.png) |
-
-Tap once to send. The screen shows a spinner while the BLE round-trip runs (typically &lt;1s) and a confirmation when the door receives the open command. Failures show a "Try Again" button instead of auto-resetting, so you don't have to scramble to react while driving.
-
-### What it looks like on the phone
-
-| Main (idle) | Sending | Pairing scan | Settings |
-|---|---|---|---|
-| ![Phone main idle](docs/screenshots/phone-main-idle.jpg) | ![Phone sending](docs/screenshots/phone-main-sending.jpg) | ![Phone scan](docs/screenshots/phone-scan.jpg) | ![Phone settings](docs/screenshots/phone-settings.jpg) |
-
-The phone app mirrors the in-car flow but is the primary surface for setup. The hero open button doubles as a status indicator — concentric pulses while sending, fills green on success, fills pastel red on failure. The pairing screen runs a real BLE scan with a sweeping radar visual; tap the device that appears in the bottom sheet to pair it. Settings is grouped by Security / Testing / (Danger zone, when paired).
 
 ## Security
 
@@ -169,30 +173,9 @@ Enable **Demo mode** in the app's phone Settings. Tapping "Open Garage" on the A
 **Test the firmware without the Android app:**
 Use **nRF Connect** (free on Android/iOS) to talk directly to the ESP32 and verify auth works. See [docs/provisioning.md](docs/provisioning.md) for the full verification steps.
 
-## Building for a different board
+---
 
-The default build target is `esp32c3` (ESP32-C3-DevKitM-1 pinout). To build for a different ESP32 variant:
-
-1. Open `firmware/platformio.ini` and add a new env block, e.g. for a classic ESP32-DevKitC:
-   ```ini
-   [env:esp32devkit]
-   platform = espressif32
-   board = esp32dev
-   framework = arduino
-   lib_deps =
-       h2zero/NimBLE-Arduino @ ^1.4.2
-   monitor_speed = 115200
-   build_flags = -DCORE_DEBUG_LEVEL=0
-   ```
-2. Open `firmware/include/config.h` and set `TRIGGER_PIN` to a valid GPIO for your board (e.g. `26` for ESP32-DevKitC).
-3. Flash with `pio run -e esp32devkit --target upload` (or select the env in VS Code's PlatformIO sidebar).
-
-The pre-built `.bin` attached to each release is ESP32-C3 only. For any other board you must build from source.
-
-## Replicating for others
-
-Each person builds their own unit with their own PIN. The repository contains no secrets.
-Share the PIN privately; share the code publicly.
+For building on non-C3 boards and other advanced topics see [docs/advanced.md](docs/advanced.md).
 
 ## License
 
