@@ -51,9 +51,9 @@ See [docs/provisioning.md](docs/provisioning.md) for full flashing instructions 
 
 ### 2. Android app
 
-1. Open `android/` in [Android Studio](https://developer.android.com/studio).
-2. Connect your Android phone via USB with USB debugging enabled.
-3. Click **Run**.
+- **Play Store** *(easiest)*: [install from Google Play](https://play.google.com/store/apps/details?id=com.dunnowsoftware.GarageAAtoESP32)
+- **APK** *(no Play Store)*: download the latest `.apk` from the [Releases](../../releases) page and sideload it.
+- **Build from source**: open `android/` in [Android Studio](https://developer.android.com/studio), connect your phone via USB with debugging enabled, and click **Run**.
 
 ### 3. Configure the app (one-time setup on phone)
 
