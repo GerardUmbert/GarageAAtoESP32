@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.3.4] - 2026-05-17
+
+### Added
+- Flash tool (`firmware/flash.bat`) now installs PlatformIO automatically via winget if not present — no manual toolchain setup required
+- Flash tool auto-detects the ESP32 COM port by USB VID/PID — no need to know which port the board is on
+- Flash tool prompts for trigger mechanism (transistor / relay / capacitive pad) and bakes the choice into the firmware at flash time
+- Flash tool asks for PIN confirmation to catch typos before flashing
+- Flash tool shows a QR code on success linking to the Play Store
+- Flash tool patches `config.h` defensively on startup to recover from any previous hard-killed run
+- GitHub releases now include a `GarageAAtoESP32-flash-tool.zip` with the flash scripts — no repo clone needed to flash
+
+### Changed
+- README reordered: leads with the experience and screenshots before technical details
+- Builder-level docs (alternative boards, replication) moved to `docs/advanced.md`
+- Quick start updated to reflect the one-step flash tool and onboarding flow
+
 ## [1.3.3] - 2026-05-15
 
 ### Added
