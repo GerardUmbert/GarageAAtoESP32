@@ -110,9 +110,10 @@ Write-Host ""
 Write-Host "  This script will:"                                      -ForegroundColor Gray
 Write-Host "    1. Make sure PlatformIO is installed"                 -ForegroundColor Gray
 Write-Host "    2. Find your ESP32 on a USB port"                     -ForegroundColor Gray
-Write-Host "    3. Ask for your PIN"                                  -ForegroundColor Gray
-Write-Host "    4. Compile and flash the firmware"                    -ForegroundColor Gray
-Write-Host "    5. Leave no trace of your PIN on disk"                -ForegroundColor Gray
+Write-Host "    3. Ask which trigger mechanism you wired up"          -ForegroundColor Gray
+Write-Host "    4. Ask for your PIN"                                  -ForegroundColor Gray
+Write-Host "    5. Compile and flash the firmware"                    -ForegroundColor Gray
+Write-Host "    6. Leave no trace of your PIN on disk"                -ForegroundColor Gray
 Write-Host ""
 
 # --- Step 1: PlatformIO ------------------------------------------------------
@@ -219,9 +220,33 @@ if ($Port -ne "") {
     }
 }
 
-# --- Step 3: PIN -------------------------------------------------------------
+# --- Step 3: Trigger mode ----------------------------------------------------
 
-Write-Step "Step 3/4 - Set your PIN..."
+Write-Step "Step 3/5 - Choose your trigger mechanism..."
+Write-Host ""
+Write-Host "  [1] Transistor     - NPN transistor wired into the fob (soldering required, recommended)" -ForegroundColor White
+Write-Host "  [2] Relay module   - relay module wired into the fob (soldering required)"                -ForegroundColor White
+Write-Host "  [3] Capacitive pad - copper tape on a Fingerbot's button (no soldering, renter-friendly)" -ForegroundColor White
+Write-Host ""
+
+$triggerChoice = Read-Host "  Enter number (default: 1)"
+if ([string]::IsNullOrWhiteSpace($triggerChoice)) { $triggerChoice = "1" }
+
+$triggerMode = switch ($triggerChoice) {
+    "1" { "MODE_TRANSISTOR" }
+    "2" { "MODE_RELAY"      }
+    "3" { "MODE_CAP_PULSE"  }
+    default {
+        Write-Fail "Invalid selection. Please run flash.bat again."
+        exit 1
+    }
+}
+
+Write-OK "Trigger mode: $triggerMode"
+
+# --- Step 4: PIN -------------------------------------------------------------
+
+Write-Step "Step 4/5 - Set your PIN..."
 Write-Host ""
 Write-Host "  This PIN must match the one you enter in the Android app." -ForegroundColor Gray
 Write-Host "  It will be compiled into the firmware and never saved to disk." -ForegroundColor Gray
@@ -247,14 +272,15 @@ if ($pin -ne $pinConfirm) {
 
 Write-OK "PIN confirmed."
 
-# --- Step 4: Compile and flash -----------------------------------------------
+# --- Step 5: Compile and flash -----------------------------------------------
 
-Write-Step "Step 4/4 - Compiling and flashing..."
+Write-Step "Step 5/5 - Compiling and flashing..."
 Write-Host ""
-Write-Host "  Patching PIN into config.h (temporary)..." -ForegroundColor Gray
+Write-Host "  Patching config.h (temporary)..." -ForegroundColor Gray
 
 $original = Get-Content $configFile -Raw
 $patched  = $original -replace "#define USER_PIN\s+`"[^`"]*`"", "#define USER_PIN  `"$pin`""
+$patched  = $patched  -replace "#define TRIGGER_MODE\s+\w+",     "#define TRIGGER_MODE       $triggerMode"
 Set-Content $configFile $patched -NoNewline -Encoding utf8
 
 Write-Host "  Running PlatformIO build + flash. This may take a few minutes on first run..." -ForegroundColor Gray
@@ -267,9 +293,10 @@ try {
     if ($?) { $flashSuccess = $true }
 } finally {
     Write-Host ""
-    Write-Host "  Restoring placeholder PIN in config.h..." -ForegroundColor Gray
+    Write-Host "  Restoring config.h..." -ForegroundColor Gray
     $restored = Get-Content $configFile -Raw
     $restored = $restored -replace "#define USER_PIN\s+`"[^`"]*`"", "#define USER_PIN  `"$placeholder`""
+    $restored = $restored -replace "#define TRIGGER_MODE\s+\w+",    "#define TRIGGER_MODE       MODE_TRANSISTOR"
     Set-Content $configFile $restored -NoNewline -Encoding utf8
 }
 
