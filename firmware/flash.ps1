@@ -100,6 +100,15 @@ function Write-QR {
     Write-Host ""
 }
 
+# --- Defensive restore -------------------------------------------------------
+# If a previous run was hard-killed before the finally block could restore
+# config.h, clean it up now before doing anything else.
+
+$earlyContent = Get-Content $configFile -Raw
+$earlyContent = $earlyContent -replace "#define USER_PIN\s+`"[^`"]*`"", "#define USER_PIN  `"$placeholder`""
+$earlyContent = $earlyContent -replace "#define TRIGGER_MODE\s+\w+",    "#define TRIGGER_MODE       MODE_TRANSISTOR"
+Set-Content $configFile $earlyContent -NoNewline -Encoding utf8
+
 # --- Header ------------------------------------------------------------------
 
 Write-Host ""
