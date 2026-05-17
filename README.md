@@ -44,11 +44,10 @@ It is **not** a replacement for a proper smart garage opener — if you own the 
 
 ### 1. Firmware
 
-1. Install [VS Code](https://code.visualstudio.com/) + [PlatformIO extension](https://platformio.org/) — or just `pip install platformio` for CLI only.
-2. Connect your ESP32 via USB.
-3. **Double-click `firmware/flash.bat`** (Windows) — it will ask for your PIN, compile, and flash. PIN is never saved to disk.
-   - Or open `firmware/` in VS Code, edit `USER_PIN` in `config.h`, and click **Upload**.
-4. See [docs/provisioning.md](docs/provisioning.md) for full flashing instructions.
+1. Connect your ESP32 via USB.
+2. **Double-click `firmware/flash.bat`** — it will install PlatformIO if needed, find your ESP32 automatically, ask for your PIN, compile, and flash. PIN is never saved to disk.
+
+See [docs/provisioning.md](docs/provisioning.md) for full flashing instructions and troubleshooting.
 
 ### 2. Android app
 
