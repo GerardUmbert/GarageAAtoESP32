@@ -105,8 +105,11 @@ function Write-QR {
 # config.h, clean it up now before doing anything else.
 
 $earlyContent = Get-Content $configFile -Raw
-$earlyContent = $earlyContent -replace "#define USER_PIN\s+`"[^`"]*`"", "#define USER_PIN  `"$placeholder`""
-$earlyContent = $earlyContent -replace "#define TRIGGER_MODE\s+\w+",    "#define TRIGGER_MODE       MODE_TRANSISTOR"
+$earlyContent = $earlyContent -replace "#define USER_PIN\s+`"[^`"]*`"",      "#define USER_PIN           `"$placeholder`""
+$earlyContent = $earlyContent -replace "#define TRIGGER_MODE\s+\w+",         "#define TRIGGER_MODE       MODE_TRANSISTOR"
+$earlyContent = $earlyContent -replace "#define SLEEP_DURATION_S\s+\d+",     "#define SLEEP_DURATION_S    5"
+$earlyContent = $earlyContent -replace "#define RELAY_PULSE_MS\s+\d+",       "#define RELAY_PULSE_MS     500"
+$earlyContent = $earlyContent -replace "#define DEVICE_NAME\s+`"[^`"]*`"",   "#define DEVICE_NAME        `"GarageOpener`""
 Set-Content $configFile $earlyContent -NoNewline -Encoding utf8
 
 # --- Header ------------------------------------------------------------------
@@ -121,13 +124,14 @@ Write-Host "    1. Make sure PlatformIO is installed"                 -Foregroun
 Write-Host "    2. Find your ESP32 on a USB port"                     -ForegroundColor Gray
 Write-Host "    3. Ask which trigger mechanism you wired up"          -ForegroundColor Gray
 Write-Host "    4. Ask for your PIN"                                  -ForegroundColor Gray
-Write-Host "    5. Compile and flash the firmware"                    -ForegroundColor Gray
-Write-Host "    6. Leave no trace of your PIN on disk"                -ForegroundColor Gray
+Write-Host "    5. Optionally tune sleep interval, pulse, device name"-ForegroundColor Gray
+Write-Host "    6. Compile and flash the firmware"                    -ForegroundColor Gray
+Write-Host "    7. Leave no trace of your PIN on disk"                -ForegroundColor Gray
 Write-Host ""
 
 # --- Step 1: PlatformIO ------------------------------------------------------
 
-Write-Step "Step 1/4 - Checking for PlatformIO..."
+Write-Step "Step 1/6 - Checking for PlatformIO..."
 
 $pioCmd = Get-Command pio -ErrorAction SilentlyContinue
 if ($pioCmd) {
@@ -164,7 +168,7 @@ if ($pioCmd) {
 
 # --- Step 2: Find the ESP32 --------------------------------------------------
 
-Write-Step "Step 2/4 - Looking for ESP32 on USB ports..."
+Write-Step "Step 2/6 - Looking for ESP32 on USB ports..."
 
 if ($Port -ne "") {
     Write-OK "Using port supplied by caller: $Port"
@@ -231,7 +235,7 @@ if ($Port -ne "") {
 
 # --- Step 3: Trigger mode ----------------------------------------------------
 
-Write-Step "Step 3/5 - Choose your trigger mechanism..."
+Write-Step "Step 3/6 - Choose your trigger mechanism..."
 Write-Host ""
 Write-Host "  [1] Transistor     - NPN transistor wired into the fob (soldering required, recommended)" -ForegroundColor White
 Write-Host "  [2] Relay module   - relay module wired into the fob (soldering required)"                -ForegroundColor White
@@ -255,7 +259,7 @@ Write-OK "Trigger mode: $triggerMode"
 
 # --- Step 4: PIN -------------------------------------------------------------
 
-Write-Step "Step 4/5 - Set your PIN..."
+Write-Step "Step 4/6 - Set your PIN..."
 Write-Host ""
 Write-Host "  This PIN must match the one you enter in the Android app." -ForegroundColor Gray
 Write-Host "  It will be compiled into the firmware and never saved to disk." -ForegroundColor Gray
@@ -281,15 +285,77 @@ if ($pin -ne $pinConfirm) {
 
 Write-OK "PIN confirmed."
 
-# --- Step 5: Compile and flash -----------------------------------------------
+# --- Step 5: Advanced options ------------------------------------------------
 
-Write-Step "Step 5/5 - Compiling and flashing..."
+Write-Step "Step 5/6 - Advanced options (press Enter to keep defaults)..."
+Write-Host ""
+Write-Host "  These are optional. Hit Enter at each prompt to use the default." -ForegroundColor Gray
+Write-Host ""
+
+# Sleep duration
+Write-Host "  How long the ESP32 sleeps between BLE advertising windows." -ForegroundColor Gray
+Write-Host "  Lower values reduce the wait at the door. 1-2 s is recommended." -ForegroundColor Gray
+Write-Host "  Default: 5 s. Valid range: 1-10 s." -ForegroundColor Gray
+$sleepInput = Read-Host "  Sleep duration in seconds (default: 5)"
+if ([string]::IsNullOrWhiteSpace($sleepInput)) {
+    $sleepDuration = 5
+} else {
+    $parsed = 0
+    if (-not [int]::TryParse($sleepInput, [ref]$parsed) -or $parsed -lt 1 -or $parsed -gt 10) {
+        Write-Fail "Sleep duration must be a number between 1 and 10."
+        exit 1
+    }
+    $sleepDuration = $parsed
+}
+Write-OK "Sleep duration: $sleepDuration s"
+
+# Relay pulse duration
+Write-Host ""
+Write-Host "  How long the ESP32 holds the fob button pressed." -ForegroundColor Gray
+Write-Host "  Too short: fob doesn't register and the door stays closed." -ForegroundColor Gray
+Write-Host "  Too long: fob may double-trigger if it re-arms quickly." -ForegroundColor Gray
+Write-Host "  Default: 500 ms. Try 300 ms for snappy fobs, 800 ms for slow ones. Valid range: 100-2000 ms." -ForegroundColor Gray
+$pulseInput = Read-Host "  Pulse duration in ms (default: 500)"
+if ([string]::IsNullOrWhiteSpace($pulseInput)) {
+    $pulseDuration = 500
+} else {
+    $parsed = 0
+    if (-not [int]::TryParse($pulseInput, [ref]$parsed) -or $parsed -lt 100 -or $parsed -gt 2000) {
+        Write-Fail "Pulse duration must be a number between 100 and 2000 ms."
+        exit 1
+    }
+    $pulseDuration = $parsed
+}
+Write-OK "Pulse duration: $pulseDuration ms"
+
+# Device name
+Write-Host ""
+Write-Host "  BLE device name — only matters if you have multiple units." -ForegroundColor Gray
+Write-Host "  The Android app will scan for this name. Default: GarageOpener" -ForegroundColor Gray
+$deviceNameInput = Read-Host "  Device name (default: GarageOpener)"
+if ([string]::IsNullOrWhiteSpace($deviceNameInput)) {
+    $deviceName = "GarageOpener"
+} else {
+    if ($deviceNameInput.Length -gt 20) {
+        Write-Fail "Device name must be 20 characters or fewer (BLE limit)."
+        exit 1
+    }
+    $deviceName = $deviceNameInput
+}
+Write-OK "Device name: $deviceName"
+
+# --- Step 6: Compile and flash -----------------------------------------------
+
+Write-Step "Step 6/6 - Compiling and flashing..."
 Write-Host ""
 Write-Host "  Patching config.h (temporary)..." -ForegroundColor Gray
 
 $original = Get-Content $configFile -Raw
-$patched  = $original -replace "#define USER_PIN\s+`"[^`"]*`"", "#define USER_PIN  `"$pin`""
-$patched  = $patched  -replace "#define TRIGGER_MODE\s+\w+",     "#define TRIGGER_MODE       $triggerMode"
+$patched  = $original -replace "#define USER_PIN\s+`"[^`"]*`"",    "#define USER_PIN           `"$pin`""
+$patched  = $patched  -replace "#define TRIGGER_MODE\s+\w+",        "#define TRIGGER_MODE       $triggerMode"
+$patched  = $patched  -replace "#define SLEEP_DURATION_S\s+\d+",    "#define SLEEP_DURATION_S    $sleepDuration"
+$patched  = $patched  -replace "#define RELAY_PULSE_MS\s+\d+",      "#define RELAY_PULSE_MS     $pulseDuration"
+$patched  = $patched  -replace "#define DEVICE_NAME\s+`"[^`"]*`"",  "#define DEVICE_NAME        `"$deviceName`""
 Set-Content $configFile $patched -NoNewline -Encoding utf8
 
 Write-Host "  Running PlatformIO build + flash. This may take a few minutes on first run..." -ForegroundColor Gray
@@ -304,8 +370,11 @@ try {
     Write-Host ""
     Write-Host "  Restoring config.h..." -ForegroundColor Gray
     $restored = Get-Content $configFile -Raw
-    $restored = $restored -replace "#define USER_PIN\s+`"[^`"]*`"", "#define USER_PIN  `"$placeholder`""
-    $restored = $restored -replace "#define TRIGGER_MODE\s+\w+",    "#define TRIGGER_MODE       MODE_TRANSISTOR"
+    $restored = $restored -replace "#define USER_PIN\s+`"[^`"]*`"",    "#define USER_PIN           `"$placeholder`""
+    $restored = $restored -replace "#define TRIGGER_MODE\s+\w+",        "#define TRIGGER_MODE       MODE_TRANSISTOR"
+    $restored = $restored -replace "#define SLEEP_DURATION_S\s+\d+",    "#define SLEEP_DURATION_S    5"
+    $restored = $restored -replace "#define RELAY_PULSE_MS\s+\d+",      "#define RELAY_PULSE_MS     500"
+    $restored = $restored -replace "#define DEVICE_NAME\s+`"[^`"]*`"",  "#define DEVICE_NAME        `"GarageOpener`""
     Set-Content $configFile $restored -NoNewline -Encoding utf8
 }
 

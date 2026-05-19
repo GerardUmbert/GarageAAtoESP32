@@ -94,7 +94,7 @@ Fingerbot arm ──▶  physically presses the fob button
 ```
 Wall outlet  ──▶  Any USB phone charger (5V ≥ 500mA)  ──▶  ESP32 USB port
 ```
-If your communal garage has a wall outlet nearby, this is the simplest possible setup — just a phone charger and a USB cable. No batteries, no solar, no maintenance. The ESP32 draws so little power (~17 mAh/day) that any basic charger handles it with ease.
+If your communal garage has a wall outlet nearby, this is the simplest possible setup — just a phone charger and a USB cable. No batteries, no solar, no maintenance. The ESP32 draws so little power (~19 mAh/day) that any basic charger handles it with ease.
 
 ### Option 1 — Solar + USB battery pack (no outlet, low maintenance)
 ```
@@ -110,7 +110,7 @@ Power bank USB-A  ──▶  ESP32 dev board Micro-USB / USB-C
 ```
 Choose a power bank with always-on / low-current mode (e.g., Anker A1263 or similar).
 Avoid banks that auto-shut off — they will cut power when ESP32 is in deep sleep (very low current draw).
-At ~17 mAh/day a 10 000 mAh bank lasts ~18 months before needing a recharge.
+At ~19 mAh/day a 10 000 mAh bank lasts ~12 months before needing a recharge.
 
 ### Option 3 — 18650 LiPo + TP4056 + solar (DIY, most flexible)
 ```

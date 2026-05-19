@@ -131,7 +131,7 @@ See [docs/wiring_diagram.md](docs/wiring_diagram.md) for full diagrams, material
 - **Power source** — pick one based on where you're deploying:
   - Wall outlet + any USB phone charger (simplest — if there's a socket nearby at the garage)
   - Solar power bank (self-sustaining, no maintenance — for at-garage deployments without a socket)
-  - USB power bank with always-on / low-current mode (~18 months per charge)
+  - USB power bank with always-on / low-current mode (~12 months per charge)
   - 18650 LiPo cells + TP4056 charger board (DIY, most flexible)
   - **Car USB / 12V socket** (for the in-car deployment — ESP32 + fob both stay in the car, powered whenever the car is on)
 
