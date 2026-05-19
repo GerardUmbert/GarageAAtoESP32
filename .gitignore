@@ -24,6 +24,9 @@ signing.properties
 .env
 .env.*
 
+# Hardware / PCB design (private, not open source)
+hardware/
+
 # OS
 .DS_Store
 Thumbs.db
