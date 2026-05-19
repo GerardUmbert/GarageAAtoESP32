@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.3.5] - 2026-05-19
+
+### Added
+- Flash tool now prompts for sleep duration, pulse duration, and BLE device name as optional advanced step — press Enter to keep defaults
+- Sleep duration: 1–10 s range with guidance on responsiveness trade-off
+- Pulse duration: 100–2000 ms range with guidance for snappy vs. slow fobs
+- BLE device name: up to 20 characters, useful for multi-unit installs
+
+### Fixed
+- Power budget corrected to match actual `SLEEP_DURATION_S = 5` (was calculated with 10 s): daily draw updated from ~17 mAh to ~19 mAh, battery runtimes and solar margin updated throughout docs
+
 ## [1.3.4] - 2026-05-17
 
 ### Added
