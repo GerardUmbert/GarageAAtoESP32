@@ -1,24 +1,42 @@
 # Advanced
 
-## Building for a different board
+## Supported boards
 
-The default build target is `esp32c3` (ESP32-C3-DevKitM-1 pinout). To build for a different ESP32 variant:
+The following boards have pre-configured environments in `firmware/platformio.ini`:
 
-1. Open `firmware/platformio.ini` and add a new env block, e.g. for a classic ESP32-DevKitC:
-   ```ini
-   [env:esp32devkit]
-   platform = espressif32
-   board = esp32dev
-   framework = arduino
-   lib_deps =
-       h2zero/NimBLE-Arduino @ ^1.4.2
-   monitor_speed = 115200
-   build_flags = -DCORE_DEBUG_LEVEL=0
-   ```
-2. Open `firmware/include/config.h` and set `TRIGGER_PIN` to a valid GPIO for your board (e.g. `26` for ESP32-DevKitC).
-3. Flash with `pio run -e esp32devkit --target upload` (or select the env in VS Code's PlatformIO sidebar).
+| Env name        | Board                  | Default trigger pin |
+|-----------------|------------------------|---------------------|
+| `esp32c3`       | ESP32-C3-DevKitM-1     | GPIO 8              |
+| `lolin32lite`   | Wemos Lolin32 Lite     | GPIO 22             |
+| `esp32dev`      | ESP32-DevKitC          | GPIO 26             |
+| `lolin32`       | Wemos Lolin32          | GPIO 26             |
+| `esp32s3`       | ESP32-S3-DevKitC-1     | GPIO 4              |
+| `nodemcu32s`    | NodeMCU ESP32-S        | GPIO 26             |
+
+Each env also has a `_debug` variant (e.g. `esp32c3_debug`) that enables verbose serial logging.
+
+To build and flash for your board:
+
+```
+python -m platformio run -e <env_name> --target upload
+```
 
 The pre-built `.bin` attached to each release is ESP32-C3 only. For any other board you must build from source.
+
+## Adding a board not in the list
+
+1. Look up the board ID: `python -m platformio boards espressif32`
+2. Add an env block to `firmware/platformio.ini`:
+   ```ini
+   [env:myboard]
+   board = <board_id>
+   build_flags =
+       -DCORE_DEBUG_LEVEL=0
+       -DTRIGGER_PIN=<gpio>
+   ```
+3. Flash with `python -m platformio run -e myboard --target upload`
+
+Pick a GPIO that has no strapping function and is not shared with USB serial on your specific board.
 
 ## Replicating for others
 

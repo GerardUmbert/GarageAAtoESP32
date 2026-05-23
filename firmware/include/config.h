@@ -21,13 +21,17 @@
 #define MODE_RELAY         2
 #define MODE_CAP_PULSE     3
 
+#ifndef TRIGGER_MODE
 #define TRIGGER_MODE       MODE_TRANSISTOR
+#endif
 
 // ── Hardware ──────────────────────────────────────────────────────────────────
 // Pin used to drive the load (transistor base, relay coil, or capacitive pad).
 // GPIO 8 is a safe general-purpose output on ESP32-C3 (no strapping function,
 // not shared with USB serial, available on all common dev boards).
+#ifndef TRIGGER_PIN
 #define TRIGGER_PIN        8
+#endif
 
 // Pulse duration. For MODE_TRANSISTOR / MODE_RELAY this is how long the fob
 // button is held "pressed". For MODE_CAP_PULSE this is how long the conductive
@@ -45,7 +49,9 @@
 
 // ── BLE ───────────────────────────────────────────────────────────────────────
 // Change DEVICE_NAME per install so multiple units are distinguishable
+#ifndef DEVICE_NAME
 #define DEVICE_NAME        "GarageOpener"
+#endif
 
 // 128-bit service / characteristic UUIDs
 #define SERVICE_UUID       "12345678-0000-1000-8000-00805F9B34FB"
@@ -61,4 +67,6 @@
 
 // ── Security ──────────────────────────────────────────────────────────────────
 // Set this PIN before flashing. Must match the PIN entered in the Android app.
+#ifndef USER_PIN
 #define USER_PIN           "change-me-before-flashing"
+#endif
