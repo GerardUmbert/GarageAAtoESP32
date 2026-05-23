@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Docs — Garage Opener</title>
+  <meta name="description" content="Full setup guide, wiring diagrams, security model, and troubleshooting for Garage Opener." />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bg:           '#0A0C0E',
+            surface:      '#14181C',
+            surface2:     '#1B2025',
+            accent:       '#2AD4A3',
+            'accent-soft':'rgba(42,212,163,0.10)',
+            'accent-line':'rgba(42,212,163,0.28)',
+            text:         '#F3F5F7',
+            'text-dim':   '#8A939C',
+            'text-faint': '#5A6169',
+            hairline:     'rgba(255,255,255,0.06)',
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+        },
+      },
+    }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html { background: #0A0C0E; }
+    body { background: #0A0C0E; color: #F3F5F7; font-family: 'Inter', system-ui, sans-serif; overflow-x: hidden; }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0A0C0E; }
+    ::-webkit-scrollbar-thumb { background: #2AD4A3; border-radius: 3px; }
+
+    /* Nav */
+    .nav-blur {
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      background: rgba(10,12,14,0.88);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: sticky; top: 64px;
+      height: calc(100vh - 64px);
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #2AD4A3 transparent;
+    }
+    .sidebar::-webkit-scrollbar { width: 3px; }
+    .sidebar::-webkit-scrollbar-thumb { background: #2AD4A3; border-radius: 2px; }
+
+    .sidebar a {
+      display: block;
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      color: #5A6169;
+      text-decoration: none;
+      transition: color 0.15s, background 0.15s;
+      line-height: 1.4;
+    }
+    .sidebar a:hover { color: #F3F5F7; background: rgba(255,255,255,0.04); }
+    .sidebar a.active { color: #2AD4A3; background: rgba(42,212,163,0.08); }
+    .sidebar-group { font-size: 11px; font-weight: 700; color: #2AD4A3; letter-spacing: 1px; text-transform: uppercase; padding: 16px 12px 6px; }
+
+    /* Content */
+    .prose-garage { max-width: 720px; }
+    .prose-garage h2 {
+      font-size: 1.9rem; font-weight: 800; color: #F3F5F7;
+      margin: 60px 0 16px; padding-top: 20px;
+      letter-spacing: -0.3px; line-height: 1.2;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .prose-garage h2:first-of-type { border-top: none; margin-top: 0; }
+    .prose-garage h3 {
+      font-size: 1.2rem; font-weight: 700; color: #F3F5F7;
+      margin: 32px 0 10px;
+    }
+    .prose-garage p { color: #8A939C; line-height: 1.75; margin: 0 0 16px; font-size: 15px; }
+    .prose-garage strong { color: #F3F5F7; font-weight: 600; }
+    .prose-garage a { color: #2AD4A3; text-decoration: none; }
+    .prose-garage a:hover { text-decoration: underline; }
+    .prose-garage ul, .prose-garage ol {
+      color: #8A939C; padding-left: 20px; margin: 0 0 16px;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .prose-garage li { font-size: 15px; line-height: 1.65; }
+
+    /* Code blocks */
+    .prose-garage pre {
+      background: #0E1115;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 20px;
+      overflow-x: auto;
+      margin: 16px 0;
+    }
+    .prose-garage pre code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: #A8B5C2;
+      line-height: 1.7;
+    }
+    .prose-garage :not(pre) > code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      color: #2AD4A3;
+      background: rgba(42,212,163,0.10);
+      border: 1px solid rgba(42,212,163,0.20);
+      border-radius: 5px;
+      padding: 2px 6px;
+    }
+
+    /* Step badge */
+    .step-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border-radius: 50%;
+      background: rgba(42,212,163,0.12);
+      border: 1.5px solid rgba(42,212,163,0.35);
+      color: #2AD4A3; font-weight: 800; font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    /* Warning / note callout */
+    .callout {
+      border-radius: 12px; padding: 16px 20px; margin: 20px 0;
+      display: flex; gap: 12px; align-items: flex-start;
+    }
+    .callout-note { background: rgba(42,212,163,0.07); border: 1px solid rgba(42,212,163,0.20); }
+    .callout-warn { background: rgba(255,140,0,0.08); border: 1px solid rgba(255,140,0,0.25); }
+    .callout-icon { font-size: 17px; flex-shrink: 0; margin-top: 1px; }
+    .callout p { margin: 0; font-size: 14px; }
+    .callout-note p { color: #8A939C; }
+    .callout-warn p { color: #A8823A; }
+
+    /* Option tab selector */
+    .tab-group { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+    .tab {
+      padding: 7px 16px; border-radius: 999px; font-size: 13px; font-weight: 600;
+      border: 1px solid rgba(255,255,255,0.08); color: #5A6169;
+      cursor: pointer; transition: all 0.2s; background: transparent;
+    }
+    .tab:hover { border-color: rgba(42,212,163,0.4); color: #F3F5F7; }
+    .tab.active-tab { background: rgba(42,212,163,0.12); border-color: rgba(42,212,163,0.40); color: #2AD4A3; }
+
+    /* Table */
+    .prose-garage table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
+    .prose-garage th { text-align: left; padding: 10px 14px; font-weight: 600; color: #F3F5F7; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; background: rgba(255,255,255,0.04); border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .prose-garage td { padding: 10px 14px; color: #8A939C; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: top; }
+    .prose-garage tr:last-child td { border-bottom: none; }
+    .prose-garage table { border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden; }
+
+    /* Diagram block */
+    .diagram-block {
+      background: #0E1115;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px;
+      padding: 20px 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #6EE7CC;
+      line-height: 1.8;
+      white-space: pre;
+      overflow-x: auto;
+      margin: 16px 0;
+    }
+
+    /* Reveal */
+    .reveal { opacity: 0; transform: translateY(20px); }
+
+    /* Chip */
+    .chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(42,212,163,0.10); border: 1px solid rgba(42,212,163,0.25);
+      color: #2AD4A3; border-radius: 999px; padding: 5px 14px;
+      font-size: 12px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;
+    }
+
+    /* Buttons */
+    .btn-primary {
+      background: #2AD4A3; color: #03120E !important; font-weight: 700;
+      border-radius: 999px; padding: 12px 28px; font-size: 14px;
+      display: inline-flex; align-items: center; gap: 8px;
+      text-decoration: none; transition: box-shadow 0.25s, transform 0.15s;
+    }
+    .btn-primary:hover { box-shadow: 0 0 24px rgba(42,212,163,0.35); transform: translateY(-1px); color: #03120E !important; }
+    .btn-primary svg { color: #03120E; }
+    .btn-ghost {
+      background: transparent; color: #F3F5F7 !important; font-weight: 600;
+      border-radius: 999px; padding: 11px 24px; font-size: 14px;
+      border: 1px solid rgba(255,255,255,0.14);
+      display: inline-flex; align-items: center; gap: 8px;
+      text-decoration: none; transition: border-color 0.2s, color 0.2s, transform 0.15s;
+    }
+    .btn-ghost:hover { border-color: rgba(42,212,163,0.5); color: #F3F5F7 !important; transform: translateY(-1px); }
+
+    footer a { color: #5A6169; transition: color 0.2s; }
+    footer a:hover { color: #2AD4A3; }
+
+    /* Mobile sidebar toggle */
+    .mobile-menu-open { transform: translateX(0) !important; }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="nav-blur fixed top-0 left-0 right-0 z-50 h-16 flex items-center px-6 md:px-10">
+    <div class="max-w-7xl mx-auto w-full flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-3" style="text-decoration:none">
+        <svg width="28" height="28" viewBox="0 0 108 108" fill="none">
+          <path fill="#2AD4A3" fill-rule="evenodd" clip-rule="evenodd"
+            d="M54 28a26 26 0 1 0 .001 0H54zm0 10.8a15.2 15.2 0 1 1-.001 0H54z"/>
+          <path fill="#2AD4A3" d="M54 49.65H82v8.7H54z"/>
+        </svg>
+        <span style="font-weight:700;font-size:16px;color:#F3F5F7">Garage Opener</span>
+        <span style="color:#5A6169;font-size:14px;margin-left:4px">/</span>
+        <span style="color:#5A6169;font-size:14px">Docs</span>
+      </a>
+      <div class="flex items-center gap-4">
+        <a href="index.html" class="btn-ghost" style="padding:8px 18px;font-size:13px">
+          ← Back to home
+        </a>
+        <a href="https://github.com/GerardUmbert/GarageAAtoESP32" target="_blank" rel="noopener"
+           class="btn-ghost" style="padding:8px 18px;font-size:13px">
+          GitHub
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- BODY LAYOUT -->
+  <div class="max-w-7xl mx-auto flex pt-16" style="min-height:100vh">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar hidden lg:block w-60 px-4 py-8 flex-shrink-0">
+      <div class="sidebar-group">Getting started</div>
+      <a href="#quick-start">Quick start</a>
+      <a href="#flash-tool">Flash tool</a>
+      <a href="#android-app">Android app</a>
+      <a href="#first-launch">First launch</a>
+
+      <div class="sidebar-group">Hardware</div>
+      <a href="#trigger-options">Trigger options</a>
+      <a href="#wiring">Wiring diagrams</a>
+      <a href="#power">Power options</a>
+      <a href="#deploy">Deployment modes</a>
+
+      <div class="sidebar-group">Using the app</div>
+      <a href="#phone-ui">Phone UI</a>
+      <a href="#android-auto">Android Auto</a>
+      <a href="#voice">Voice commands</a>
+      <a href="#quick-settings">Quick Settings tile</a>
+
+      <div class="sidebar-group">Reference</div>
+      <a href="#security">Security model</a>
+      <a href="#boards">Supported boards</a>
+      <a href="#troubleshooting">Troubleshooting</a>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 px-6 md:px-12 py-12 pb-32">
+      <div class="prose-garage">
+
+        <!-- Header -->
+        <div class="reveal mb-12">
+          <div class="chip mb-4">Documentation</div>
+          <h1 style="font-size:clamp(2rem,4vw,3rem);font-weight:800;letter-spacing:-0.3px;line-height:1.15;color:#F3F5F7">
+            Setup guide &amp; reference
+          </h1>
+          <p style="color:#8A939C;font-size:1.05rem;margin-top:12px;max-width:560px;line-height:1.65">
+            Everything from flashing the ESP32 to driving away with a gate that opens itself.
+          </p>
+        </div>
+
+        <!-- ── QUICK START ── -->
+        <h2 id="quick-start">Quick start</h2>
+        <p>Three steps from unboxing to working garage opener.</p>
+
+        <div style="display:flex;flex-direction:column;gap:20px;margin:24px 0">
+
+          <div class="reveal" style="display:flex;gap:16px;align-items:flex-start;background:#14181C;border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:20px 24px">
+            <div class="step-badge">1</div>
+            <div>
+              <div style="font-weight:700;color:#F3F5F7;font-size:16px;margin-bottom:4px">Flash the firmware</div>
+              <p>Download <a href="https://github.com/GerardUmbert/GarageAAtoESP32/releases">GarageAAtoESP32-flash-tool.zip</a> from the Releases page, extract it, and double-click <code>flash.bat</code>. The tool installs PlatformIO if needed, lets you pick your board, detects the COM port, asks for your password, compiles, and flashes.</p>
+            </div>
+          </div>
+
+          <div class="reveal" style="display:flex;gap:16px;align-items:flex-start;background:#14181C;border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:20px 24px">
+            <div class="step-badge">2</div>
+            <div>
+              <div style="font-weight:700;color:#F3F5F7;font-size:16px;margin-bottom:4px">Install the Android app</div>
+              <p>Get it from the <a href="https://play.google.com/store/apps/details?id=com.dunnowsoftware.GarageAAtoESP32">Play Store</a>, or download the APK from the Releases page and sideload it.</p>
+            </div>
+          </div>
+
+          <div class="reveal" style="display:flex;gap:16px;align-items:flex-start;background:#14181C;border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:20px 24px">
+            <div class="step-badge">3</div>
+            <div>
+              <div style="font-weight:700;color:#F3F5F7;font-size:16px;margin-bottom:4px">Pair and go</div>
+              <p>Open <strong>Garage Opener</strong> on your phone — it walks you through scanning for your ESP32 and entering your password. Then connect your phone to Android Auto and tap <strong>Open Garage</strong>.</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ── FLASH TOOL ── -->
+        <h2 id="flash-tool">Flash tool</h2>
+        <p>The flash tool is a self-contained Windows batch script in the release ZIP. It handles everything automatically — no manual toolchain setup needed.</p>
+
+        <h3>What the tool does</h3>
+        <ol>
+          <li>Installs PlatformIO via <code>winget</code> if not already present</li>
+          <li>Presents a board picker — choose your ESP32 variant</li>
+          <li>Auto-detects the COM port by USB VID/PID — no guessing</li>
+          <li>Asks for your trigger mechanism (transistor / relay / capacitive pad)</li>
+          <li>Prompts for optional advanced settings: sleep duration, pulse duration, BLE device name</li>
+          <li>Asks for your password and a confirmation to catch typos</li>
+          <li>Compiles with your settings baked in as compiler flags — <code>config.h</code> is never modified</li>
+          <li>Flashes and shows a success QR code linking to the Play Store</li>
+        </ol>
+
+        <div class="callout callout-note">
+          <div class="callout-icon">ℹ️</div>
+          <p>Your password is injected via compiler flags and exists only in RAM during compilation. It is never written to a file on disk.</p>
+        </div>
+
+        <h3>Manual flash (advanced)</h3>
+        <p>If you prefer to build from source directly:</p>
+        <pre><code>cd firmware
+pio run -e esp32c3 --target upload</code></pre>
+        <p>Pass your settings as build flags:</p>
+        <pre><code>pio run -e esp32c3 --target upload \
+  -e esp32c3 \
+  "--build-flags=-DUSER_PIN=\"\\\"my-password\\\"\" -DTRIGGER_MODE=MODE_TRANSISTOR"</code></pre>
+
+        <!-- ── ANDROID APP ── -->
+        <h2 id="android-app">Android app</h2>
+
+        <div class="tab-group" id="app-tabs">
+          <button class="tab active-tab" onclick="showTab('play')">Play Store</button>
+          <button class="tab" onclick="showTab('apk')">APK sideload</button>
+          <button class="tab" onclick="showTab('source')">Build from source</button>
+        </div>
+
+        <div id="tab-play">
+          <p>The easiest path. Open the Play Store on your Android phone, search for <strong>Garage Opener</strong> or use the link below.</p>
+          <a href="https://play.google.com/store/apps/details?id=com.dunnowsoftware.GarageAAtoESP32"
+             target="_blank" rel="noopener" class="btn-primary" style="margin-bottom:16px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 20.5v-17c0-.83 1.01-1.3 1.63-.77l15 8.5c.54.31.54 1.09 0 1.4l-15 8.5c-.62.53-1.63.06-1.63-.77z"/></svg>
+            Get on Google Play
+          </a>
+          <div class="callout callout-note" style="margin-top:16px">
+            <div class="callout-icon">ℹ️</div>
+            <p>Play Store installs work in Android Auto out of the box — no developer mode required.</p>
+          </div>
+        </div>
+
+        <div id="tab-apk" style="display:none">
+          <p>Download the latest <code>.apk</code> from the <a href="https://github.com/GerardUmbert/GarageAAtoESP32/releases">Releases page</a>. Transfer it to your phone and install it.</p>
+          <div class="callout callout-warn">
+            <div class="callout-icon">⚠️</div>
+            <p>Sideloaded APKs require Android Auto Unknown Sources to be enabled in Android Auto Developer settings (tap the version number 10 times). This is a one-time step.</p>
+          </div>
+          <p>To install via ADB instead of a file manager:</p>
+          <pre><code>adb install -i com.android.vending garage-opener.apk</code></pre>
+          <p>The <code>-i com.android.vending</code> flag makes the install appear as a Play Store install, which avoids the Unknown Sources requirement on some Android Auto versions.</p>
+        </div>
+
+        <div id="tab-source" style="display:none">
+          <p>Open <code>android/</code> in Android Studio (Hedgehog 2023.1.1+). Wait for Gradle sync, then build:</p>
+          <pre><code>cd android
+./gradlew assembleDebug   # macOS / Linux
+.\gradlew.bat assembleDebug  # Windows</code></pre>
+          <p>APK: <code>app/build/outputs/apk/debug/app-debug.apk</code></p>
+          <p>For a release build, create <code>android/keystore.properties</code> with your keystore credentials and run <code>assembleRelease</code>.</p>
+        </div>
+
+        <!-- ── FIRST LAUNCH ── -->
+        <h2 id="first-launch">First launch</h2>
+        <p>On first open, the app walks you through a three-screen onboarding flow:</p>
+
+        <ol>
+          <li><strong>Welcome</strong> — explains what the app does</li>
+          <li><strong>Set password</strong> — enter the same password you used when flashing the firmware. This is stored locally on the phone and is never sent over the air</li>
+          <li><strong>Pair device</strong> — the app starts a BLE scan with a radar visual. Make sure the ESP32 is powered on and within ~10 m. Tap the device that appears in the list to pair it</li>
+        </ol>
+
+        <p>After pairing, the main screen shows the paired device name and a presence indicator dot. When the dot is green and reads <strong>In range</strong>, the opener is advertising and ready.</p>
+
+        <!-- ── TRIGGER OPTIONS ── -->
+        <h2 id="trigger-options">Trigger options</h2>
+        <p>The firmware supports three ways to press the fob button. Pick the one that fits your situation. All three use the same app, same authentication, and same Android Auto UI.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Option</th>
+              <th>Soldering</th>
+              <th>Fob modified</th>
+              <th>Best for</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong style="color:#2AD4A3">A — Transistor</strong></td>
+              <td>Yes</td>
+              <td>Yes</td>
+              <td>You own the fob. Cheapest and fastest.</td>
+            </tr>
+            <tr>
+              <td><strong>B — Relay</strong></td>
+              <td>Yes</td>
+              <td>Yes</td>
+              <td>Prefer galvanic isolation or have a relay on hand.</td>
+            </tr>
+            <tr>
+              <td><strong>C — Capacitive pulse</strong></td>
+              <td><strong style="color:#2AD4A3">No</strong></td>
+              <td><strong style="color:#2AD4A3">No</strong></td>
+              <td>Rented fob that must be returned untouched.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ── WIRING ── -->
+        <h2 id="wiring">Wiring diagrams</h2>
+
+        <h3>Option A — Transistor (recommended)</h3>
+        <p>One NPN transistor (2N2222, BC547, 2N3904) + one 1 kΩ resistor.</p>
+        <div class="diagram-block">ESP32 GPIO 8 ──[1 kΩ]──▶ Base (B)
+                           Collector (C) ──▶ Fob button pad A
+ESP32 GND     ─────────▶ Emitter (E)
+                           Emitter (E)  ──▶ Fob button pad B</div>
+        <p>GPIO HIGH → transistor saturates → fob pads shorted → gate opens.</p>
+        <p>In firmware: <code>TRIGGER_MODE=MODE_TRANSISTOR</code>, <code>TRIGGER_PIN=8</code></p>
+
+        <h3>Option B — Relay module</h3>
+        <div class="diagram-block">ESP32 GPIO 8  ──▶  Relay IN
+ESP32 GND     ──▶  Relay GND
+ESP32 3.3V    ──▶  Relay VCC
+
+Fob pad A  ──▶  Relay COM
+Fob pad B  ──▶  Relay NO (Normally Open)</div>
+        <p>In firmware: <code>TRIGGER_MODE=MODE_RELAY</code></p>
+
+        <h3>Option C — Capacitive pulse on a Fingerbot</h3>
+        <div class="diagram-block">ESP32 GPIO 8  ──▶  Copper tape (~1 cm²)
+                        │
+                        │  pressed flat against
+                        ▼
+               Fingerbot capacitive top button
+
+Fingerbot arm  ──▶  physically presses fob button</div>
+        <p>The ESP32 briefly drives GPIO 8 HIGH, injecting charge into the fingerbot's capacitive sensor. The fingerbot triggers its mechanical arm. No BLE pairing with the fingerbot needed — the copper tape is the whole interface.</p>
+        <p>In firmware: <code>TRIGGER_MODE=MODE_CAP_PULSE</code></p>
+
+        <div class="callout callout-note">
+          <div class="callout-icon">💡</div>
+          <p>Assembly: stick the fingerbot over the fob button with its own double-sided tape. Place the copper tape flat on the fingerbot's top capacitive button with no air gap. Run a thin wire from the pad to GPIO 8. No resistor needed.</p>
+        </div>
+
+        <!-- ── POWER ── -->
+        <h2 id="power">Power options</h2>
+        <p>The ESP32 spends most of its time in deep sleep (~19 mAh/day total at the default 5 s sleep cycle).</p>
+
+        <table>
+          <thead>
+            <tr><th>Option</th><th>Setup</th><th>Best for</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Wall outlet + USB charger</strong></td>
+              <td>Any 5V ≥ 500mA USB charger</td>
+              <td>Socket nearby at the garage. Zero maintenance.</td>
+            </tr>
+            <tr>
+              <td><strong>Solar power bank</strong></td>
+              <td>Solar panel → battery pack → ESP32 USB</td>
+              <td>No socket. Self-sustaining outdoors.</td>
+            </tr>
+            <tr>
+              <td><strong>USB power bank</strong></td>
+              <td>10,000 mAh always-on bank</td>
+              <td>No socket. ~12 months per charge at ~19 mAh/day.</td>
+            </tr>
+            <tr>
+              <td><strong>Car USB / 12V socket</strong></td>
+              <td>ESP32 + fob in the car, powered by the car</td>
+              <td>In-car deployment. Charges when car is on.</td>
+            </tr>
+            <tr>
+              <td><strong>18650 + TP4056 + solar</strong></td>
+              <td>DIY — most flexible capacity/charging</td>
+              <td>Custom enclosures, precise capacity sizing.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-warn">
+          <div class="callout-icon">⚠️</div>
+          <p>Avoid power banks that auto-shut off when current draw drops — the ESP32 in deep sleep draws very little current and will trigger the auto-off. Use an always-on bank (e.g., Anker A1263 or equivalent).</p>
+        </div>
+
+        <!-- ── DEPLOY ── -->
+        <h2 id="deploy">Deployment modes</h2>
+
+        <h3>In the car (recommended for single-user)</h3>
+        <p>ESP32 and fob both ride in the car, powered off the car's USB or 12V socket. Everything is in the same vehicle so BLE range is never a concern. The auto-fire feature (opens when the app detects the ESP32 in range on the AA screen) is particularly effective here.</p>
+        <ul>
+          <li>No outdoor enclosure needed</li>
+          <li>Unit charges whenever the car is on</li>
+          <li>Not suitable for multiple users (the fob travels with one car)</li>
+        </ul>
+
+        <h3>At the garage (for multi-user)</h3>
+        <p>ESP32 lives near the gate, powered by wall outlet, power bank, or solar. The fob stays at the garage. Anyone you share the password with can open the same gate from their own phone.</p>
+        <ul>
+          <li>Supports multiple users and vehicles</li>
+          <li>BLE range 10–30 m through walls — position the ESP32 near the entrance</li>
+          <li>Firmware optimised for this mode: deep sleep between BLE advertising windows</li>
+        </ul>
+
+        <!-- ── PHONE UI ── -->
+        <h2 id="phone-ui">Phone UI</h2>
+        <p>The phone app is the primary setup surface and a functional opener in its own right.</p>
+
+        <h3>Main screen states</h3>
+        <table>
+          <thead><tr><th>State</th><th>Ring colour</th><th>What it means</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Idle</strong></td><td>White hairline</td><td>Ready to send. Tap to open.</td></tr>
+            <tr><td><strong>Sending</strong></td><td>Teal + pulse rings</td><td>BLE connect → HMAC → write in progress.</td></tr>
+            <tr><td><strong>Opened</strong></td><td>Fills teal + ✓</td><td>ESP32 confirmed open. Resets to idle after 2 s.</td></tr>
+            <tr><td><strong>Failed</strong></td><td>Fills pastel red + ✗</td><td>Connection failed or auth failed. Resets after 2 s.</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Presence indicator</h3>
+        <p>A low-power BLE scan filtered to your paired device's MAC runs while the main screen is in the foreground. The dot shows <strong>In range</strong> (green) when the opener has been heard within the last 15 s, <strong>Out of range</strong> (grey) otherwise.</p>
+
+        <h3>Settings</h3>
+        <p>Open settings via the ⚙ button in the top right. From here you can:</p>
+        <ul>
+          <li>View or change your paired device (Repair / Pair another / Unpair)</li>
+          <li>Change your password</li>
+          <li>Switch the app language (8 supported)</li>
+          <li>Enable Demo mode (runs the full UI flow without a real ESP32)</li>
+        </ul>
+
+        <!-- ── ANDROID AUTO ── -->
+        <h2 id="android-auto">Android Auto</h2>
+        <p>The AA screen is built on the Car App Library and shows a single button: <strong>Open Garage</strong>. Designed to be safe to operate while driving.</p>
+
+        <h3>States on the car screen</h3>
+        <table>
+          <thead><tr><th>Screen</th><th>What you see</th></tr></thead>
+          <tbody>
+            <tr><td>Idle</td><td>Open Garage button + presence indicator</td></tr>
+            <tr><td>Sending</td><td>Spinner replaces the button while BLE round-trip runs</td></tr>
+            <tr><td>Opened</td><td>Confirmation for 2 s, then returns to idle</td></tr>
+            <tr><td>Failed</td><td>"Try Again" button — never auto-retries so you don't need to react while moving</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Auto-fire</h3>
+        <p>When the AA screen is active and the presence scan detects the paired device in range, the app fires the open command automatically — once per AA session. This means the gate often starts opening before you've pulled up to it.</p>
+
+        <h3>Testing without a car</h3>
+        <p>Use the Android Auto Desktop Head Unit emulator. Install it via Android Studio: <em>Tools → SDK Manager → SDK Tools → Android Auto Desktop Head Unit Emulator</em>. Start the DHU server on your phone (Android Auto → Developer settings → Start head unit server), then launch the emulator on your PC.</p>
+
+        <!-- ── VOICE ── -->
+        <h2 id="voice">Voice commands</h2>
+        <p>Say <strong>"Open the garage"</strong> through the car microphone or the steering wheel mic button. Google routes the matched intent directly to the running AA service, which fires the BLE command immediately — no screen touch needed.</p>
+        <p>Voice commands work in all 8 supported languages: English, Spanish, French, German, Catalan, Finnish, Portuguese (Portugal), and Italian.</p>
+
+        <div class="callout callout-note">
+          <div class="callout-icon">ℹ️</div>
+          <p>The voice trigger uses Google Assistant / Gemini's App Actions (<code>OPEN_APP_FEATURE</code> BII). The intent routing is cloud-based, but the actual open command is fully local BLE — no cloud dependency once the intent arrives.</p>
+        </div>
+
+        <!-- ── QUICK SETTINGS ── -->
+        <h2 id="quick-settings">Quick Settings tile</h2>
+        <p>Add the app to your notification shade for one-swipe access: long-press the shade → <strong>Edit tiles</strong> → drag <strong>Garage Opener</strong> into the active area.</p>
+        <p>The tile subtitle shows the current state: <em>Sending…</em> → <em>Opened</em> / <em>Failed</em>, then clears after 2 seconds. You can open the garage without unlocking the phone or opening the app.</p>
+        <p>There's also a launcher long-press shortcut: long-press the app icon → <strong>Open garage</strong> — launches the app and triggers the opener immediately.</p>
+
+        <!-- ── SECURITY ── -->
+        <h2 id="security">Security model</h2>
+
+        <h3>Authentication flow</h3>
+        <ol>
+          <li>Phone connects over BLE and reads the Nonce characteristic — 16 random bytes generated fresh on the ESP32 for this connection</li>
+          <li>Phone computes <code>HMAC-SHA256(password, nonce)</code> and writes the 32-byte result to the Command characteristic</li>
+          <li>ESP32 computes the same HMAC locally and compares. On match it triggers the relay/transistor, writes <code>0x01</code> to Status. On mismatch it writes <code>0x00</code></li>
+          <li>Nonce is discarded — the next connection generates a new one</li>
+        </ol>
+
+        <h3>Replay attack resistance</h3>
+        <p>A captured BLE packet is useless: the nonce changes every connection. An attacker who records a valid HMAC cannot replay it because the ESP32 will generate a different nonce next time.</p>
+
+        <h3>What never leaves the phone</h3>
+        <p>Your password is stored only on the phone (in Android's <code>EncryptedSharedPreferences</code>) and in the ESP32's firmware. It is never transmitted over BLE or the internet, at any point.</p>
+
+        <div class="callout callout-note">
+          <div class="callout-icon">🔒</div>
+          <p>The BLE transport itself is not encrypted (standard BLE advertising is unencrypted), but because the credential is an HMAC rather than the password itself, a full packet capture yields nothing useful to an attacker.</p>
+        </div>
+
+        <!-- ── BOARDS ── -->
+        <h2 id="boards">Supported boards</h2>
+        <p>The flash tool presents a board picker. All of these are pre-configured in <code>platformio.ini</code>:</p>
+
+        <table>
+          <thead><tr><th>Board</th><th>PlatformIO env</th><th>Default GPIO</th></tr></thead>
+          <tbody>
+            <tr><td>ESP32-C3 SuperMini / XIAO / DevKitM-1</td><td><code>esp32c3</code></td><td>8</td></tr>
+            <tr><td>Wemos Lolin32 Lite</td><td><code>lolin32lite</code></td><td>26</td></tr>
+            <tr><td>ESP32-DevKitC (classic)</td><td><code>esp32devkit</code></td><td>26</td></tr>
+            <tr><td>Wemos Lolin32</td><td><code>lolin32</code></td><td>26</td></tr>
+            <tr><td>ESP32-S3-DevKitC-1</td><td><code>esp32s3devkit</code></td><td>8</td></tr>
+            <tr><td>NodeMCU ESP32-S</td><td><code>nodemcuesp32s</code></td><td>26</td></tr>
+          </tbody>
+        </table>
+        <p>To use a different board, add a new <code>[env:yourboard]</code> section to <code>firmware/platformio.ini</code> following the existing pattern, then run <code>pio run -e yourboard --target upload</code>.</p>
+
+        <!-- ── TROUBLESHOOTING ── -->
+        <h2 id="troubleshooting">Troubleshooting</h2>
+
+        <table>
+          <thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Serial monitor shows nothing</td>
+              <td>Wrong baud rate or port</td>
+              <td>Set 115200 baud; check COM port in Device Manager</td>
+            </tr>
+            <tr>
+              <td>Relay / transistor never clicks</td>
+              <td>Wrong <code>TRIGGER_MODE</code></td>
+              <td>Flash with correct mode for your hardware</td>
+            </tr>
+            <tr>
+              <td>Fingerbot never triggers</td>
+              <td>Pad coupling too weak</td>
+              <td>Increase <code>RELAY_PULSE_MS</code>, enlarge copper pad, or add GND wire to fingerbot chassis</td>
+            </tr>
+            <tr>
+              <td>nRF Connect status always <code>00</code></td>
+              <td>Password mismatch</td>
+              <td>Verify password in app exactly matches firmware</td>
+            </tr>
+            <tr>
+              <td>App not in Android Auto launcher</td>
+              <td>Unknown sources not enabled (sideload only)</td>
+              <td>Android Auto → tap version 10 times → enable Unknown sources</td>
+            </tr>
+            <tr>
+              <td>BLE scan finds nothing</td>
+              <td>ESP32 not advertising or too far</td>
+              <td>Check power; check serial output; move phone within 5 m</td>
+            </tr>
+            <tr>
+              <td>Scan times out immediately</td>
+              <td>BLE permission denied</td>
+              <td>Settings → Apps → Garage Opener → Permissions → allow Nearby devices</td>
+            </tr>
+            <tr>
+              <td>UI stuck on Sending…</td>
+              <td>ESP32 in deep sleep during connect window</td>
+              <td>The app retries 3× automatically. If it persists, check the ESP32 is advertising (serial monitor)</td>
+            </tr>
+            <tr>
+              <td>Gradle sync fails</td>
+              <td>Android SDK not installed</td>
+              <td>Android Studio → SDK Manager → install Android 15 (API 35)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ── BOTTOM CTA ── -->
+        <div style="margin-top:60px;padding:40px;background:rgba(42,212,163,0.05);border:1px solid rgba(42,212,163,0.18);border-radius:20px;text-align:center">
+          <h3 style="font-size:1.4rem;font-weight:800;color:#F3F5F7;margin:0 0 8px">Still stuck?</h3>
+          <p style="color:#8A939C;margin:0 0 24px">Open an issue on GitHub and include your serial monitor output and board type.</p>
+          <a href="https://github.com/GerardUmbert/GarageAAtoESP32/issues" target="_blank" rel="noopener" class="btn-primary">
+            Open an issue
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </a>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- FOOTER -->
+  <footer style="border-top:1px solid rgba(255,255,255,0.05);padding:32px 24px">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <svg width="22" height="22" viewBox="0 0 108 108" fill="none">
+          <path fill="#2AD4A3" fill-rule="evenodd" clip-rule="evenodd"
+            d="M54 28a26 26 0 1 0 .001 0H54zm0 10.8a15.2 15.2 0 1 1-.001 0H54z"/>
+          <path fill="#2AD4A3" d="M54 49.65H82v8.7H54z"/>
+        </svg>
+        <span style="font-size:13px;color:#5A6169">Garage Opener · CC BY-NC-SA 4.0</span>
+      </div>
+      <div class="flex items-center gap-6">
+        <a href="index.html">Home</a>
+        <a href="https://github.com/GerardUmbert/GarageAAtoESP32" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/GerardUmbert/GarageAAtoESP32/releases" target="_blank" rel="noopener">Releases</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    // Entrance
+    gsap.to('.reveal', {
+      opacity: 1, y: 0, duration: 0.7, ease: 'power3.out', stagger: 0.1,
+    });
+
+    // Section reveals
+    gsap.utils.toArray('.prose-garage h2, .prose-garage h3').forEach((el) => {
+      gsap.from(el, {
+        opacity: 0, x: -20, duration: 0.5, ease: 'power3.out',
+        scrollTrigger: { trigger: el, start: 'top 90%', toggleActions: 'play none none none' },
+      });
+    });
+    gsap.utils.toArray('.prose-garage p, .prose-garage ul, .prose-garage ol, .prose-garage table, .prose-garage pre, .prose-garage .callout, .prose-garage .diagram-block').forEach((el) => {
+      gsap.from(el, {
+        opacity: 0, y: 16, duration: 0.5, ease: 'power3.out',
+        scrollTrigger: { trigger: el, start: 'top 93%', toggleActions: 'play none none none' },
+      });
+    });
+
+    // Sidebar active link tracking
+    const sections = document.querySelectorAll('h2[id]');
+    const links = document.querySelectorAll('.sidebar a');
+
+    function updateActive() {
+      let current = '';
+      sections.forEach((s) => {
+        if (window.scrollY >= s.offsetTop - 120) current = s.id;
+      });
+      links.forEach((a) => {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+      });
+    }
+    window.addEventListener('scroll', updateActive, { passive: true });
+    updateActive();
+
+    // Tab switcher
+    function showTab(id) {
+      ['play', 'apk', 'source'].forEach((t) => {
+        document.getElementById('tab-' + t).style.display = t === id ? '' : 'none';
+      });
+      document.querySelectorAll('#app-tabs .tab').forEach((btn, i) => {
+        btn.classList.toggle('active-tab', ['play','apk','source'][i] === id);
+      });
+    }
+  </script>
+</body>
+</html>
