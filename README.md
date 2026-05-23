@@ -2,6 +2,10 @@
 
 Pull into your garage and it opens itself — triggered from your car's screen, no phone fumbling, no cloud, no subscription.
 
+<a href="https://play.google.com/store/apps/details?id=com.dunnowsoftware.GarageAAtoESP32">
+  <img alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" height="60"/>
+</a>
+
 ### What it looks like in the car
 
 | Idle | Sending | Opened |
@@ -51,7 +55,7 @@ See [docs/provisioning.md](docs/provisioning.md) for full flashing instructions 
 
 ### 2. Android app
 
-- **Play Store** *(easiest)*: [install from Google Play](https://play.google.com/store/apps/details?id=com.dunnowsoftware.GarageAAtoESP32)
+- **Play Store** *(easiest)*: [Get it on Google Play](https://play.google.com/store/apps/details?id=com.dunnowsoftware.GarageAAtoESP32)
 - **APK** *(no Play Store)*: download the latest `.apk` from the [Releases](../../releases) page and sideload it.
 - **Build from source**: open `android/` in [Android Studio](https://developer.android.com/studio), connect your phone via USB with debugging enabled, and click **Run**.
 
