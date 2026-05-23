@@ -50,7 +50,7 @@
 // ── BLE ───────────────────────────────────────────────────────────────────────
 // Change DEVICE_NAME per install so multiple units are distinguishable
 #ifndef DEVICE_NAME
-#define DEVICE_NAME        "GarageOpener"
+#define DEVICE_NAME     "Garage-Opener"
 #endif
 
 // 128-bit service / characteristic UUIDs
