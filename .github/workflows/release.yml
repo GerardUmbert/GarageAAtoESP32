@@ -82,44 +82,9 @@ jobs:
             GarageAAtoESP32-${{ steps.version.outputs.version }}-debug.apk
             GarageAAtoESP32-${{ steps.version.outputs.version }}.aab
 
-  build-firmware:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Cache PlatformIO
-        uses: actions/cache@v4
-        with:
-          path: ~/.platformio
-          key: pio-${{ hashFiles('firmware/platformio.ini') }}
-          restore-keys: pio-
-
-      - name: Install PlatformIO
-        run: pip install platformio
-
-      - name: Build firmware
-        working-directory: firmware
-        run: pio run -e esp32c3
-
-      - name: Rename firmware binary
-        run: |
-          cp firmware/.pio/build/esp32c3/firmware.bin GarageAAtoESP32-firmware-PLACEHOLDER-PIN.bin
-
-      - name: Upload firmware artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: firmware
-          path: GarageAAtoESP32-firmware-PLACEHOLDER-PIN.bin
-
   release:
     runs-on: ubuntu-latest
-    needs: [build-android, build-firmware]
+    needs: [build-android]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -143,7 +108,7 @@ jobs:
           echo "$NOTES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Package flash scripts
+      - name: Package flash tool
         run: zip GarageAAtoESP32-flash-tool.zip firmware/flash.bat firmware/flash.ps1
 
       - name: Create GitHub Release
@@ -156,12 +121,11 @@ jobs:
 
             ---
 
-            > **Firmware note:** The `.bin` file targets **ESP32-C3** only and is built with the placeholder PIN `change-me-before-flashing`.
-            > It is provided for testing only. To flash with your own PIN, download `GarageAAtoESP32-flash-tool.zip`, extract it, and run `flash.bat` — it handles everything automatically.
+            > **Firmware:** no pre-built binary is provided — the PIN must be yours.
+            > Download `GarageAAtoESP32-flash-tool.zip`, extract it, and run `flash.bat`. It installs PlatformIO if needed, lets you pick your board, and compiles and flashes with your PIN in one step.
           files: |
             artifacts/apk/*.apk
             artifacts/apk/*.aab
-            artifacts/firmware/*.bin
             GarageAAtoESP32-flash-tool.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
