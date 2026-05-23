@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.3.6] - 2026-05-23
+
+### Added
+- Flash tool now asks which board you have and picks the right PlatformIO env automatically — supports ESP32-C3-DevKitM-1, Wemos Lolin32 Lite, ESP32-DevKitC, Wemos Lolin32, ESP32-S3-DevKitC-1, and NodeMCU ESP32-S
+- Flash tool advanced options now include trigger GPIO — shown with the correct default for the selected board
+- Pre-configured build environments for all supported boards in `platformio.ini` — `pio run -e <env>` just works
+- `config.h` overridable defines (`TRIGGER_MODE`, `TRIGGER_PIN`, `DEVICE_NAME`, `USER_PIN`) now use `#ifndef` guards so per-board values can be injected via build flags without editing the file
+- Flash tool no longer patches `config.h` — settings are injected via compiler flags, so the file is never modified and there is nothing to restore if the tool is killed mid-run
+
+### Changed
+- Default BLE device name changed from `GarageOpener` to `Garage-Opener`
+- No pre-built firmware binary in releases — the PIN must be yours, so the flash tool is the only path. Download `GarageAAtoESP32-flash-tool.zip` from the release and run `flash.bat`
+
 ## [1.3.5] - 2026-05-19
 
 ### Added
@@ -11,8 +24,6 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - Sleep duration: 1–10 s range with guidance on responsiveness trade-off
 - Pulse duration: 100–2000 ms range with guidance for snappy vs. slow fobs
 - BLE device name: up to 20 characters, useful for multi-unit installs
-- Pre-configured build environments for Wemos Lolin32 Lite, ESP32-DevKitC, Wemos Lolin32, ESP32-S3-DevKitC-1, and NodeMCU ESP32-S — build for any supported board with `pio run -e <env>`
-- `config.h` overridable defines (`TRIGGER_MODE`, `TRIGGER_PIN`, `DEVICE_NAME`, `USER_PIN`) now use `#ifndef` guards so per-board values can be injected via `platformio.ini` build flags without editing the file
 
 ### Fixed
 - Power budget corrected to match actual `SLEEP_DURATION_S = 5` (was calculated with 10 s): daily draw updated from ~17 mAh to ~19 mAh, battery runtimes and solar margin updated throughout docs
