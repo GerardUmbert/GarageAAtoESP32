@@ -29,6 +29,7 @@ hardware/
 
 # Claude
 .claude/
+TODO.md
 
 # OS
 .DS_Store
