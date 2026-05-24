@@ -1,4 +1,4 @@
-﻿// Site translations — ported from the app's strings.xml files.
+// Site translations — ported from the app's strings.xml files.
 // Keys used by both index.html and docs.html.
 // The app already carries verified human translations for all 8 locales,
 // so this file contains zero machine-translated strings.
