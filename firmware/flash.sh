@@ -407,11 +407,10 @@ echo -e "  ${GRAY}Running PlatformIO build + flash. This may take a few minutes 
 echo -e "  ${GRAY}(First run downloads the ESP32 toolchain - subsequent runs are much faster)${NC}"
 echo ""
 
-EXTRA_FLAGS="-DTRIGGER_MODE=${TRIGGER_MODE} -DTRIGGER_PIN=${TRIGGER_PIN} -DUSER_PIN=\\\"${PIN}\\\" -DDEVICE_NAME=\\\"${DEVICE_NAME}\\\" -DSLEEP_DURATION_S=${SLEEP_DURATION} -DRELAY_PULSE_MS=${PULSE_DURATION}"
+EXTRA_FLAGS="-DCORE_DEBUG_LEVEL=0 -DTRIGGER_MODE=${TRIGGER_MODE} -DTRIGGER_PIN=${TRIGGER_PIN} -DUSER_PIN=\\\"${PIN}\\\" -DDEVICE_NAME=\\\"${DEVICE_NAME}\\\" -DSLEEP_DURATION_S=${SLEEP_DURATION} -DRELAY_PULSE_MS=${PULSE_DURATION}"
 
 FLASH_OK=0
-invoke_pio run -e "$BOARD" --target upload --upload-port "$PORT" \
-    -O "build_flags=-DCORE_DEBUG_LEVEL=0 ${EXTRA_FLAGS}" \
+PLATFORMIO_BUILD_FLAGS="$EXTRA_FLAGS" invoke_pio run -e "$BOARD" --target upload --upload-port "$PORT" \
     && FLASH_OK=1 || true
 
 unset PIN PIN_CONFIRM

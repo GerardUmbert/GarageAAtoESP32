@@ -437,11 +437,13 @@ Write-Host "  Running PlatformIO build + flash. This may take a few minutes on f
 Write-Host "  (First run downloads the ESP32 toolchain - subsequent runs are much faster)"   -ForegroundColor Gray
 Write-Host ""
 
-$extraFlags = "-DTRIGGER_MODE=$triggerMode -DTRIGGER_PIN=$triggerPin -DUSER_PIN=`\`"$pin`\`" -DDEVICE_NAME=`\`"$deviceName`\`" -DSLEEP_DURATION_S=$sleepDuration -DRELAY_PULSE_MS=$pulseDuration"
+$extraFlags = "-DCORE_DEBUG_LEVEL=0 -DTRIGGER_MODE=$triggerMode -DTRIGGER_PIN=$triggerPin -DUSER_PIN=\`"$pin\`" -DDEVICE_NAME=\`"$deviceName\`" -DSLEEP_DURATION_S=$sleepDuration -DRELAY_PULSE_MS=$pulseDuration"
 
 $flashSuccess = $false
-Invoke-Pio @("run", "-e", $Board, "--target", "upload", "--upload-port", $Port, "-O", "build_flags=-DCORE_DEBUG_LEVEL=0 $extraFlags")
+$env:PLATFORMIO_BUILD_FLAGS = $extraFlags
+Invoke-Pio @("run", "-e", $Board, "--target", "upload", "--upload-port", $Port)
 if ($LASTEXITCODE -eq 0) { $flashSuccess = $true }
+$env:PLATFORMIO_BUILD_FLAGS = $null
 
 # --- Done --------------------------------------------------------------------
 
