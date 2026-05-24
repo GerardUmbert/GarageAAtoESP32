@@ -440,7 +440,7 @@ Write-Host ""
 $extraFlags = "-DTRIGGER_MODE=$triggerMode -DTRIGGER_PIN=$triggerPin -DUSER_PIN=`\`"$pin`\`" -DDEVICE_NAME=`\`"$deviceName`\`" -DSLEEP_DURATION_S=$sleepDuration -DRELAY_PULSE_MS=$pulseDuration"
 
 $flashSuccess = $false
-Invoke-Pio @("run", "-e", $Board, "--target", "upload", "--upload-port", $Port, "--project-option", "build_flags=-DCORE_DEBUG_LEVEL=0 $extraFlags")
+Invoke-Pio @("run", "-e", $Board, "--target", "upload", "--upload-port", $Port, "-O", "build_flags=-DCORE_DEBUG_LEVEL=0 $extraFlags")
 if ($LASTEXITCODE -eq 0) { $flashSuccess = $true }
 
 # --- Done --------------------------------------------------------------------

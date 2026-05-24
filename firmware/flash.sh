@@ -411,7 +411,7 @@ EXTRA_FLAGS="-DTRIGGER_MODE=${TRIGGER_MODE} -DTRIGGER_PIN=${TRIGGER_PIN} -DUSER_
 
 FLASH_OK=0
 invoke_pio run -e "$BOARD" --target upload --upload-port "$PORT" \
-    --project-option "build_flags=-DCORE_DEBUG_LEVEL=0 ${EXTRA_FLAGS}" \
+    -O "build_flags=-DCORE_DEBUG_LEVEL=0 ${EXTRA_FLAGS}" \
     && FLASH_OK=1 || true
 
 unset PIN PIN_CONFIRM
