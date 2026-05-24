@@ -148,25 +148,42 @@ if (-not $pioCmd) {
 if ($pioCmd) {
     Write-OK "PlatformIO found."
 } else {
-    Write-Host "     PlatformIO not found. Installing via winget..." -ForegroundColor Yellow
-    Write-Host "     (This is a one-time download of ~300 MB, please be patient)" -ForegroundColor Yellow
+    Write-Host "     PlatformIO not found. Installing via official installer..." -ForegroundColor Yellow
+    Write-Host "     (This is a one-time download, please be patient)" -ForegroundColor Yellow
     Write-Host ""
 
-    $winget = Get-Command winget -ErrorAction SilentlyContinue
-    if (-not $winget) {
-        Write-Fail "winget not found. Please install PlatformIO manually from https://platformio.org/install/cli and re-run this script."
+    $python = Get-Command python -ErrorAction SilentlyContinue
+    if (-not $python) {
+        $python = Get-Command python3 -ErrorAction SilentlyContinue
+    }
+    if (-not $python) {
+        Write-Fail "Python is required but not found. Download it from https://www.python.org/downloads/ (tick 'Add Python to PATH') and run flash.bat again."
         exit 1
     }
 
-    winget install --id platformio.platformio -e --accept-package-agreements --accept-source-agreements
+    $curl = Get-Command curl -ErrorAction SilentlyContinue
+    if (-not $curl) {
+        Write-Fail "curl is required but not found. It ships with Windows 10/11 — if missing, update Windows or install manually from https://curl.se/windows/"
+        exit 1
+    }
+
+    $installerUrl = "https://raw.githubusercontent.com/platformio/platformio-core-installer/develop/get-platformio.py"
+    $installerPath = Join-Path $env:TEMP "get-platformio.py"
+    curl -fsSL $installerUrl -o $installerPath
     if (-not $?) {
-        Write-Fail "winget failed to install PlatformIO. Try running as Administrator, or install manually from https://platformio.org/install/cli"
+        Write-Fail "Failed to download the PlatformIO installer. Check your internet connection and try again."
         exit 1
     }
 
-    $machinePath = [System.Environment]::GetEnvironmentVariable("PATH", "Machine")
-    $userPath    = [System.Environment]::GetEnvironmentVariable("PATH", "User")
-    $env:PATH    = "$machinePath;$userPath"
+    & $python.Source $installerPath
+    if (-not $?) {
+        Write-Fail "PlatformIO installer failed. See errors above."
+        exit 1
+    }
+
+    # PlatformIO installs pio into %USERPROFILE%\.platformio\penv\Scripts
+    $pioPath = Join-Path $env:USERPROFILE ".platformio\penv\Scripts"
+    $env:PATH = "$pioPath;$env:PATH"
 
     $pioCmd = Get-Command pio -ErrorAction SilentlyContinue
     if (-not $pioCmd) {
