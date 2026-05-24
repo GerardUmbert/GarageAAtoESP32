@@ -109,7 +109,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Package flash tool
-        run: zip GarageAAtoESP32-flash-tool.zip firmware/flash.bat firmware/flash.ps1
+        run: zip GarageAAtoESP32-flash-tool.zip firmware/flash.bat firmware/flash.ps1 firmware/flash.sh
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
