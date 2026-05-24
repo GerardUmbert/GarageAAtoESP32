@@ -27,6 +27,9 @@ signing.properties
 # Hardware / PCB design (private, not open source)
 hardware/
 
+# Claude
+.claude/
+
 # OS
 .DS_Store
 Thumbs.db
