@@ -51,9 +51,11 @@ It is **not** a replacement for a proper smart garage opener — if you own the 
 There is no pre-built firmware — the PIN must be yours, so you build it yourself. It's one step:
 
 1. Connect your ESP32 via USB.
-2. Download `GarageAAtoESP32-flash-tool.zip` from the [Releases](../../releases) page, extract it, and **double-click `flash.bat`**.
+2. Download `GarageAAtoESP32-flash-tool.zip` from the [Releases](../../releases) page, extract it, and run the script for your OS:
+   - **Windows:** double-click `flash.bat`
+   - **Linux:** `chmod +x flash.sh && ./flash.sh`
 
-The tool installs PlatformIO if needed, lets you pick your board, detects the COM port, asks for your PIN, compiles, and flashes. Your PIN is never saved to disk.
+The tool installs PlatformIO if needed, lets you pick your board, detects the port, asks for your PIN, compiles, and flashes. Your PIN is never saved to disk.
 
 See [docs/provisioning.md](docs/provisioning.md) for full flashing instructions and troubleshooting.
 

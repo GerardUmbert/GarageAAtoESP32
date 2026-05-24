@@ -39,22 +39,30 @@ pio --version
 
 ## Step 3 — Flash the firmware
 
-### Option A — Flash script (easiest, Windows)
+### Option A — Flash script (easiest)
 
-A script is provided that asks for your PIN, flashes the firmware, then immediately wipes the PIN from the file so it's never stored on disk.
+A script is provided that asks for your PIN, compiles, and flashes. Your PIN is never saved to disk.
 
 1. Connect your ESP32 via USB.
-2. Double-click `firmware/flash.bat`.
+2. Run the script for your OS:
+   - **Windows:** double-click `firmware/flash.bat`
+   - **Linux:** `chmod +x firmware/flash.sh && ./firmware/flash.sh`
 3. Enter your PIN when prompted.
 4. Wait for `Leaving... Hard resetting via RTS pin...` — done.
 
-If the script can't find the COM port automatically, run it from PowerShell with the port specified:
+If the script can't find the port automatically, pass it explicitly:
 ```powershell
+# Windows
 cd firmware
 .\flash.ps1 -Port COM3
 ```
+```bash
+# Linux
+./firmware/flash.sh --port /dev/ttyUSB0
+```
 
-To find your COM port: Device Manager → Ports (COM & LPT) → look for "USB Serial Device" or "CP210x".
+To find your port on Windows: Device Manager → Ports (COM & LPT) → look for "USB Serial Device" or "CP210x".  
+On Linux: `ls /dev/ttyUSB* /dev/ttyACM*` after plugging in the board.
 
 ### Option B — Flash via VS Code (PlatformIO extension)
 
