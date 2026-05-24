@@ -285,9 +285,10 @@ fi
 
 write_step "Step 4/7 - Choose your trigger mechanism..."
 echo ""
-echo -e "  ${WHITE}[1] Transistor     - NPN transistor wired into the fob (soldering required, recommended)${NC}"
-echo -e "  ${WHITE}[2] Relay module   - relay module wired into the fob (soldering required)${NC}"
-echo -e "  ${WHITE}[3] Capacitive pad - copper tape on a Fingerbot's button (no soldering, renter-friendly)${NC}"
+echo -e "  ${WHITE}[1] Transistor          - NPN transistor wired into the fob (soldering required, recommended)${NC}"
+echo -e "  ${WHITE}[2] Relay active-low    - relay module that triggers on LOW  (older/opto-isolated modules)${NC}"
+echo -e "  ${WHITE}[3] Relay active-high   - relay module that triggers on HIGH (most common, e.g. JQC-3FF)${NC}"
+echo -e "  ${WHITE}[4] Capacitive pad      - copper tape on a Fingerbot's button (no soldering, renter-friendly)${NC}"
 echo ""
 
 read -rp "  Enter number (default: 1): " trigger_choice
@@ -296,7 +297,8 @@ read -rp "  Enter number (default: 1): " trigger_choice
 case "$trigger_choice" in
     1) TRIGGER_MODE="MODE_TRANSISTOR" ;;
     2) TRIGGER_MODE="MODE_RELAY"      ;;
-    3) TRIGGER_MODE="MODE_CAP_PULSE"  ;;
+    3) TRIGGER_MODE="MODE_RELAY_HIGH" ;;
+    4) TRIGGER_MODE="MODE_CAP_PULSE"  ;;
     *) write_fail "Invalid selection. Please run flash.sh again." ;;
 esac
 

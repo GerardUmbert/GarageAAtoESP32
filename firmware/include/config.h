@@ -11,6 +11,11 @@
 //                      transistor. GPIO LOW pulls the relay coil (most modules
 //                      are active-low). Same wiring complexity as transistor.
 //
+//   MODE_RELAY_HIGH  – Same as MODE_RELAY but for active-high relay modules
+//                      (trigger on HIGH, rest on LOW). Use this if your relay
+//                      module energizes when the GPIO is HIGH. Common on
+//                      modules with a direct transistor driver (e.g. JQC-3FF).
+//
 //   MODE_CAP_PULSE   – No soldering. ESP32 drives a small conductive pad
 //                      (copper tape) physically pressed against the capacitive
 //                      top button of an Adaprox/Tuya-style Fingerbot, faking a
@@ -20,6 +25,7 @@
 #define MODE_TRANSISTOR    1
 #define MODE_RELAY         2
 #define MODE_CAP_PULSE     3
+#define MODE_RELAY_HIGH    4
 
 #ifndef TRIGGER_MODE
 #define TRIGGER_MODE       MODE_TRANSISTOR

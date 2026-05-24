@@ -7,7 +7,7 @@ namespace RelayControl {
 #if TRIGGER_MODE == MODE_RELAY
     static constexpr int ON_LEVEL  = LOW;
     static constexpr int OFF_LEVEL = HIGH;
-#elif TRIGGER_MODE == MODE_TRANSISTOR
+#elif TRIGGER_MODE == MODE_TRANSISTOR || TRIGGER_MODE == MODE_RELAY_HIGH
     static constexpr int ON_LEVEL  = HIGH;
     static constexpr int OFF_LEVEL = LOW;
 #endif
