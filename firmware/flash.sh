@@ -156,16 +156,16 @@ fi
 if [[ -n "$PIO_CMD" ]]; then
     write_ok "PlatformIO found ($PIO_CMD)."
 else
-    echo -e "  ${YELLOW}  PlatformIO not found. Installing via pip...${NC}"
+    echo -e "  ${YELLOW}  PlatformIO not found. Installing via official installer...${NC}"
     echo -e "  ${YELLOW}  (One-time download of ~300 MB, please be patient)${NC}"
     echo ""
-    if command -v pip3 &>/dev/null; then
-        pip3 install --user platformio
-    elif command -v pip &>/dev/null; then
-        pip install --user platformio
-    else
-        write_fail "pip not found. Install Python + pip first, then re-run this script.\n  See: https://platformio.org/install/cli"
+    if ! command -v python3 &>/dev/null; then
+        write_fail "Python 3 is required but not found. Install it with your package manager (e.g. sudo apt install python3) and re-run this script."
     fi
+    if ! command -v curl &>/dev/null; then
+        write_fail "curl is required but not found. Install it with your package manager (e.g. sudo apt install curl) and re-run this script."
+    fi
+    curl -fsSL https://raw.githubusercontent.com/platformio/platformio-core-installer/develop/get-platformio.py | python3
     # Reload PATH for ~/.local/bin
     export PATH="$HOME/.local/bin:$PATH"
     if command -v pio &>/dev/null; then
@@ -230,13 +230,13 @@ else
             key="${vid}:${pid}"
             chip_name="${VID_PID_NAMES[$key]:-}"
             [[ -z "$chip_name" ]] && continue
-            # Find associated tty
-            for tty in "$dev_path"/**/tty/tty* "$dev_path"/**/ttyUSB* "$dev_path"/**/ttyACM*; do
-                tty_name=$(basename "$tty" 2>/dev/null) || continue
+            # Find associated tty via find (globstar not reliable by default)
+            while IFS= read -r tty_path; do
+                tty_name=$(basename "$tty_path")
                 [[ -c "/dev/$tty_name" ]] || continue
                 found_ports+=("/dev/$tty_name")
                 found_chips+=("$chip_name")
-            done
+            done < <(find "$dev_path" \( -name "tty[A-Z]*" \) 2>/dev/null)
         done 2>/dev/null
     fi
 

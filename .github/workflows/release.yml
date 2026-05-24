@@ -122,7 +122,7 @@ jobs:
             ---
 
             > **Firmware:** no pre-built binary is provided — the PIN must be yours.
-            > Download `GarageAAtoESP32-flash-tool.zip`, extract it, and run `flash.bat`. It installs PlatformIO if needed, lets you pick your board, and compiles and flashes with your PIN in one step.
+            > Download `GarageAAtoESP32-flash-tool.zip`, extract it, and run `flash.bat` (Windows) or `flash.sh` (Linux). It installs PlatformIO if needed, lets you pick your board, and compiles and flashes with your PIN in one step.
           files: |
             artifacts/apk/*.apk
             artifacts/apk/*.aab

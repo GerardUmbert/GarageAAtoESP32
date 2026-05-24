@@ -7,7 +7,7 @@ Versions follow [Semantic Versioning](https://semver.org/).
 ## [1.3.7] - 2026-05-24
 
 ### Added
-- Linux flash tool (`firmware/flash.sh`) — mirrors `flash.ps1` step for step: PlatformIO auto-install via pip, port detection via `/sys/bus/usb` VID/PID matching with `/dev/ttyUSB*`/`/dev/ttyACM*` fallback, same board picker, trigger picker, PIN prompt (silent input, never written to disk), advanced options, and Play Store QR on success
+- Linux flash tool (`firmware/flash.sh`) — mirrors `flash.ps1` step for step: PlatformIO auto-install via official installer script, port detection via `/sys/bus/usb` VID/PID matching with `/dev/ttyUSB*`/`/dev/ttyACM*` fallback, same board picker, trigger picker, PIN prompt (silent input, never written to disk), advanced options, and Play Store QR on success
 
 ## [1.3.6] - 2026-05-23
 
