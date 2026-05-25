@@ -184,17 +184,6 @@ Use **nRF Connect** (free on Android/iOS) to talk directly to the ESP32 and veri
 
 For building on non-C3 boards and other advanced topics see [docs/advanced.md](docs/advanced.md).
 
-## Changelog
-
-### 1.3.7
-- Linux flash tool (`firmware/flash.sh`)
-- **Firmware:** LED indicator on trigger — built-in LED flashes once per garage open and is off the rest of the time, eliminating continuous LED drain on active-low boards (Lolin32 Lite, Lolin32)
-- **Firmware:** Lolin32 Lite default trigger pin changed from GPIO 22 (shared with LED) to GPIO 26
-- **Firmware:** Fixed deep sleep crash on wake
-
-### 1.3.6
-- Flash tool board selection and multi-board platformio.ini support
-
 ## License
 
 [![CC BY-NC-SA 4.0](https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
