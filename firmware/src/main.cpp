@@ -14,7 +14,6 @@ void onGarageOpen() {
 // ── Deep sleep helpers ────────────────────────────────────────────────────────
 
 static void goToSleep() {
-    BleGarage::stopAdvertising();
     NimBLEDevice::deinit(true);
     esp_sleep_enable_timer_wakeup((uint64_t)SLEEP_DURATION_S * 1000000ULL);
     esp_deep_sleep_start();
