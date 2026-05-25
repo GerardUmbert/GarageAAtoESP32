@@ -89,4 +89,35 @@
     <string name="shortcut_open_short">Abrir</string>
     <string name="shortcut_open_long">Abrir garaje</string>
     <string name="shortcut_open_disabled">Configura la app primero</string>
+
+    <!-- Settings — Auto-open / Geofence section -->
+    <string name="settings_autoopen_header">Apertura automática</string>
+    <string name="settings_geofence_location_label">Ubicación del garaje</string>
+    <string name="settings_geofence_location_set">Configurada</string>
+    <string name="settings_geofence_location_not_set">No configurada</string>
+    <string name="settings_geofence_toggle_label">Abrir al llegar</string>
+    <string name="settings_geofence_toggle_desc_active">Se abre al aproximarse al garaje conduciendo con Android Auto</string>
+    <string name="settings_geofence_toggle_desc_no_location">Configura primero la ubicación del garaje</string>
+
+    <!-- Geofence picker screen -->
+    <string name="geofence_picker_title">Zona de apertura</string>
+    <string name="geofence_picker_subtitle">Toca el mapa para definir dónde se abre la puerta automáticamente</string>
+    <string name="geofence_picker_radius_label">RADIO</string>
+    <string name="geofence_picker_radius_pill_suffix">radio</string>
+    <string name="geofence_picker_save">Guardar</string>
+
+    <!-- Geofence notifications -->
+    <string name="notif_channel_geofence_name">Apertura automática</string>
+    <string name="notif_channel_geofence_desc">Notificaciones de apertura automática al llegar</string>
+    <string name="notif_geofence_opening_title">Abriendo garaje…</string>
+    <string name="notif_geofence_opening_body">Conectando con tu abridor</string>
+    <string name="notif_geofence_success_title">Garaje abierto</string>
+    <string name="notif_geofence_success_body">Abierto automáticamente al llegar</string>
+    <string name="notif_geofence_fail_title">No se pudo abrir el garaje</string>
+    <string name="notif_geofence_fail_body">Abre la app Garage Opener para abrirlo manualmente</string>
+
+    <string name="settings_diagnostics_header">Diagnóstico</string>
+    <string name="settings_share_log_label">Compartir registro de geofence</string>
+    <string name="toast_log_empty">El registro está vacío — aún no se han registrado eventos</string>
+    <string name="toast_log_share_title">Compartir registro de geofence</string>
 </resources>

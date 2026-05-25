@@ -28,7 +28,12 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
     private var uiState = UiState.IDLE
     private var failureReason = ""
     private var connectAttempt = 0
-    private var hasAutoFired = false
+
+    // Shared debounce with GeofenceBroadcastReceiver: both read/write
+    // lastAutoFiredAt in DevicePreferences so cross-process races are absorbed.
+    // 10s window (design doc): enough to cover geofence latency, prevents the
+    // geofence-then-BLE-in-range double-open that toggles the gate back closed.
+    private val autoFireDebounceMs = 10_000L
 
     // Presence: matches the phone main screen. lastSeenMs=0 + inRange=false
     // means we've never heard from the paired device this session.
@@ -59,8 +64,10 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
                 (System.currentTimeMillis() - lastSeenMs) < presenceStaleAfterMs
             if (nowInRange != inRange) {
                 inRange = nowInRange
-                if (inRange && !hasAutoFired && uiState == UiState.IDLE && prefs().isConfigured) {
-                    hasAutoFired = true
+                val now = System.currentTimeMillis()
+                val lastFired = prefs().lastAutoFiredAt
+                val debounceOk = (now - lastFired) > autoFireDebounceMs
+                if (inRange && debounceOk && uiState == UiState.IDLE && prefs().isConfigured) {
                     triggerOpen()
                 } else if (uiState == UiState.IDLE) {
                     invalidate()
@@ -77,7 +84,6 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
             override fun onStart(owner: LifecycleOwner) = startPresenceScan()
             override fun onStop(owner: LifecycleOwner) {
                 stopPresenceScan()
-                hasAutoFired = false
             }
         })
     }
@@ -216,6 +222,7 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
             carContext.mainExecutor.execute {
                 when (result) {
                     is OpenResult.Success -> {
+                        prefs().lastAutoFiredAt = System.currentTimeMillis()
                         uiState = UiState.SUCCESS
                         invalidate()
                         Handler(Looper.getMainLooper()).postDelayed({

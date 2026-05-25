@@ -1,13 +1,18 @@
 package com.dunnowsoftware.GarageAAtoESP32.ui
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color as AndroidColor
+import android.os.Build
 import android.os.Bundle
 import androidx.compose.runtime.mutableStateOf
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.SystemBarStyle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
@@ -21,6 +26,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.core.content.ContextCompat
 import com.dunnowsoftware.GarageAAtoESP32.DemoOpener
 import com.dunnowsoftware.GarageAAtoESP32.R
 import com.dunnowsoftware.GarageAAtoESP32.ble.GarageBleManager
@@ -29,6 +35,9 @@ import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
 import com.dunnowsoftware.GarageAAtoESP32.data.getSavedLocaleTag
 import com.dunnowsoftware.GarageAAtoESP32.data.localeListFromTag
 import com.dunnowsoftware.GarageAAtoESP32.data.saveLocaleTag
+import androidx.core.content.FileProvider
+import com.dunnowsoftware.GarageAAtoESP32.geofence.GeofenceLogger
+import com.dunnowsoftware.GarageAAtoESP32.geofence.GeofenceManager
 import com.dunnowsoftware.GarageAAtoESP32.ui.screens.*
 import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageColors
 import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageTheme
@@ -117,6 +126,7 @@ private sealed interface Route {
     data object ChangePassword : Route
     data object ScanAnother    : Route
     data object Language       : Route
+    data object GeofencePicker : Route
 }
 
 @Composable
@@ -214,27 +224,114 @@ private fun AppRoot(
             onSettings = { push(Route.Settings) },
         )
 
-        Route.Settings -> SettingsScreen(
-            deviceName = remember(stateBust) { prefs.pairedDevice?.name },
-            deviceAddress = remember(stateBust) { prefs.pairedDevice?.address },
-            demoMode = remember(stateBust) { prefs.demoMode },
-            currentLocaleTag = remember(stateBust) { getSavedLocaleTag(ctx) },
-            presence = rememberPresence(prefs, stateBust),
-            onBack = { pop() },
-            onChangePassword = { push(Route.ChangePassword) },
-            onRepair = { push(Route.Scan) },
-            onUnpair = {
-                prefs.unpairDevice()
-                bust()
-                replaceAll(Route.Scan)
-            },
-            onPairAnother = { push(Route.ScanAnother) },
-            onToggleDemo = { v ->
-                prefs.demoMode = v
-                bust()
-            },
-            onLanguageScreen = { push(Route.Language) },
-        )
+        Route.Settings -> {
+            // Permission launcher for the three-step background location flow
+            val bgLocationLauncher = rememberLauncherForActivityResult(
+                ActivityResultContracts.RequestPermission()
+            ) { /* result handled implicitly; user landing on the picker is enough */ }
+            val fineLocationLauncher = rememberLauncherForActivityResult(
+                ActivityResultContracts.RequestMultiplePermissions()
+            ) { grants ->
+                val fineGranted = grants[Manifest.permission.ACCESS_FINE_LOCATION] == true
+                if (fineGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    // Step 2: request background location (must be separate prompt on Android 10+)
+                    bgLocationLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                }
+            }
+
+            fun requestLocationPermissions() {
+                val fineOk = ContextCompat.checkSelfPermission(
+                    ctx, Manifest.permission.ACCESS_FINE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
+                val bgOk = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                    ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED
+                else true
+
+                when {
+                    !fineOk -> fineLocationLauncher.launch(
+                        arrayOf(
+                            Manifest.permission.ACCESS_COARSE_LOCATION,
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                        )
+                    )
+                    !bgOk && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ->
+                        bgLocationLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                    else -> push(Route.GeofencePicker)
+                }
+            }
+
+            SettingsScreen(
+                deviceName = remember(stateBust) { prefs.pairedDevice?.name },
+                deviceAddress = remember(stateBust) { prefs.pairedDevice?.address },
+                demoMode = remember(stateBust) { prefs.demoMode },
+                currentLocaleTag = remember(stateBust) { getSavedLocaleTag(ctx) },
+                presence = rememberPresence(prefs, stateBust),
+                geofenceSet = remember(stateBust) { prefs.pairedDevice?.hasGeofence == true },
+                geofenceEnabled = remember(stateBust) { prefs.pairedDevice?.isGeofenceActive == true },
+                onBack = { pop() },
+                onChangePassword = { push(Route.ChangePassword) },
+                onRepair = { push(Route.Scan) },
+                onUnpair = {
+                    val addr = prefs.pairedDevice?.address
+                    if (addr != null) GeofenceManager(ctx).unregister(addr)
+                    prefs.unpairDevice()
+                    bust()
+                    replaceAll(Route.Scan)
+                },
+                onPairAnother = { push(Route.ScanAnother) },
+                onToggleDemo = { v ->
+                    prefs.demoMode = v
+                    bust()
+                },
+                onLanguageScreen = { push(Route.Language) },
+                onShareLog = {
+                    val file = GeofenceLogger.getLogFile(ctx)
+                    if (!file.exists() || file.length() == 0L) {
+                        Toast.makeText(ctx, ctx.getString(R.string.toast_log_empty), Toast.LENGTH_SHORT).show()
+                    } else {
+                        val uri = FileProvider.getUriForFile(ctx, "${ctx.packageName}.fileprovider", file)
+                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_STREAM, uri)
+                            putExtra(Intent.EXTRA_SUBJECT, "geofence.log")
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        ctx.startActivity(Intent.createChooser(shareIntent, ctx.getString(R.string.toast_log_share_title)))
+                    }
+                },
+                onGeofencePicker = { requestLocationPermissions() },
+                onToggleGeofence = { enabled ->
+                    prefs.setGeofenceEnabled(enabled)
+                    val device = prefs.pairedDevice
+                    if (device != null) {
+                        val gm = GeofenceManager(ctx)
+                        if (enabled) gm.register(device) else gm.unregister(device.address)
+                    }
+                    bust()
+                },
+            )
+        }
+
+        Route.GeofencePicker -> {
+            val device = remember(stateBust) { prefs.pairedDevice }
+            GeofencePickerScreen(
+                initialLat = device?.geofenceLat,
+                initialLng = device?.geofenceLng,
+                initialRadiusM = device?.geofenceRadiusM,
+                deviceName = device?.name,
+                deviceAddress = device?.address,
+                onSave = { lat, lng, radius ->
+                    prefs.updateGeofence(lat, lng, radius)
+                    val updated = prefs.pairedDevice
+                    if (updated?.isGeofenceActive == true) {
+                        GeofenceManager(ctx).register(updated)
+                    }
+                    bust()
+                    pop()
+                },
+                onBack = { pop() },
+            )
+        }
 
         Route.Language -> LanguageScreen(
             currentLocaleTag = remember(stateBust) { getSavedLocaleTag(ctx) },
@@ -395,15 +492,17 @@ private fun routeKey(r: Route): String = when (r) {
     Route.Main           -> "main"
     Route.Settings       -> "settings"
     Route.Language       -> "language"
+    Route.GeofencePicker -> "geofence_picker"
 }
 
 private fun keyRoute(k: String): Route = when (k) {
-    "welcome"      -> Route.Welcome
-    "chg_pwd"      -> Route.ChangePassword
-    "scan"         -> Route.Scan
-    "scan_another" -> Route.ScanAnother
-    "pair"         -> Route.Pair
-    "settings"     -> Route.Settings
-    "language"     -> Route.Language
-    else           -> Route.Main
+    "welcome"          -> Route.Welcome
+    "chg_pwd"          -> Route.ChangePassword
+    "scan"             -> Route.Scan
+    "scan_another"     -> Route.ScanAnother
+    "pair"             -> Route.Pair
+    "settings"         -> Route.Settings
+    "language"         -> Route.Language
+    "geofence_picker"  -> Route.GeofencePicker
+    else               -> Route.Main
 }

@@ -89,4 +89,35 @@
     <string name="shortcut_open_short">Avaa</string>
     <string name="shortcut_open_long">Avaa autotalli</string>
     <string name="shortcut_open_disabled">Määritä sovellus ensin</string>
+
+    <!-- Settings — Auto-open / Geofence section -->
+    <string name="settings_autoopen_header">Automaattinen avaus</string>
+    <string name="settings_geofence_location_label">Tallin sijainti</string>
+    <string name="settings_geofence_location_set">Asetettu</string>
+    <string name="settings_geofence_location_not_set">Ei asetettu</string>
+    <string name="settings_geofence_toggle_label">Avaa saapuessa</string>
+    <string name="settings_geofence_toggle_desc_active">Avautuu lähestyttäessä tallia Android Auto yhteydessä</string>
+    <string name="settings_geofence_toggle_desc_no_location">Aseta tallin sijainti ensin</string>
+
+    <!-- Geofence picker screen -->
+    <string name="geofence_picker_title">Avausvyöhyke</string>
+    <string name="geofence_picker_subtitle">Napauta karttaa määrittääksesi automaattisen avauksen alueen</string>
+    <string name="geofence_picker_radius_label">SÄDE</string>
+    <string name="geofence_picker_radius_pill_suffix">säde</string>
+    <string name="geofence_picker_save">Tallenna</string>
+
+    <!-- Geofence notifications -->
+    <string name="notif_channel_geofence_name">Automaattinen avaus</string>
+    <string name="notif_channel_geofence_desc">Ilmoitukset automaattisesta avauksesta saapuessa</string>
+    <string name="notif_geofence_opening_title">Avataan tallia…</string>
+    <string name="notif_geofence_opening_body">Yhdistetään avaajaan</string>
+    <string name="notif_geofence_success_title">Talli avattu</string>
+    <string name="notif_geofence_success_body">Avattu automaattisesti saapuessa</string>
+    <string name="notif_geofence_fail_title">Tallin avaaminen epäonnistui</string>
+    <string name="notif_geofence_fail_body">Avaa Garage Opener -sovellus avataksesi manuaalisesti</string>
+
+    <string name="settings_diagnostics_header">Diagnostiikka</string>
+    <string name="settings_share_log_label">Jaa geofence-loki</string>
+    <string name="toast_log_empty">Loki on tyhjä — tapahtumia ei ole vielä tallennettu</string>
+    <string name="toast_log_share_title">Jaa geofence-loki</string>
 </resources>

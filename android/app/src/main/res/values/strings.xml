@@ -100,6 +100,38 @@
     <string name="shortcut_open_long">Open garage</string>
     <string name="shortcut_open_disabled">Set up the app first</string>
 
+    <!-- Diagnostics -->
+    <string name="settings_diagnostics_header">Diagnostics</string>
+    <string name="settings_share_log_label">Share geofence log</string>
+
     <!-- Toasts -->
     <string name="toast_password_updated">Password updated</string>
+    <string name="toast_log_empty">Log is empty — no geofence events recorded yet</string>
+    <string name="toast_log_share_title">Share geofence log</string>
+
+    <!-- Settings — Auto-open / Geofence section -->
+    <string name="settings_autoopen_header">Auto-open</string>
+    <string name="settings_geofence_location_label">Garage location</string>
+    <string name="settings_geofence_location_set">Set</string>
+    <string name="settings_geofence_location_not_set">Not set</string>
+    <string name="settings_geofence_toggle_label">Auto-open on arrival</string>
+    <string name="settings_geofence_toggle_desc_active">Opens when you approach your garage while driving with Android Auto</string>
+    <string name="settings_geofence_toggle_desc_no_location">Set a garage location first</string>
+
+    <!-- Geofence picker screen -->
+    <string name="geofence_picker_title">Auto-open zone</string>
+    <string name="geofence_picker_subtitle">Tap the map to set where the door opens automatically</string>
+    <string name="geofence_picker_radius_label">RADIUS</string>
+    <string name="geofence_picker_radius_pill_suffix">radius</string>
+    <string name="geofence_picker_save">Save</string>
+
+    <!-- Geofence notifications -->
+    <string name="notif_channel_geofence_name">Auto-open</string>
+    <string name="notif_channel_geofence_desc">Notifications for automatic garage opening on arrival</string>
+    <string name="notif_geofence_opening_title">Opening garage…</string>
+    <string name="notif_geofence_opening_body">Connecting to your opener</string>
+    <string name="notif_geofence_success_title">Garage opened</string>
+    <string name="notif_geofence_success_body">Auto-opened on arrival</string>
+    <string name="notif_geofence_fail_title">Couldn\'t open garage</string>
+    <string name="notif_geofence_fail_body">Tap the Garage Opener app to open manually</string>
 </resources>

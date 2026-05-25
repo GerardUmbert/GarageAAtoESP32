@@ -89,4 +89,35 @@
     <string name="shortcut_open_short">Obre</string>
     <string name="shortcut_open_long">Obre el garatge</string>
     <string name="shortcut_open_disabled">Configura l\'app primer</string>
+
+    <!-- Settings — Auto-open / Geofence section -->
+    <string name="settings_autoopen_header">Obertura automàtica</string>
+    <string name="settings_geofence_location_label">Ubicació del garatge</string>
+    <string name="settings_geofence_location_set">Configurada</string>
+    <string name="settings_geofence_location_not_set">No configurada</string>
+    <string name="settings_geofence_toggle_label">Obrir en arribar</string>
+    <string name="settings_geofence_toggle_desc_active">S\'obre en apropar-se al garatge conduint amb Android Auto</string>
+    <string name="settings_geofence_toggle_desc_no_location">Configura primer la ubicació del garatge</string>
+
+    <!-- Geofence picker screen -->
+    <string name="geofence_picker_title">Zona d\'obertura</string>
+    <string name="geofence_picker_subtitle">Toca el mapa per definir on s\'obre la porta automàticament</string>
+    <string name="geofence_picker_radius_label">RADI</string>
+    <string name="geofence_picker_radius_pill_suffix">radi</string>
+    <string name="geofence_picker_save">Desa</string>
+
+    <!-- Geofence notifications -->
+    <string name="notif_channel_geofence_name">Obertura automàtica</string>
+    <string name="notif_channel_geofence_desc">Notificacions d\'obertura automàtica en arribar</string>
+    <string name="notif_geofence_opening_title">Obrint el garatge…</string>
+    <string name="notif_geofence_opening_body">Connectant amb el teu abridor</string>
+    <string name="notif_geofence_success_title">Garatge obert</string>
+    <string name="notif_geofence_success_body">Obert automàticament en arribar</string>
+    <string name="notif_geofence_fail_title">No s\'ha pogut obrir el garatge</string>
+    <string name="notif_geofence_fail_body">Obre l\'app Garage Opener per obrir-lo manualment</string>
+
+    <string name="settings_diagnostics_header">Diagnòstics</string>
+    <string name="settings_share_log_label">Compartir registre de geofence</string>
+    <string name="toast_log_empty">El registre és buit — encara no s\'han enregistrat events</string>
+    <string name="toast_log_share_title">Compartir registre de geofence</string>
 </resources>

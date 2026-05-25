@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.4.0]
+
+### Added
+- Geofence auto-open: the garage opens automatically when the phone crosses the configured geofence radius while Android Auto is connected and the vehicle is moving (> 3 m/s)
+- Settings → Auto-open section: tap "Garage location" to set a pin on an OSM dark map and drag a radius slider (50–200 m); toggle enables/disables auto-open independently of the saved location
+- `GeofenceBroadcastReceiver` gates four conditions before firing: AA connected within 60 s, ENTER transition, speed > 3 m/s, 10 s debounce since last successful auto-open
+- `GeofenceForegroundService` handles the BLE work with an elevated 8-attempt retry budget and posts a result notification ("Garage opened" / "Couldn't open garage")
+- Geofences re-register after reboot via `BOOT_COMPLETED` receiver
+- Cross-process debounce: `lastAutoFiredAt` in `EncryptedSharedPreferences` is written by both the foreground service and `GarageScreen`, so a geofence fire and a BLE-in-range auto-fire cannot double-trigger
+- Background location permission request flow (coarse → fine → background, three separate prompts as required by Android 10+)
+- New strings in all 8 languages (en, es, ca, de, fr, fi, it, pt-PT)
+
 ## [1.3.7] - 2026-05-25
 
 ### Added

@@ -89,4 +89,35 @@
     <string name="shortcut_open_short">Öffnen</string>
     <string name="shortcut_open_long">Garage öffnen</string>
     <string name="shortcut_open_disabled">App zuerst einrichten</string>
+
+    <!-- Settings — Auto-open / Geofence section -->
+    <string name="settings_autoopen_header">Automatisches Öffnen</string>
+    <string name="settings_geofence_location_label">Garagenstandort</string>
+    <string name="settings_geofence_location_set">Festgelegt</string>
+    <string name="settings_geofence_location_not_set">Nicht festgelegt</string>
+    <string name="settings_geofence_toggle_label">Beim Ankommen öffnen</string>
+    <string name="settings_geofence_toggle_desc_active">Öffnet beim Nähern an die Garage während der Fahrt mit Android Auto</string>
+    <string name="settings_geofence_toggle_desc_no_location">Zuerst einen Garagenstandort festlegen</string>
+
+    <!-- Geofence picker screen -->
+    <string name="geofence_picker_title">Öffnungszone</string>
+    <string name="geofence_picker_subtitle">Tippe auf die Karte, um den automatischen Öffnungsbereich festzulegen</string>
+    <string name="geofence_picker_radius_label">RADIUS</string>
+    <string name="geofence_picker_radius_pill_suffix">Radius</string>
+    <string name="geofence_picker_save">Speichern</string>
+
+    <!-- Geofence notifications -->
+    <string name="notif_channel_geofence_name">Automatisches Öffnen</string>
+    <string name="notif_channel_geofence_desc">Benachrichtigungen für automatisches Öffnen bei Ankunft</string>
+    <string name="notif_geofence_opening_title">Garage öffnet…</string>
+    <string name="notif_geofence_opening_body">Verbindung mit deinem Öffner wird hergestellt</string>
+    <string name="notif_geofence_success_title">Garage geöffnet</string>
+    <string name="notif_geofence_success_body">Automatisch beim Ankommen geöffnet</string>
+    <string name="notif_geofence_fail_title">Garage konnte nicht geöffnet werden</string>
+    <string name="notif_geofence_fail_body">Öffne die Garage Opener App, um manuell zu öffnen</string>
+
+    <string name="settings_diagnostics_header">Diagnose</string>
+    <string name="settings_share_log_label">Geofence-Protokoll teilen</string>
+    <string name="toast_log_empty">Protokoll ist leer — noch keine Ereignisse aufgezeichnet</string>
+    <string name="toast_log_share_title">Geofence-Protokoll teilen</string>
 </resources>

@@ -14,8 +14,8 @@ android {
         applicationId = "com.dunnowsoftware.GarageAAtoESP32"
         minSdk = 29
         targetSdk = 35
-        versionCode = 28
-        versionName = "1.3.7"
+        versionCode = 29
+        versionName = "1.4.0"
     }
 
     buildFeatures {
@@ -85,6 +85,9 @@ dependencies {
     implementation(libs.preference.ktx)
     implementation(libs.lifecycle.viewmodel)
     implementation(libs.core.ktx)
+
+    implementation(libs.play.services.location)
+    implementation(libs.osmdroid)
 
     implementation(libs.activity.compose)
     implementation(platform(libs.compose.bom))

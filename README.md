@@ -73,6 +73,8 @@ Open **Garage Opener** — it will walk you through scanning for your ESP32 and 
 
 Connect your phone to Android Auto. Open **Garage Opener** and tap **Open Garage**.
 
+**Optional — auto-open on arrival:** in the phone app, go to Settings → Auto-open, set your garage location on the map, adjust the trigger radius (50–200 m), and enable the toggle. From then on the garage opens automatically when you approach while driving with Android Auto connected — no tap needed.
+
 ---
 
 ## Choose your trigger mechanism
