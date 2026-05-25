@@ -38,7 +38,11 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
             else -> "UNKNOWN(${event.geofenceTransition})"
         }
         val ids = event.triggeringGeofences?.map { it.requestId } ?: emptyList()
-        GeofenceLogger.i(context, TAG, "Geofence transition: $transitionName — IDs: $ids")
+        val loc = event.triggeringLocation
+        val locStr = if (loc != null)
+            "lat=%.6f lng=%.6f acc=%.1fm speed=%.1fm/s".format(loc.latitude, loc.longitude, loc.accuracy, loc.speed)
+        else "no location"
+        GeofenceLogger.i(context, TAG, "Geofence transition: $transitionName — IDs: $ids — $locStr")
 
         if (event.geofenceTransition != Geofence.GEOFENCE_TRANSITION_ENTER) return
 

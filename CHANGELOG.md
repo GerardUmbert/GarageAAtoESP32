@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.4.1]
+
+### Fixed
+- Geofence transition log now includes trigger location coordinates, accuracy, and speed for easier field debugging
+- Settings screen scrolls correctly (LazyColumn conversion completed)
+- Map picker: zoom-to-circle on open; user location zoom tightened when no pin set
+- Map picker: zoom/pan buttons removed; pinch-to-zoom clipped correctly via `clipToOutline`
+- Removed duplicate chevron from "location set" string in all 8 languages
+
 ## [1.4.0]
 
 ### Added
