@@ -186,13 +186,14 @@ For building on non-C3 boards and other advanced topics see [docs/advanced.md](d
 
 ## Changelog
 
-### 1.3.8
-- **Firmware:** LED indicator on trigger — the board's built-in LED flashes once per garage open and is off the rest of the time, eliminating the continuous LED drain on active-low boards (Lolin32 Lite, Lolin32)
-- **Firmware:** Lolin32 Lite default trigger pin changed from GPIO 22 (shared with LED) to GPIO 26; GPIO 22 is now driven HIGH at boot to keep the LED off between triggers
-- **Firmware:** Fixed deep sleep crash — redundant `stopAdvertising()` call before `NimBLEDevice::deinit()` left a stale NimBLE host task that caused a crash on wake
-
 ### 1.3.7
 - Linux flash tool (`firmware/flash.sh`)
+- **Firmware:** LED indicator on trigger — built-in LED flashes once per garage open and is off the rest of the time, eliminating continuous LED drain on active-low boards (Lolin32 Lite, Lolin32)
+- **Firmware:** Lolin32 Lite default trigger pin changed from GPIO 22 (shared with LED) to GPIO 26
+- **Firmware:** Fixed deep sleep crash on wake
+
+### 1.3.6
+- Flash tool board selection and multi-board platformio.ini support
 
 ## License
 

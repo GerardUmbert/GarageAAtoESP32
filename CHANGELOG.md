@@ -4,9 +4,10 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
-## [1.3.8] - 2026-05-25
+## [1.3.7] - 2026-05-25
 
 ### Added
+- Linux flash tool (`firmware/flash.sh`) — mirrors `flash.ps1` step for step: PlatformIO auto-install via official installer script, port detection via `/sys/bus/usb` VID/PID matching with `/dev/ttyUSB*`/`/dev/ttyACM*` fallback, same board picker, trigger picker, PIN prompt (silent input, never written to disk), advanced options, and Play Store QR on success
 - LED indicator on trigger — the board's built-in LED flashes once per garage open and is off the rest of the time, eliminating continuous LED drain on active-low boards (Lolin32 Lite, Lolin32)
 
 ### Changed
@@ -14,11 +15,6 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 - Deep sleep crash on wake — redundant `stopAdvertising()` call before `NimBLEDevice::deinit()` left a stale NimBLE host task that caused a crash on the next wake cycle
-
-## [1.3.7] - 2026-05-24
-
-### Added
-- Linux flash tool (`firmware/flash.sh`) — mirrors `flash.ps1` step for step: PlatformIO auto-install via official installer script, port detection via `/sys/bus/usb` VID/PID matching with `/dev/ttyUSB*`/`/dev/ttyACM*` fallback, same board picker, trigger picker, PIN prompt (silent input, never written to disk), advanced options, and Play Store QR on success
 
 ## [1.3.6] - 2026-05-23
 
