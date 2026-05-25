@@ -49,6 +49,17 @@
 // LOW. Some sensors also need a short minimum touch time (typ. 100–300 ms);
 // adjust RELAY_PULSE_MS upward if a single press isn't being registered.
 
+// ── LED indicator ─────────────────────────────────────────────────────────────
+// Optional. If defined, the LED flashes once per garage trigger.
+// LED_ON_LEVEL: 1 = active-high (LED lights on HIGH), 0 = active-low (LED lights on LOW).
+// If LED_PIN == TRIGGER_PIN and the trigger is active-high, the flash is free —
+// no extra code runs. Define them separately only when the LED needs independent control.
+#ifdef LED_PIN
+#ifndef LED_ON_LEVEL
+#define LED_ON_LEVEL       1
+#endif
+#endif
+
 // ── Legacy aliases (kept so the existing pin name still works in case anyone
 // is referencing it externally; new code should use TRIGGER_PIN). ─────────────
 #define RELAY_PIN          TRIGGER_PIN

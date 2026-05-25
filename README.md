@@ -184,6 +184,16 @@ Use **nRF Connect** (free on Android/iOS) to talk directly to the ESP32 and veri
 
 For building on non-C3 boards and other advanced topics see [docs/advanced.md](docs/advanced.md).
 
+## Changelog
+
+### 1.3.8
+- **Firmware:** LED indicator on trigger — the board's built-in LED flashes once per garage open and is off the rest of the time, eliminating the continuous LED drain on active-low boards (Lolin32 Lite, Lolin32)
+- **Firmware:** Lolin32 Lite default trigger pin changed from GPIO 22 (shared with LED) to GPIO 26; GPIO 22 is now driven HIGH at boot to keep the LED off between triggers
+- **Firmware:** Fixed deep sleep crash — redundant `stopAdvertising()` call before `NimBLEDevice::deinit()` left a stale NimBLE host task that caused a crash on wake
+
+### 1.3.7
+- Linux flash tool (`firmware/flash.sh`)
+
 ## License
 
 [![CC BY-NC-SA 4.0](https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png)](https://creativecommons.org/licenses/by-nc-sa/4.0/)

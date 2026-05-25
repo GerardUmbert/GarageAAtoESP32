@@ -8,12 +8,12 @@ $placeholder = "change-me-before-flashing"
 
 # Supported boards: env name → friendly label + default trigger pin
 $supportedBoards = [ordered]@{
-    "esp32c3"     = @{ Label = "ESP32-C3-DevKitM-1 (default)"; Pin = 8  }
-    "lolin32lite" = @{ Label = "Wemos Lolin32 Lite";            Pin = 22 }
-    "esp32dev"    = @{ Label = "ESP32-DevKitC";                 Pin = 26 }
-    "lolin32"     = @{ Label = "Wemos Lolin32";                 Pin = 26 }
-    "esp32s3"     = @{ Label = "ESP32-S3-DevKitC-1";            Pin = 4  }
-    "nodemcu32s"  = @{ Label = "NodeMCU ESP32-S";               Pin = 26 }
+    "esp32c3"     = @{ Label = "ESP32-C3-DevKitM-1 (default)"; Pin = 8;  LedPin = 8;  LedOn = 1 }
+    "lolin32lite" = @{ Label = "Wemos Lolin32 Lite";            Pin = 26; LedPin = 22; LedOn = 0 }
+    "esp32dev"    = @{ Label = "ESP32-DevKitC";                 Pin = 26; LedPin = 2;  LedOn = 1 }
+    "lolin32"     = @{ Label = "Wemos Lolin32";                 Pin = 26; LedPin = 5;  LedOn = 0 }
+    "esp32s3"     = @{ Label = "ESP32-S3-DevKitC-1";            Pin = 4;  LedPin = $null; LedOn = $null }
+    "nodemcu32s"  = @{ Label = "NodeMCU ESP32-S";               Pin = 26; LedPin = 2;  LedOn = 1 }
 }
 
 # Known ESP32 USB adapter VID/PID pairs
@@ -439,7 +439,10 @@ Write-Host "  Running PlatformIO build + flash. This may take a few minutes on f
 Write-Host "  (First run downloads the ESP32 toolchain - subsequent runs are much faster)"   -ForegroundColor Gray
 Write-Host ""
 
-$extraFlags = "-DCORE_DEBUG_LEVEL=0 -DTRIGGER_MODE=$triggerMode -DTRIGGER_PIN=$triggerPin -DUSER_PIN=\`"$pin\`" -DDEVICE_NAME=\`"$deviceName\`" -DSLEEP_DURATION_S=$sleepDuration -DRELAY_PULSE_MS=$pulseDuration"
+$ledPin = $supportedBoards[$Board].LedPin
+$ledOn  = $supportedBoards[$Board].LedOn
+$ledFlags = if ($null -ne $ledPin) { " -DLED_PIN=$ledPin -DLED_ON_LEVEL=$ledOn" } else { "" }
+$extraFlags = "-DCORE_DEBUG_LEVEL=0 -DTRIGGER_MODE=$triggerMode -DTRIGGER_PIN=$triggerPin -DUSER_PIN=\`"$pin\`" -DDEVICE_NAME=\`"$deviceName\`" -DSLEEP_DURATION_S=$sleepDuration -DRELAY_PULSE_MS=$pulseDuration$ledFlags"
 
 $flashSuccess = $false
 $env:PLATFORMIO_BUILD_FLAGS = $extraFlags
