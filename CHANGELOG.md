@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.3.8] - 2026-05-25
+
+### Added
+- LED indicator on trigger — the board's built-in LED flashes once per garage open and is off the rest of the time, eliminating continuous LED drain on active-low boards (Lolin32 Lite, Lolin32)
+
+### Changed
+- Lolin32 Lite default trigger pin changed from GPIO 22 (shared with built-in LED) to GPIO 26; GPIO 22 is now driven HIGH at boot to keep the LED off between triggers
+
+### Fixed
+- Deep sleep crash on wake — redundant `stopAdvertising()` call before `NimBLEDevice::deinit()` left a stale NimBLE host task that caused a crash on the next wake cycle
+
 ## [1.3.7] - 2026-05-24
 
 ### Added
