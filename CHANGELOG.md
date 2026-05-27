@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.4.3]
+
+### Fixed
+- Notification permission (POST_NOTIFICATIONS) is now requested during geofence setup flow on Android 13+, ensuring the auto-open result banner is actually shown
+
 ## [1.4.2]
 
 ### Changed
@@ -13,7 +18,6 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - ENTER log now includes a full context summary (speed, AA connected, last auto-fire) before gate evaluation, so all information is visible even when Gate 1 fails
 - Geofence result notification now appears as a heads-up banner on the Android Auto head unit display and auto-dismisses after 5 seconds
 - Foreground service notification is explicitly removed before posting the result notification, preventing Android from wiping the result when the service stops
-- Notification permission (POST_NOTIFICATIONS) is now requested during geofence setup flow on Android 13+, after background location is granted
 
 ### Fixed
 - Geofence auto-open was broken for drives longer than 60 seconds — the old timestamp-based AA check would always fail once the grace window elapsed
