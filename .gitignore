@@ -31,6 +31,9 @@ hardware/
 .claude/
 TODO.md
 
+# Internal notes (kept locally, not public)
+docs/android-auto-ux-ideas.md
+
 # OS
 .DS_Store
 Thumbs.db
