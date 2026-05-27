@@ -59,6 +59,7 @@ class GeofenceForegroundService : Service() {
     private fun attemptSession(address: String, password: String, attemptsLeft: Int, startId: Int) {
         if (attemptsLeft <= 0) {
             GeofenceLogger.w(this, TAG, "All $GEOFENCE_MAX_ATTEMPTS attempts exhausted for $address — giving up")
+            stopForeground(STOP_FOREGROUND_REMOVE)
             postResultNotification(success = false)
             stopSelf(startId)
             return
@@ -81,12 +82,14 @@ class GeofenceForegroundService : Service() {
                     val ts = System.currentTimeMillis()
                     GeofenceLogger.i(this, TAG, "BLE open SUCCESS for $address — writing lastAutoFiredAt=$ts")
                     DevicePreferences(this).lastAutoFiredAt = ts
+                    stopForeground(STOP_FOREGROUND_REMOVE)
                     postResultNotification(success = true)
                     stopSelf(startId)
                 }
                 is OpenResult.Failure -> {
                     if (result.isAuthFailure) {
                         GeofenceLogger.w(this, TAG, "BLE open AUTH FAILURE for $address — wrong password, not retrying")
+                        stopForeground(STOP_FOREGROUND_REMOVE)
                         postResultNotification(success = false)
                         stopSelf(startId)
                     } else {
