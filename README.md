@@ -61,9 +61,9 @@ See [docs/provisioning.md](docs/provisioning.md) for full flashing instructions 
 
 ### 2. Android app
 
-- **Play Store** *(easiest)*: [Get it on Google Play](https://play.google.com/store/apps/details?id=com.dunnowsoftware.GarageAAtoESP32)
-- **APK** *(no Play Store)*: download the latest `.apk` from the [Releases](../../releases) page and sideload it.
-- **Build from source**: open `android/` in [Android Studio](https://developer.android.com/studio), connect your phone via USB with debugging enabled, and click **Run**.
+- **Play Store** *(easiest, includes Android Auto)*: [Get it on Google Play](https://play.google.com/store/apps/details?id=com.dunnowsoftware.GarageAAtoESP32)
+- **APK** *(no Play Store)*: download the latest `.apk` from the [Releases](../../releases) page and sideload it. **Note: sideloaded APKs do not work with Android Auto** — AA only loads apps installed through the Play Store.
+- **Build from source**: open `android/` in [Android Studio](https://developer.android.com/studio), connect your phone via USB with debugging enabled, and click **Run**. Same limitation as the APK — Android Auto requires a Play Store install.
 
 ### 3. Configure the app (one-time setup on phone)
 
