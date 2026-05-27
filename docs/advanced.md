@@ -37,6 +37,8 @@ flowchart TD
     J -->|No — need battery too| J2[Board: ESP32-DevKitC-32U\n+ external LiPo + TP4056\ncharger board wired externally.\nMost complex setup but covers\nboth range and battery backup]
 ```
 
+> **Picking a geofence radius:** start at the default (40 m) and adjust based on what you observe. For **in-car deployment** the limiting factor is the fob's RF range to the gate from inside the car — there's no point triggering at 75 m if the fob can't reach the gate from there. For **at-garage deployment** BLE range through walls is typically 10–30 m, so a tight radius (20–35 m) avoids firing before you're actually close enough to connect. If the gate opens a few seconds after you've already stopped, shrink the radius; if it fires too late, widen it slightly.
+
 > **This chart is orientative.** The board recommendations are based on common trade-offs — if you already have a different ESP32 board lying around, or you want to spend less, it will almost certainly work. Any ESP32 variant with BLE is supported; see [Adding a board not in the list](#adding-a-board-not-in-the-list) below. Real-world BLE range also varies a lot by environment, so treat the deployment guidance as a starting point and adjust based on what you observe in your specific garage.
 
 ---

@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.4.5]
+
+### Changed
+- Geofence radius slider range tightened from 50–200 m to 15–75 m; default changed from 100 m to 40 m. Both in-car and at-garage deployments work best in the 15–50 m range — at-garage BLE range through walls rarely exceeds 30 m, and in-car the limiting factor is the fob's RF reach to the gate from inside the car, not BLE
+
 ## [1.4.4]
 
 ### Fixed

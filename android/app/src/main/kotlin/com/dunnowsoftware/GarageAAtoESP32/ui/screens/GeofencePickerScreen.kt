@@ -69,9 +69,9 @@ private val CartoDarkTiles = object : OnlineTileSourceBase(
 private const val ACCENT_ARGB      = 0xFF2AD4A3.toInt()
 private const val ACCENT_FILL_ARGB = 0x302AD4A3
 
-private const val RADIUS_MIN     = 50f
-private const val RADIUS_MAX     = 200f
-private const val RADIUS_DEFAULT = 100f
+private const val RADIUS_MIN     = 15f
+private const val RADIUS_MAX     = 75f
+private const val RADIUS_DEFAULT = 40f
 private const val DEFAULT_ZOOM   = 17.0  // used only when centering on user location with no pin
 private const val CIRCLE_PADDING = 0.55  // fraction of map viewport the circle should fill
 
