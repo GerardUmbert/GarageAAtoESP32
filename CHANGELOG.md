@@ -11,6 +11,7 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - Speed gate (> 3 m/s) removed — AA connection is the authoritative signal that the user is in a vehicle
 - Geofence EXIT events are now requested from the OS and logged with speed, AA connection state, and time since last auto-fire
 - ENTER log now includes a full context summary (speed, AA connected, last auto-fire) before gate evaluation, so all information is visible even when Gate 1 fails
+- Geofence result notification now appears as a heads-up banner on the Android Auto head unit display and auto-dismisses after 5 seconds
 
 ### Fixed
 - Geofence auto-open was broken for drives longer than 60 seconds — the old timestamp-based AA check would always fail once the grace window elapsed

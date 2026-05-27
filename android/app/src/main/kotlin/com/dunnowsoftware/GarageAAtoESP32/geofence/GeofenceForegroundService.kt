@@ -121,7 +121,9 @@ class GeofenceForegroundService : Service() {
             .setSmallIcon(R.drawable.ic_tile)
             .setContentTitle(title)
             .setContentText(body)
+            .setCategory(Notification.CATEGORY_CAR_INFORMATION)
             .setAutoCancel(true)
+            .setTimeoutAfter(5_000)
             .build()
         nm.notify(NOTIF_RESULT_ID, notif)
     }
@@ -132,7 +134,7 @@ class GeofenceForegroundService : Service() {
         val channel = NotificationChannel(
             CHANNEL_ID,
             getString(R.string.notif_channel_geofence_name),
-            NotificationManager.IMPORTANCE_DEFAULT,
+            NotificationManager.IMPORTANCE_HIGH,
         ).apply {
             description = getString(R.string.notif_channel_geofence_desc)
         }
