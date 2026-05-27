@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.4.4]
+
+### Fixed
+- OS per-app language (App Info → Language) no longer ignored when no in-app language is saved; Settings screen now shows the correct active language
+
 ## [1.4.3]
 
 ### Fixed
