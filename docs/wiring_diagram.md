@@ -88,6 +88,60 @@ Fingerbot arm ──▶  physically presses the fob button
 - ⚠️ Adds the fingerbot's battery to maintain (USB-C, recharge every few months depending on use).
 - ⚠️ Latency adds ~0.5–1 s vs the direct wired path because the fingerbot has its own internal trigger-to-arm cycle.
 
+## Option D — Fake battery + power-rail switching (no soldering, no fob modification, recommended for rented fobs)
+
+This is the cleanest no-solder option when you cannot modify the fob at all. Instead of simulating a button press, the ESP32 controls the fob's entire power rail. The fob button is held down mechanically with a 3D-printed clip, so the fob fires every time it gets power.
+
+**Concept:**
+- A fake CR2032 "battery" made from copper tape slides into the fob's battery slot. The real CR2032 sits outside the fob connected by wires — easy to replace without opening anything.
+- The ESP32 switches the fob's ground line via a relay or NPN transistor. When the GPIO fires, the fob powers on with the button already pressed, transmits, and powers off again.
+- Zero PCB contact. Zero soldering inside the fob. Fully reversible — remove the fake battery insert and the 3D-printed clip and the fob is exactly as you found it.
+
+```
+ESP32 GPIO ──[1kΩ]──▶ Base (NPN)   or   ESP32 GPIO ──▶ Relay IN
+                        Collector ──▶ Fob battery − wire             ESP32 GND ──▶ Relay GND
+ESP32 GND ──────────▶ Emitter                                        Relay NO  ──▶ Fob battery − wire
+                                                                      Relay COM ──▶ CR2032 − (external)
+
+CR2032 + (external) ──▶ Fob battery + contact (via copper tape insert)
+CR2032 − (external) ──▶ switched by transistor/relay to Fob battery − contact
+```
+
+Low-side switching: the transistor/relay interrupts the negative rail. The positive rail is always connected. Standard, safe pattern.
+
+**Materials:**
+- 1 × NPN transistor (2N2222 / BC547) + 1 kΩ resistor, **or** 1 × 5V relay module
+- Thin copper tape or copper foil cut to the CR2032 footprint (~20 mm diameter) × 2 pieces (for + and − contacts inside the fob slot)
+- 2 × thin wires soldered to the copper tape pads before insertion
+- 1 × CR2032 held externally (e.g., taped to the outside of the fob body, or in a small CR2032 holder)
+- 1 × 3D-printed button press clip — a small bracket that physically depresses the fob's button and holds it down permanently. Model to suit your fob.
+
+**Assembly:**
+1. Cut two copper tape discs to the CR2032 size. Solder a short wire to each before sticking them in — the flat inside the fob slot makes post-insertion soldering very hard.
+2. Slide the two copper discs into the fob's battery slot, one on each contact face (+ and −). They replace the battery.
+3. Run both wires out of the fob (through the seam or a tiny routed notch if needed). The fob body does not need to be opened further.
+4. Connect the + wire directly to the CR2032 + terminal (external). Connect the − wire to the Collector of the NPN (or relay NO contact). Connect the CR2032 − terminal to the Emitter (or relay COM).
+5. Print and fit the button press clip so the fob's button is held depressed at all times.
+6. Wire the transistor base (or relay IN) to an ESP32 GPIO through a 1 kΩ resistor.
+7. In `config.h`, set `TRIGGER_MODE MODE_TRANSISTOR` (same low-side pulse behavior) and set `TRIGGER_PIN` to your chosen GPIO.
+
+**Verifying it works:**
+Before wiring to the ESP32, briefly touch the CR2032 − wire to GND by hand — the fob should transmit (LED flash, gate responds). If not, check the copper disc contacts are making firm contact with both battery slot faces.
+
+**One thing to test:**
+Some fobs require a clean power-on to register a button press — if the fob's MCU boots and immediately sees the button held, it may ignore it. Test by cycling power a few times rapidly: if it fires reliably every cycle, you're fine. If it occasionally misses, add a small capacitor (100 µF) across the fob's power rails to give the MCU a slightly softer power ramp.
+
+**Trade-offs:**
+- ✅ No soldering on the fob PCB — fob is returned exactly as received.
+- ✅ No fingerbot battery to maintain.
+- ✅ Lower latency than Option C (~same as Options A/B).
+- ✅ Battery replacement is trivial — CR2032 is external and accessible.
+- ✅ Works on any fob regardless of internal button layout.
+- ⚠️ Requires a 3D-printed button clip specific to your fob model (or improvise with foam/tape to hold the button down).
+- ⚠️ Slightly more assembly than Option C, but no fingerbot dependency.
+
+---
+
 ## Power Options
 
 ### Option 0 — Wall outlet + USB charger (easiest of all)

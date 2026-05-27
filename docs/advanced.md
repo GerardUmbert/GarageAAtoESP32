@@ -1,5 +1,44 @@
 # Advanced
 
+## Decision tree — is this project right for you, and how should you deploy it?
+
+```mermaid
+flowchart TD
+    A([Start]) --> B{Do you have access to\nthe garage motor or\ngate controller wiring?}
+
+    B -->|Yes — you own the garage\nor can wire into it| B1[This project is NOT the best fit.\nA proper smart opener wired\ndirectly to the motor is cleaner\nand more reliable.]
+    B -->|No — you only have a fob\nrented space, communal garage,\napartment block| C
+
+    C{Must you return\nthe fob untouched?} -->|Yes — rented / managed fob| D1{Can you solder\nwires to copper tape\noutside the fob?}
+    C -->|No — you own the fob\nor can open it| D2{Can you solder?}
+
+    D1 -->|Yes| D1a[Trigger: Option D\nFake CR2032 battery insert\n+ power-rail switching.\nBest renter option — no fingerbot,\nlower latency, fully reversible]
+    D1 -->|No — zero soldering| D1b[Trigger: Option C\nFingerbot capacitive pulse.\nStick everything with tape,\nno tools needed]
+
+    D2 -->|Yes| D3[Trigger: Option A\nNPN transistor — cheapest,\nlowest power, most reliable]
+    D2 -->|No| D4[Trigger: Option B\nRelay module — beginner-friendly,\nno fine soldering needed]
+
+    D1a & D1b & D3 & D4 --> E
+
+    E{Single vehicle\nand single user?} -->|Yes| F[Deploy IN the car\nESP32 + fob ride in the car,\npowered off USB / 12V socket]
+    E -->|No — multiple users\nor multiple vehicles| G[Deploy AT the garage\nESP32 fixed near the gate,\nfob stays at the garage]
+
+    F --> F1[Board: ESP32-C3 SuperMini\nTiny, USB-C, fits behind the dash.\nBLE range = fob RF range from inside car,\nusually plenty]
+
+    G --> H{Is there a wall or\nmetal obstacle between\nthe entrance and the board?}
+
+    H -->|No — open line of sight\nor thin wall| I{Power socket\navailable?}
+    H -->|Yes — concrete / brick /\nmetal door in the way| J{Power socket\navailable?}
+
+    I -->|Yes| I1[Board: Lolin32 Lite\nBuilt-in LiPo connector for\nbattery backup during outages]
+    I -->|No| I2[Board: Lolin32 Lite\nPower via USB power bank\nor 18650 + TP4056 charger board]
+
+    J -->|Yes| J1[Board: ESP32-DevKitC-32U\nU.FL connector for external\n2.4 GHz antenna — significant\nrange gain through walls.\nPower via USB charger]
+    J -->|No — need battery too| J2[Board: ESP32-DevKitC-32U\n+ external LiPo + TP4056\ncharger board wired externally.\nMost complex setup but covers\nboth range and battery backup]
+```
+
+---
+
 ## Supported boards
 
 The following boards have pre-configured environments in `firmware/platformio.ini`:
@@ -14,6 +53,8 @@ The following boards have pre-configured environments in `firmware/platformio.in
 | `nodemcu32s`    | NodeMCU ESP32-S        | GPIO 26             |
 
 The ESP32-C3 SuperMini uses the same chip as the DevKitM-1 — the `esp32c3` env covers both.
+
+The ESP32-DevKitC-32U (external antenna variant) uses the same chip and pinout as the standard DevKitC — the `esp32dev` env covers both. Select option 3 in the flash tool.
 
 Each env also has a `_debug` variant (e.g. `esp32c3_debug`) that enables verbose serial logging.
 

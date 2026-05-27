@@ -85,7 +85,8 @@ The ESP32 supports **three ways** to press the fob's button. Pick the one that f
 |---|---|---|---|
 | **A — Transistor** | Yes (3 wires inside the fob) | Yes | You own the fob and want the cheapest, lowest-power, most reliable setup |
 | **B — Relay module** | Yes (3 wires inside the fob) | Yes | Same as A but you prefer galvanic isolation or already have a relay module |
-| **C — Capacitive pulse on a fingerbot** | **No** | **No** | You **rent** the fob (apartment block, communal car park) and have to return it untouched |
+| **C — Capacitive pulse on a fingerbot** | **No** | **No** | You rent the fob and want zero assembly beyond sticking things together |
+| **D — Fake battery + power-rail switching** | Minimal (solder wires to copper tape only, outside fob) | **No** | You **rent** the fob and want a cleaner, lower-latency, no-fingerbot solution — best all-round no-modification option |
 
 ### Option A — Transistor (recommended if you can solder)
 
@@ -129,7 +130,13 @@ The setup looks like this:
 - ⚠️ Adds the fingerbot's battery to maintain (USB-C, recharge every few months).
 - ⚠️ Latency adds ~0.5–1 s vs the direct wired path because the fingerbot has its own internal trigger-to-arm cycle.
 
-See [docs/wiring_diagram.md](docs/wiring_diagram.md) for full diagrams, materials lists, and tuning notes for all three options.
+### Option D — Fake battery + power-rail switching (recommended for rented fobs)
+
+If you can't open or modify the fob, this is the cleanest wired option. A fake CR2032 made from copper tape slides into the fob's battery slot; the real battery sits outside for easy replacement. A 3D-printed clip holds the fob's button depressed permanently. The ESP32 switches the fob's ground rail via a transistor or relay — when the GPIO fires, the fob powers on with the button already held, transmits, and powers off.
+
+No PCB soldering inside the fob. No fingerbot battery to maintain. Lower latency than Option C. Fully reversible — remove the insert and clip and the fob is exactly as you found it.
+
+See [docs/wiring_diagram.md](docs/wiring_diagram.md) for full diagrams, materials lists, and tuning notes for all four options.
 
 ## Hardware required
 
@@ -139,6 +146,7 @@ See [docs/wiring_diagram.md](docs/wiring_diagram.md) for full diagrams, material
   - Option A: NPN transistor (2N2222 / BC547 / 2N3904, ~$0.10) + 1 kΩ resistor
   - Option B: 5V relay module (~$1)
   - Option C: Adaprox / Tuya Fingerbot Plus (model `ADFBB531` or similar, capacitive top button) + ~1 cm² of copper tape + thin wire
+  - Option D: NPN transistor or relay module + copper tape (two ~20 mm discs) + thin wire + CR2032 holder + 3D-printed button press clip for your fob model
 - **Garage key fob** — for Options A and B you'll solder two wires to the button pads inside it. For Option C you don't open the fob at all.
 - **Power source** — pick one based on where you're deploying:
   - Wall outlet + any USB phone charger (simplest — if there's a socket nearby at the garage)
