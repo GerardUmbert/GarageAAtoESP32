@@ -13,8 +13,7 @@ import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
 
 private const val TAG = "GeofenceService"
 private const val CHANNEL_ID = "geofence_auto_open"
-private const val NOTIF_ONGOING_ID = 1001
-private const val NOTIF_RESULT_ID  = 1002
+private const val NOTIF_ID = 1001
 
 // Design doc: elevated retry budget for at-garage deployment where 100m
 // may be marginal BLE range at geofence ENTER time.
@@ -39,7 +38,7 @@ class GeofenceForegroundService : Service() {
         }
 
         GeofenceLogger.i(this, TAG, "Service started for $deviceAddress — budget $GEOFENCE_MAX_ATTEMPTS attempts")
-        startForeground(NOTIF_ONGOING_ID, buildOngoingNotification())
+        startForeground(NOTIF_ID, buildOngoingNotification())
         fireOpen(deviceAddress, startId)
         return START_NOT_STICKY
     }
@@ -124,10 +123,11 @@ class GeofenceForegroundService : Service() {
             .setSmallIcon(R.drawable.ic_tile)
             .setContentTitle(title)
             .setContentText(body)
+            .setOnlyAlertOnce(false)
             .setAutoCancel(true)
             .setTimeoutAfter(5_000)
             .build()
-        nm.notify(NOTIF_RESULT_ID, notif)
+        nm.notify(NOTIF_ID, notif)
     }
 
     private fun createNotificationChannels() {
