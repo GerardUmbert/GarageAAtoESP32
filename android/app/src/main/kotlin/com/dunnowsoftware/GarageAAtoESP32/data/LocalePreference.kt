@@ -1,7 +1,6 @@
 package com.dunnowsoftware.GarageAAtoESP32.data
 
 import android.content.Context
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 
 private const val PREFS_NAME = "locale_prefs"
@@ -14,15 +13,9 @@ fun getSavedLocaleTag(context: Context): String? {
         .getString(KEY_LOCALE, null)
         .takeIf { !it.isNullOrEmpty() }
     if (saved != null) return saved
-    // Fall back to whatever the system/AppCompatDelegate has set (e.g. via
-    // App Info → Language in Android Settings), so the in-app language list
-    // reflects the OS-level selection even when nothing is stored in prefs.
-    val systemSet = AppCompatDelegate.getApplicationLocales()
-    if (systemSet.isEmpty) return null
-    val full = systemSet[0]?.toLanguageTag() ?: return null
-    // Match against the supported list: prefer an exact match, fall back to
-    // language-prefix match (e.g. "ca-ES" → "ca"). This avoids hardcoding
-    // any specific region variant.
+    // No in-app preference saved — reflect whatever locale is active on the
+    // context (covers both the OS per-app language setting and AppCompat).
+    val full = context.resources.configuration.locales[0]?.toLanguageTag() ?: return null
     return SUPPORTED_LOCALE_TAGS.firstOrNull { it == full }
         ?: SUPPORTED_LOCALE_TAGS.firstOrNull { full.startsWith(it.substringBefore('-')) }
 }

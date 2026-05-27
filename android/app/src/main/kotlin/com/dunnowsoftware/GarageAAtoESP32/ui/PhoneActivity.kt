@@ -55,8 +55,11 @@ class PhoneActivity : AppCompatActivity() {
     private val shortcutOpenPending = mutableStateOf(false)
 
     override fun attachBaseContext(newBase: Context) {
-        val tag = getSavedLocaleTag(newBase)
-        AppCompatDelegate.setApplicationLocales(localeListFromTag(tag))
+        val prefs = newBase.getSharedPreferences("locale_prefs", Context.MODE_PRIVATE)
+        val savedTag = prefs.getString("selected_locale", null).takeIf { !it.isNullOrEmpty() }
+        if (savedTag != null) {
+            AppCompatDelegate.setApplicationLocales(localeListFromTag(savedTag))
+        }
         super.attachBaseContext(newBase)
     }
 
