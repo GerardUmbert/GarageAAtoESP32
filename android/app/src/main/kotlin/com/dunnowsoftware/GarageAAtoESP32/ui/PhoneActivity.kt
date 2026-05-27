@@ -232,16 +232,27 @@ private fun AppRoot(
         )
 
         Route.Settings -> {
-            // Permission launcher for the three-step background location flow
+            // Permission launchers for the geofence setup flow:
+            // Step 1: fine location → Step 2: background location → Step 3: notifications → picker
+            val notifLauncher = rememberLauncherForActivityResult(
+                ActivityResultContracts.RequestPermission()
+            ) { push(Route.GeofencePicker) }
             val bgLocationLauncher = rememberLauncherForActivityResult(
                 ActivityResultContracts.RequestPermission()
-            ) { /* result handled implicitly; user landing on the picker is enough */ }
+            ) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                    ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                } else {
+                    push(Route.GeofencePicker)
+                }
+            }
             val fineLocationLauncher = rememberLauncherForActivityResult(
                 ActivityResultContracts.RequestMultiplePermissions()
             ) { grants ->
                 val fineGranted = grants[Manifest.permission.ACCESS_FINE_LOCATION] == true
                 if (fineGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    // Step 2: request background location (must be separate prompt on Android 10+)
                     bgLocationLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
                 }
             }
@@ -253,6 +264,9 @@ private fun AppRoot(
                 val bgOk = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
                     ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED
                 else true
+                val notifOk = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                    ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+                else true
 
                 when {
                     !fineOk -> fineLocationLauncher.launch(
@@ -263,6 +277,8 @@ private fun AppRoot(
                     )
                     !bgOk && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ->
                         bgLocationLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                    !notifOk && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU ->
+                        notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     else -> push(Route.GeofencePicker)
                 }
             }
