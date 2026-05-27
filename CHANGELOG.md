@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.4.2]
+
+### Changed
+- Geofence auto-open now requires Android Auto to be actively connected (via `CarConnection`) instead of checking a 60-second grace window from the last AA session stamp — correctly handles long drives where AA was connected from the start
+- Speed gate (> 3 m/s) removed — AA connection is the authoritative signal that the user is in a vehicle
+- Geofence EXIT events are now requested from the OS and logged with speed, AA connection state, and time since last auto-fire
+- ENTER log now includes a full context summary (speed, AA connected, last auto-fire) before gate evaluation, so all information is visible even when Gate 1 fails
+
+### Fixed
+- Geofence auto-open was broken for drives longer than 60 seconds — the old timestamp-based AA check would always fail once the grace window elapsed
+
 ## [1.4.1]
 
 ### Fixed

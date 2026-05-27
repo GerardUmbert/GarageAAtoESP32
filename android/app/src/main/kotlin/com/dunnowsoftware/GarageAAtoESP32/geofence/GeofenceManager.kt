@@ -37,7 +37,7 @@ class GeofenceManager(private val context: Context) {
         val geofence = Geofence.Builder()
             .setRequestId(GEOFENCE_ID_PREFIX + device.address)
             .setCircularRegion(lat, lng, radius)
-            .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
+            .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT)
             .setExpirationDuration(Geofence.NEVER_EXPIRE)
             .setNotificationResponsiveness(5_000)
             .build()

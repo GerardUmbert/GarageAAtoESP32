@@ -6,18 +6,11 @@ import android.content.Intent
 import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
 import com.google.android.gms.location.GeofencingEvent
 import com.google.android.gms.location.Geofence
-import com.google.android.gms.location.LocationServices
 
 private const val TAG = "GeofenceReceiver"
 
-// AA connection grace window: cover brief BT/USB flickers and slow AA startup.
-private const val CAR_CONNECTION_GRACE_MS = 60_000L
-
 // Debounce: don't re-trigger if a successful auto-open happened within this window.
 private const val DEBOUNCE_MS = 10_000L
-
-// Speed gate: reject walking/parked. ~11 km/h in m/s.
-private const val MIN_SPEED_MS = 3.0f
 
 class GeofenceBroadcastReceiver : BroadcastReceiver() {
 
@@ -44,6 +37,15 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
         else "no location"
         GeofenceLogger.i(context, TAG, "Geofence transition: $transitionName — IDs: $ids — $locStr")
 
+        if (event.geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT) {
+            val triggeringGeofences = event.triggeringGeofences ?: return
+            for (geofence in triggeringGeofences) {
+                val address = geofence.requestId.removePrefix(GEOFENCE_ID_PREFIX)
+                logExitContext(context, address, event)
+            }
+            return
+        }
+
         if (event.geofenceTransition != Geofence.GEOFENCE_TRANSITION_ENTER) return
 
         val triggeringGeofences = event.triggeringGeofences ?: return
@@ -67,50 +69,30 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
             return
         }
 
-        // Gate 1 — Android Auto connected or was connected within grace window.
         val now = System.currentTimeMillis()
-        val lastCar = prefs.lastCarConnectionAt
-        val carAgoMs = now - lastCar
-        val carRecent = carAgoMs <= CAR_CONNECTION_GRACE_MS
-        GeofenceLogger.d(context, TAG, "Gate 1 — AA last seen ${carAgoMs}ms ago (limit=${CAR_CONNECTION_GRACE_MS}ms): ${if (carRecent) "PASS" else "FAIL"}")
-        if (!carRecent) {
-            GeofenceLogger.i(context, TAG, "ENTER suppressed: AA not connected recently enough")
-            return
-        }
+        val enterSpeed = event.triggeringLocation?.speed ?: -1f
+        val enterLastFiredAgoMs = now - prefs.lastAutoFiredAt
+        val aaConnected = com.dunnowsoftware.GarageAAtoESP32.AndroidAutoState.isConnected
+        GeofenceLogger.i(context, TAG, "ENTER — device=$deviceAddress speed=${if (enterSpeed >= 0) "${enterSpeed}m/s" else "unknown"} AA connected=$aaConnected lastAutoFire ${enterLastFiredAgoMs}ms ago")
 
-        // Gate 2 — Speed > 3 m/s. Use the location baked into the geofence event if available,
-        // otherwise fall back to FusedLocationProviderClient.lastLocation.
-        val triggerLocation = event.triggeringLocation
-        val speed = triggerLocation?.speed ?: -1f
-        GeofenceLogger.d(context, TAG, "Gate 2 — event location speed: ${if (speed >= 0) "${speed} m/s" else "unknown (no speed in event location)"}")
-        if (speed >= 0 && speed < MIN_SPEED_MS) {
-            GeofenceLogger.i(context, TAG, "ENTER suppressed: speed too low (${speed} m/s < ${MIN_SPEED_MS} m/s)")
-            return
-        }
-        if (speed < 0) {
-            GeofenceLogger.d(context, TAG, "Gate 2 — falling back to FusedLocation.lastLocation for speed")
-            try {
-                LocationServices.getFusedLocationProviderClient(context)
-                    .lastLocation
-                    .addOnSuccessListener { loc ->
-                        val fallbackSpeed = loc?.speed ?: -1f
-                        GeofenceLogger.d(context, TAG, "Gate 2 fallback — lastLocation speed: ${if (fallbackSpeed >= 0) "${fallbackSpeed} m/s" else "null/unknown"}")
-                        if (loc == null || fallbackSpeed < MIN_SPEED_MS) {
-                            GeofenceLogger.i(context, TAG, "ENTER suppressed: fallback speed too low (${fallbackSpeed} m/s)")
-                            return@addOnSuccessListener
-                        }
-                        fireIfNotDebounced(context, deviceAddress)
-                    }
-                    .addOnFailureListener {
-                        GeofenceLogger.w(context, TAG, "Gate 2 fallback — could not read lastLocation: $it")
-                    }
-            } catch (_: SecurityException) {
-                GeofenceLogger.w(context, TAG, "Gate 2 fallback — no location permission")
-            }
+        // Gate 1 — Android Auto must be connected.
+        GeofenceLogger.d(context, TAG, "Gate 1 — AA connected: ${if (aaConnected) "PASS" else "FAIL"}")
+        if (!aaConnected) {
+            GeofenceLogger.i(context, TAG, "ENTER suppressed: AA not connected")
             return
         }
 
         fireIfNotDebounced(context, deviceAddress)
+    }
+
+    private fun logExitContext(context: Context, deviceAddress: String, event: GeofencingEvent) {
+        val prefs = DevicePreferences(context)
+        val now = System.currentTimeMillis()
+        val loc = event.triggeringLocation
+        val speed = loc?.speed ?: -1f
+        val aaConnected = com.dunnowsoftware.GarageAAtoESP32.AndroidAutoState.isConnected
+        val lastFiredAgoMs = now - prefs.lastAutoFiredAt
+        GeofenceLogger.i(context, TAG, "EXIT — device=$deviceAddress speed=${if (speed >= 0) "${speed}m/s" else "unknown"} AA connected=$aaConnected lastAutoFire ${lastFiredAgoMs}ms ago")
     }
 
     private fun fireIfNotDebounced(context: Context, deviceAddress: String) {

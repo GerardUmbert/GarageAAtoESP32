@@ -93,15 +93,6 @@ class DevicePreferences(context: Context) {
         get() = prefs.getLong(KEY_LAST_AUTO_FIRED, 0L)
         set(value) = prefs.edit().putLong(KEY_LAST_AUTO_FIRED, value).apply()
 
-    /**
-     * Epoch-ms of the last time Android Auto was observed connected.
-     * Written by GarageSession on start/stop so the broadcast receiver
-     * (different process) can check the 60s grace window.
-     */
-    var lastCarConnectionAt: Long
-        get() = prefs.getLong(KEY_LAST_CAR_CONNECTION, 0L)
-        set(value) = prefs.edit().putLong(KEY_LAST_CAR_CONNECTION, value).apply()
-
     val hasPairedDevice: Boolean
         get() = pairedDevice != null
 
@@ -154,6 +145,5 @@ class DevicePreferences(context: Context) {
         private const val KEY_DEMO              = "demo_mode"
         private const val KEY_LAST_OPENED       = "last_opened_at"
         private const val KEY_LAST_AUTO_FIRED   = "last_auto_fired_at"
-        private const val KEY_LAST_CAR_CONNECTION = "last_car_connection_at"
     }
 }
