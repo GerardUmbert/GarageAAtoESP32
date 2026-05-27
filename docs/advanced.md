@@ -31,7 +31,7 @@ flowchart TD
     H -->|Yes — concrete / brick /\nmetal door in the way| J{Power socket\navailable?}
 
     I -->|Yes| I1[Board: Lolin32 Lite\nBuilt-in LiPo connector for\nbattery backup during outages]
-    I -->|No| I2[Board: Lolin32 Lite\nPower via USB power bank\nor 18650 + TP4056 charger board]
+    I -->|No| I2[Board: Lolin32 Lite\nLiPo to JST connector\n+ small solar panel to USB port]
 
     J -->|Yes| J1[Board: ESP32-DevKitC-32U\nU.FL connector for external\n2.4 GHz antenna — significant\nrange gain through walls.\nPower via USB charger]
     J -->|No — need battery too| J2[Board: ESP32-DevKitC-32U\n+ external LiPo + TP4056\ncharger board wired externally.\nMost complex setup but covers\nboth range and battery backup]
