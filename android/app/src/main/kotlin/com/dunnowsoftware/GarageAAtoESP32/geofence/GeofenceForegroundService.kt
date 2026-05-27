@@ -121,7 +121,6 @@ class GeofenceForegroundService : Service() {
             .setSmallIcon(R.drawable.ic_tile)
             .setContentTitle(title)
             .setContentText(body)
-            .setCategory(Notification.CATEGORY_CAR_INFORMATION)
             .setAutoCancel(true)
             .setTimeoutAfter(5_000)
             .build()
