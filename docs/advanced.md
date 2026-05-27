@@ -37,6 +37,8 @@ flowchart TD
     J -->|No — need battery too| J2[Board: ESP32-DevKitC-32U\n+ external LiPo + TP4056\ncharger board wired externally.\nMost complex setup but covers\nboth range and battery backup]
 ```
 
+> **This chart is orientative.** The board recommendations are based on common trade-offs — if you already have a different ESP32 board lying around, or you want to spend less, it will almost certainly work. Any ESP32 variant with BLE is supported; see [Adding a board not in the list](#adding-a-board-not-in-the-list) below. Real-world BLE range also varies a lot by environment, so treat the deployment guidance as a starting point and adjust based on what you observe in your specific garage.
+
 ---
 
 ## Supported boards
