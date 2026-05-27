@@ -15,8 +15,8 @@ private const val TAG = "GeofenceService"
 private const val CHANNEL_ID = "geofence_auto_open"
 private const val NOTIF_ID = 1001
 
-// Design doc: elevated retry budget for at-garage deployment where 100m
-// may be marginal BLE range at geofence ENTER time.
+// Elevated retry budget: geofence fires up to 40 m out; the phone keeps
+// retrying as it drives closer, so BLE range at trigger time doesn't matter.
 private const val GEOFENCE_MAX_ATTEMPTS = 8
 
 class GeofenceForegroundService : Service() {
