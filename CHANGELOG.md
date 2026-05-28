@@ -8,8 +8,11 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 - Geofence radius slider range tightened from 50–200 m to 15–75 m; default changed from 100 m to 40 m. Both in-car and at-garage deployments work best in the 15–50 m range — at-garage BLE range through walls rarely exceeds 30 m, and in-car the limiting factor is the fob's RF reach to the gate from inside the car, not BLE
-- Geofence setup flow now requests battery optimisation exemption ("Allow background activity") as a final step, ensuring the app is not throttled by Doze or App Standby
-- App declares it should not be hibernated by Android's unused-app management, preventing automatic permission revocation on devices left idle for extended periods
+- Permission setup replaced with a paged onboarding screen triggered at the point of action (tapping Set Location or enabling Auto-open), instead of persistent warning rows in Settings. Each step shows a phone-frame illustration of the relevant system screen before it opens
+- Onboarding now verifies each permission was actually granted before advancing to the next step — staying on the same step if the user dismissed without acting
+- Battery step attempts to open the per-app battery settings directly; falls back to App Info on OEMs that don't support the direct intent
+- Battery illustration animates between App Info (Battery row highlighted) and the options list, showing the two-tap flow
+- Battery and unused-app onboarding text made OEM-agnostic — describes what to look for rather than naming a specific label, since wording varies by manufacturer
 
 ## [1.4.4]
 

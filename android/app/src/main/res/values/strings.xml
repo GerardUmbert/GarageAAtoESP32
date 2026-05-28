@@ -160,5 +160,5 @@
     <string name="onboarding_battery_title">Allow background activity</string>
     <string name="onboarding_battery_body">You\'ll land on the App Info screen. Tap Battery, then choose the least restrictive option available (e.g. \"Unrestricted\" or \"No restrictions\") so the app can open your garage in the background.</string>
     <string name="onboarding_unused_title">Keep app active</string>
-    <string name="onboarding_unused_body">On the next screen, turn off \"Pause app activity if unused\" so Android doesn\'t revoke permissions when the app hasn\'t been opened for a while.</string>
+    <string name="onboarding_unused_body">On the next screen, look for an option about pausing or managing the app when unused (e.g. \"Pause app activity if unused\" or \"Manage app if unused\") and turn it off so Android doesn\'t revoke permissions.</string>
 </resources>

@@ -144,5 +144,5 @@
     <string name="onboarding_battery_title">Salli tausta-aktiviteetti</string>
     <string name="onboarding_battery_body">Päädyt Sovellustiedot-näytölle. Napauta Akku ja valitse vähiten rajoittava saatavilla oleva vaihtoehto (esim. \"Rajoittamaton\"), jotta sovellus voi avata autotallin taustalla.</string>
     <string name="onboarding_unused_title">Pidä sovellus aktiivisena</string>
-    <string name="onboarding_unused_body">Poista seuraavalla näytöllä käytöstä \"Keskeytä sovelluksen toiminta, jos sitä ei käytetä\", jotta Android ei peruuta lupia sovelluksen pitkän käyttämättömyyden aikana.</string>
+    <string name="onboarding_unused_body">Etsi seuraavalta näytöltä vaihtoehto sovelluksen keskeyttämisestä tai hallinnasta käyttämattomana (esim. \"Keskeytä toiminta jos ei käytetä\") ja poista se käytöstä, jotta Android ei peruuta lupia.</string>
 </resources>

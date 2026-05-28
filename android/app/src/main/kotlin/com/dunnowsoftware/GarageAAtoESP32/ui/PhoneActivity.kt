@@ -339,15 +339,36 @@ private fun AppRoot(
             val route = current as Route.GeofenceOnboarding
             val steps = buildOnboardingSteps(ctx, route.stepIds)
 
-            val unusedAppLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {}
-            val batteryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {}
-            val notifLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
-            val bgLocationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
-            val fineLocationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {}
+            // Each launcher holds a pending advance callback — called only when the check passes.
+            var pendingAdvance by remember { mutableStateOf<(() -> Unit)?>(null) }
+
+            val unusedAppLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+                val ok = Build.VERSION.SDK_INT < Build.VERSION_CODES.R || ctx.packageManager.isAutoRevokeWhitelisted
+                if (ok) pendingAdvance?.invoke()
+                pendingAdvance = null
+            }
+            val batteryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+                val pm = ctx.getSystemService(Context.POWER_SERVICE) as PowerManager
+                if (pm.isIgnoringBatteryOptimizations(ctx.packageName)) pendingAdvance?.invoke()
+                pendingAdvance = null
+            }
+            val notifLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+                if (granted) pendingAdvance?.invoke()
+                pendingAdvance = null
+            }
+            val bgLocationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+                if (granted) pendingAdvance?.invoke()
+                pendingAdvance = null
+            }
+            val fineLocationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { perms ->
+                if (perms[Manifest.permission.ACCESS_FINE_LOCATION] == true) pendingAdvance?.invoke()
+                pendingAdvance = null
+            }
 
             GeofencePermissionOnboardingScreen(
                 steps = steps,
-                onStepAction = { id ->
+                onStepAction = { id, advance ->
+                    pendingAdvance = advance
                     when (id) {
                         OnboardingStepId.FINE_LOCATION -> fineLocationLauncher.launch(
                             arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)

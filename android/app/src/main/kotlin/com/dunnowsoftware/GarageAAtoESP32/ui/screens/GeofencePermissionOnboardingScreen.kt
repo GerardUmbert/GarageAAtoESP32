@@ -44,13 +44,17 @@ data class OnboardingStep(
 @Composable
 fun GeofencePermissionOnboardingScreen(
     steps: List<OnboardingStep>,
-    onStepAction: (OnboardingStepId) -> Unit,
+    onStepAction: (id: OnboardingStepId, advance: () -> Unit) -> Unit,
     onCancel: () -> Unit,
     onDone: () -> Unit,
     cancelLabel: String = stringResource(R.string.onboarding_skip),
 ) {
     var index by rememberSaveable { mutableIntStateOf(0) }
     val step = steps.getOrNull(index) ?: return
+
+    fun advance() {
+        if (index < steps.lastIndex) index++ else onDone()
+    }
 
     Column(
         modifier = Modifier
@@ -99,15 +103,7 @@ fun GeofencePermissionOnboardingScreen(
 
         PrimaryButton(
             text = stringResource(R.string.onboarding_continue),
-            onClick = {
-                if (index < steps.lastIndex) {
-                    onStepAction(step.id)
-                    index++
-                } else {
-                    onStepAction(step.id)
-                    onDone()
-                }
-            },
+            onClick = { onStepAction(step.id, ::advance) },
             modifier = Modifier.fillMaxWidth(),
         )
 
