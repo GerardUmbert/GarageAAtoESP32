@@ -1,5 +1,9 @@
 package com.dunnowsoftware.GarageAAtoESP32.ui.screens
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -16,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import com.dunnowsoftware.GarageAAtoESP32.R
 import com.dunnowsoftware.GarageAAtoESP32.ui.components.GhostButton
 import com.dunnowsoftware.GarageAAtoESP32.ui.components.PrimaryButton
@@ -318,64 +323,124 @@ internal fun NotificationsIllustration() {
 
 @Composable
 internal fun BatteryIllustration() {
+    // 0 = App Info screen, 1 = Battery options screen
+    var scene by remember { mutableIntStateOf(0) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(2000)
+            scene = 1
+            delay(2500)
+            scene = 0
+        }
+    }
+
     PhoneFrame {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-        ) {
-            Text(
-                "Battery",
-                color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(bottom = 8.dp),
-            )
-            val options = listOf(
-                Triple("Unrestricted", "Allows background use.", true),
-                Triple("Optimized", "", false),
-                Triple("Restricted", "", false),
-            )
-            options.forEachIndexed { i, (label, sub, highlighted) ->
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(if (highlighted) GarageColors.AccentSoft else Color(0xFF1E2228))
-                        .border(
-                            if (highlighted) 1.dp else 0.dp,
-                            GarageColors.AccentLine, RoundedCornerShape(8.dp),
-                        )
-                        .padding(horizontal = 8.dp, vertical = 6.dp),
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(14.dp)
-                                .clip(CircleShape)
-                                .background(if (highlighted) GarageColors.Accent else Color(0xFF2E3338))
-                                .border(
-                                    1.dp,
-                                    if (highlighted) GarageColors.Accent else GarageColors.HairlineStrong,
-                                    CircleShape,
-                                ),
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            label,
-                            color = if (highlighted) GarageColors.Accent else GarageColors.TextDim,
-                            fontSize = 11.sp,
-                            fontWeight = if (highlighted) FontWeight.Bold else FontWeight.Normal,
-                        )
-                    }
-                    if (sub.isNotEmpty()) {
-                        Text(
-                            sub,
-                            color = GarageColors.TextDim, fontSize = 9.sp,
-                            modifier = Modifier.padding(start = 20.dp, top = 2.dp),
-                        )
-                    }
-                }
-                if (i < options.lastIndex) Spacer(Modifier.height(3.dp))
+        AnimatedContent(
+            targetState = scene,
+            transitionSpec = {
+                if (targetState > initialState)
+                    slideInHorizontally { it } togetherWith slideOutHorizontally { -it }
+                else
+                    slideInHorizontally { -it } togetherWith slideOutHorizontally { it }
+            },
+            label = "battery_scene",
+        ) { s ->
+            when (s) {
+                0 -> BatteryAppInfoScene()
+                else -> BatteryOptionsScene()
             }
+        }
+    }
+}
+
+@Composable
+private fun BatteryAppInfoScene() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+    ) {
+        Text(
+            "App Info",
+            color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(bottom = 10.dp),
+        )
+        val rows = listOf("Storage" to false, "Battery" to true, "Permissions" to false, "Notifications" to false)
+        rows.forEach { (label, highlighted) ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(if (highlighted) GarageColors.AccentSoft else Color(0xFF1E2228))
+                    .border(if (highlighted) 1.dp else 0.dp, GarageColors.AccentLine, RoundedCornerShape(8.dp))
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    label,
+                    color = if (highlighted) GarageColors.Accent else GarageColors.TextDim,
+                    fontSize = 11.sp,
+                    fontWeight = if (highlighted) FontWeight.Bold else FontWeight.Normal,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    "›",
+                    color = if (highlighted) GarageColors.Accent else GarageColors.TextFaint,
+                    fontSize = 14.sp,
+                )
+            }
+            Spacer(Modifier.height(3.dp))
+        }
+    }
+}
+
+@Composable
+private fun BatteryOptionsScene() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+    ) {
+        Text(
+            "Battery",
+            color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(bottom = 8.dp),
+        )
+        val options = listOf(
+            Triple("Unrestricted", "Allows background use.", true),
+            Triple("Optimized", "", false),
+            Triple("Restricted", "", false),
+        )
+        options.forEachIndexed { i, (label, sub, highlighted) ->
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(if (highlighted) GarageColors.AccentSoft else Color(0xFF1E2228))
+                    .border(if (highlighted) 1.dp else 0.dp, GarageColors.AccentLine, RoundedCornerShape(8.dp))
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(14.dp)
+                            .clip(CircleShape)
+                            .background(if (highlighted) GarageColors.Accent else Color(0xFF2E3338))
+                            .border(1.dp, if (highlighted) GarageColors.Accent else GarageColors.HairlineStrong, CircleShape),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        label,
+                        color = if (highlighted) GarageColors.Accent else GarageColors.TextDim,
+                        fontSize = 11.sp,
+                        fontWeight = if (highlighted) FontWeight.Bold else FontWeight.Normal,
+                    )
+                }
+                if (sub.isNotEmpty()) {
+                    Text(sub, color = GarageColors.TextDim, fontSize = 9.sp, modifier = Modifier.padding(start = 20.dp, top = 2.dp))
+                }
+            }
+            if (i < options.lastIndex) Spacer(Modifier.height(3.dp))
         }
     }
 }

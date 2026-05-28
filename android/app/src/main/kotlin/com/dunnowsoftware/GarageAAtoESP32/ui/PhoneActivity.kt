@@ -359,9 +359,12 @@ private fun AppRoot(
                             Manifest.permission.POST_NOTIFICATIONS
                         )
                         OnboardingStepId.BATTERY -> batteryLauncher.launch(
-                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            Intent("android.settings.APP_BATTERY_SETTINGS").apply {
                                 data = Uri.parse("package:${ctx.packageName}")
-                            }
+                            }.takeIf { ctx.packageManager.resolveActivity(it, 0) != null }
+                                ?: Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                    data = Uri.parse("package:${ctx.packageName}")
+                                }
                         )
                         OnboardingStepId.UNUSED_APP -> unusedAppLauncher.launch(
                             IntentCompat.createManageUnusedAppRestrictionsIntent(ctx, ctx.packageName)
