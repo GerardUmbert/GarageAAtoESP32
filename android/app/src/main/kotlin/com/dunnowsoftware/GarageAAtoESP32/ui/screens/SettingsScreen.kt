@@ -302,6 +302,7 @@ fun SettingsScreen(
                         onCheckedChange = if (geofenceSet) onToggleGeofence else { _ -> },
                         enabled = geofenceSet,
                     )
+
                 }
                 Spacer(Modifier.height(24.dp))
             }

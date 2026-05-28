@@ -120,4 +120,29 @@
     <string name="settings_share_log_label">Compartir registro de geofence</string>
     <string name="toast_log_empty">El registro está vacío — aún no se han registrado eventos</string>
     <string name="toast_log_share_title">Compartir registro de geofence</string>
+
+    <string name="perm_dialog_location_title">Se necesita ubicación precisa</string>
+    <string name="perm_dialog_location_message">En la siguiente pantalla, asegúrate de activar Ubicación precisa — la ubicación aproximada no es suficientemente exacta para que la zona de apertura automática funcione correctamente.</string>
+    <string name="perm_dialog_battery_title">Permitir actividad en segundo plano</string>
+    <string name="perm_dialog_battery_message">En la siguiente pantalla, toca Batería y luego selecciona \"Sin restricciones\" para que la app pueda abrir tu garaje en segundo plano.</string>
+    <string name="perm_dialog_unused_title">Desactivar \"Pausar si no se usa\"</string>
+    <string name="perm_dialog_unused_message">En la siguiente pantalla, desactiva \"Pausar actividad si no se usa\" para que Android no revoque los permisos cuando la app lleve tiempo sin abrirse.</string>
+    <string name="perm_dialog_ok">Abrir ajustes</string>
+    <string name="settings_warn_battery">Actividad en segundo plano restringida — toca para corregir</string>
+    <string name="settings_warn_unused">La app puede pausarse si no se usa — toca para corregir</string>
+
+    <string name="onboarding_step_indicator">Paso %1$d de %2$d</string>
+    <string name="onboarding_continue">Continuar</string>
+    <string name="onboarding_skip">Omitir configuración</string>
+    <string name="onboarding_cancel">Cancelar</string>
+    <string name="onboarding_location_title">Permitir ubicación precisa</string>
+    <string name="onboarding_location_body">La app necesita tu ubicación precisa para detectar cuándo llegas a tu garaje. En la siguiente pantalla, asegúrate de activar Ubicación precisa.</string>
+    <string name="onboarding_bg_location_title">Permitir ubicación en segundo plano</string>
+    <string name="onboarding_bg_location_body">La zona de apertura automática solo funciona mientras conduces, por lo que la app necesita acceso a la ubicación incluso cuando no está abierta. Elige \"Permitir siempre\" en la siguiente pantalla.</string>
+    <string name="onboarding_notifications_title">Permitir notificaciones</string>
+    <string name="onboarding_notifications_body">Recibirás una notificación cada vez que el garaje se abra automáticamente para que sepas que ha funcionado.</string>
+    <string name="onboarding_battery_title">Permitir actividad en segundo plano</string>
+    <string name="onboarding_battery_body">En la siguiente pantalla, busca los ajustes de uso de batería y elige la opción menos restrictiva (p. ej. \"Sin restricciones\") para que la app pueda abrir tu garaje en segundo plano.</string>
+    <string name="onboarding_unused_title">Mantener la app activa</string>
+    <string name="onboarding_unused_body">En la siguiente pantalla, desactiva \"Pausar actividad si no se usa\" para que Android no revoque los permisos cuando la app lleve tiempo sin abrirse.</string>
 </resources>

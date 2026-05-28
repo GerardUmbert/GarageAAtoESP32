@@ -4,6 +4,16 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.PowerManager
+import android.provider.Settings
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.core.content.IntentCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import android.graphics.Color as AndroidColor
 import android.os.Build
 import android.os.Bundle
@@ -137,6 +147,10 @@ private sealed interface Route {
     data object ScanAnother    : Route
     data object Language       : Route
     data object GeofencePicker : Route
+    data class GeofenceOnboarding(
+        val stepIds: List<String>,
+        val afterPickerNeeded: Boolean,
+    ) : Route
 }
 
 @Composable
@@ -235,55 +249,24 @@ private fun AppRoot(
         )
 
         Route.Settings -> {
-            // Permission launchers for the geofence setup flow:
-            // Step 1: fine location → Step 2: background location → Step 3: notifications → picker
-            val notifLauncher = rememberLauncherForActivityResult(
-                ActivityResultContracts.RequestPermission()
-            ) { push(Route.GeofencePicker) }
-            val bgLocationLauncher = rememberLauncherForActivityResult(
-                ActivityResultContracts.RequestPermission()
-            ) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                    ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-                ) {
-                    notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                } else {
-                    push(Route.GeofencePicker)
+            fun collectMissingSteps(geofenceAlreadySet: Boolean): List<OnboardingStepId> {
+                val missing = mutableListOf<OnboardingStepId>()
+                if (!geofenceAlreadySet) {
+                    if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+                        missing += OnboardingStepId.FINE_LOCATION
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+                        ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED)
+                        missing += OnboardingStepId.BACKGROUND_LOCATION
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                        ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
+                        missing += OnboardingStepId.NOTIFICATIONS
                 }
-            }
-            val fineLocationLauncher = rememberLauncherForActivityResult(
-                ActivityResultContracts.RequestMultiplePermissions()
-            ) { grants ->
-                val fineGranted = grants[Manifest.permission.ACCESS_FINE_LOCATION] == true
-                if (fineGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    bgLocationLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-                }
-            }
-
-            fun requestLocationPermissions() {
-                val fineOk = ContextCompat.checkSelfPermission(
-                    ctx, Manifest.permission.ACCESS_FINE_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED
-                val bgOk = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
-                    ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED
-                else true
-                val notifOk = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
-                    ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
-                else true
-
-                when {
-                    !fineOk -> fineLocationLauncher.launch(
-                        arrayOf(
-                            Manifest.permission.ACCESS_COARSE_LOCATION,
-                            Manifest.permission.ACCESS_FINE_LOCATION,
-                        )
-                    )
-                    !bgOk && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ->
-                        bgLocationLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-                    !notifOk && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU ->
-                        notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                    else -> push(Route.GeofencePicker)
-                }
+                val pm = ctx.getSystemService(Context.POWER_SERVICE) as PowerManager
+                if (!pm.isIgnoringBatteryOptimizations(ctx.packageName))
+                    missing += OnboardingStepId.BATTERY
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !ctx.packageManager.isAutoRevokeWhitelisted)
+                    missing += OnboardingStepId.UNUSED_APP
+                return missing
             }
 
             SettingsScreen(
@@ -325,16 +308,84 @@ private fun AppRoot(
                         ctx.startActivity(Intent.createChooser(shareIntent, ctx.getString(R.string.toast_log_share_title)))
                     }
                 },
-                onGeofencePicker = { requestLocationPermissions() },
-                onToggleGeofence = { enabled ->
-                    prefs.setGeofenceEnabled(enabled)
-                    val device = prefs.pairedDevice
-                    if (device != null) {
-                        val gm = GeofenceManager(ctx)
-                        if (enabled) gm.register(device) else gm.unregister(device.address)
-                    }
-                    bust()
+                onGeofencePicker = {
+                    val missing = collectMissingSteps(geofenceAlreadySet = false)
+                    if (missing.isEmpty()) push(Route.GeofencePicker)
+                    else push(Route.GeofenceOnboarding(missing.map { it.name }, afterPickerNeeded = true))
                 },
+                onToggleGeofence = { enabled ->
+                    if (!enabled) {
+                        prefs.setGeofenceEnabled(false)
+                        val device = prefs.pairedDevice
+                        if (device != null) GeofenceManager(ctx).unregister(device.address)
+                        bust()
+                    } else {
+                        val geofenceSet = prefs.pairedDevice?.hasGeofence == true
+                        val missing = collectMissingSteps(geofenceAlreadySet = geofenceSet)
+                        if (missing.isEmpty()) {
+                            prefs.setGeofenceEnabled(true)
+                            val device = prefs.pairedDevice
+                            if (device != null) GeofenceManager(ctx).register(device)
+                            bust()
+                        } else {
+                            push(Route.GeofenceOnboarding(missing.map { it.name }, afterPickerNeeded = !geofenceSet))
+                        }
+                    }
+                },
+            )
+        }
+
+        is Route.GeofenceOnboarding -> {
+            val route = current as Route.GeofenceOnboarding
+            val steps = buildOnboardingSteps(ctx, route.stepIds)
+
+            val unusedAppLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {}
+            val batteryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {}
+            val notifLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+            val bgLocationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+            val fineLocationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {}
+
+            GeofencePermissionOnboardingScreen(
+                steps = steps,
+                onStepAction = { id ->
+                    when (id) {
+                        OnboardingStepId.FINE_LOCATION -> fineLocationLauncher.launch(
+                            arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)
+                        )
+                        OnboardingStepId.BACKGROUND_LOCATION -> bgLocationLauncher.launch(
+                            Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                        )
+                        OnboardingStepId.NOTIFICATIONS -> notifLauncher.launch(
+                            Manifest.permission.POST_NOTIFICATIONS
+                        )
+                        OnboardingStepId.BATTERY -> batteryLauncher.launch(
+                            Intent("android.settings.APP_BATTERY_SETTINGS").apply {
+                                data = Uri.parse("package:${ctx.packageName}")
+                            }.takeIf { ctx.packageManager.resolveActivity(it, 0) != null }
+                                ?: Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                    data = Uri.parse("package:${ctx.packageName}")
+                                }
+                        )
+                        OnboardingStepId.UNUSED_APP -> unusedAppLauncher.launch(
+                            IntentCompat.createManageUnusedAppRestrictionsIntent(ctx, ctx.packageName)
+                        )
+                    }
+                },
+                onCancel = { pop() },
+                onDone = {
+                    pop()
+                    if (route.afterPickerNeeded) {
+                        push(Route.GeofencePicker)
+                    } else {
+                        prefs.setGeofenceEnabled(true)
+                        val device = prefs.pairedDevice
+                        if (device != null) GeofenceManager(ctx).register(device)
+                        bust()
+                    }
+                },
+                cancelLabel = ctx.getString(
+                    if (route.afterPickerNeeded) R.string.onboarding_skip else R.string.onboarding_cancel
+                ),
             )
         }
 
@@ -519,16 +570,66 @@ private fun routeKey(r: Route): String = when (r) {
     Route.Settings       -> "settings"
     Route.Language       -> "language"
     Route.GeofencePicker -> "geofence_picker"
+    is Route.GeofenceOnboarding -> "geo_onboard:${r.stepIds.joinToString(",")}:${r.afterPickerNeeded}"
 }
 
-private fun keyRoute(k: String): Route = when (k) {
-    "welcome"          -> Route.Welcome
-    "chg_pwd"          -> Route.ChangePassword
-    "scan"             -> Route.Scan
-    "scan_another"     -> Route.ScanAnother
-    "pair"             -> Route.Pair
-    "settings"         -> Route.Settings
-    "language"         -> Route.Language
-    "geofence_picker"  -> Route.GeofencePicker
-    else               -> Route.Main
+private fun keyRoute(k: String): Route = when {
+    k == "welcome"          -> Route.Welcome
+    k == "chg_pwd"          -> Route.ChangePassword
+    k == "scan"             -> Route.Scan
+    k == "scan_another"     -> Route.ScanAnother
+    k == "pair"             -> Route.Pair
+    k == "settings"         -> Route.Settings
+    k == "language"         -> Route.Language
+    k == "geofence_picker"  -> Route.GeofencePicker
+    k.startsWith("geo_onboard:") -> {
+        val payload = k.removePrefix("geo_onboard:")
+        val lastColon = payload.lastIndexOf(':')
+        val stepsPart = if (lastColon > 0) payload.substring(0, lastColon) else payload
+        val afterPicker = payload.substringAfterLast(':') == "true"
+        Route.GeofenceOnboarding(
+            stepIds = stepsPart.split(",").filter { it.isNotEmpty() },
+            afterPickerNeeded = afterPicker,
+        )
+    }
+    else -> Route.Main
+}
+
+private fun buildOnboardingSteps(
+    ctx: android.content.Context,
+    stepIds: List<String>,
+): List<OnboardingStep> = stepIds.mapNotNull { name ->
+    when (runCatching { OnboardingStepId.valueOf(name) }.getOrNull()) {
+        OnboardingStepId.FINE_LOCATION -> OnboardingStep(
+            id = OnboardingStepId.FINE_LOCATION,
+            titleRes = R.string.onboarding_location_title,
+            bodyRes = R.string.onboarding_location_body,
+            illustration = { LocationPermissionIllustration() },
+        )
+        OnboardingStepId.BACKGROUND_LOCATION -> OnboardingStep(
+            id = OnboardingStepId.BACKGROUND_LOCATION,
+            titleRes = R.string.onboarding_bg_location_title,
+            bodyRes = R.string.onboarding_bg_location_body,
+            illustration = { BackgroundLocationIllustration() },
+        )
+        OnboardingStepId.NOTIFICATIONS -> OnboardingStep(
+            id = OnboardingStepId.NOTIFICATIONS,
+            titleRes = R.string.onboarding_notifications_title,
+            bodyRes = R.string.onboarding_notifications_body,
+            illustration = { NotificationsIllustration() },
+        )
+        OnboardingStepId.BATTERY -> OnboardingStep(
+            id = OnboardingStepId.BATTERY,
+            titleRes = R.string.onboarding_battery_title,
+            bodyRes = R.string.onboarding_battery_body,
+            illustration = { BatteryIllustration() },
+        )
+        OnboardingStepId.UNUSED_APP -> OnboardingStep(
+            id = OnboardingStepId.UNUSED_APP,
+            titleRes = R.string.onboarding_unused_title,
+            bodyRes = R.string.onboarding_unused_body,
+            illustration = { UnusedAppIllustration() },
+        )
+        null -> null
+    }
 }

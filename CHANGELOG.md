@@ -8,6 +8,8 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 - Geofence radius slider range tightened from 50–200 m to 15–75 m; default changed from 100 m to 40 m. Both in-car and at-garage deployments work best in the 15–50 m range — at-garage BLE range through walls rarely exceeds 30 m, and in-car the limiting factor is the fob's RF reach to the gate from inside the car, not BLE
+- Geofence setup flow now requests battery optimisation exemption ("Allow background activity") as a final step, ensuring the app is not throttled by Doze or App Standby
+- App declares it should not be hibernated by Android's unused-app management, preventing automatic permission revocation on devices left idle for extended periods
 
 ## [1.4.4]
 

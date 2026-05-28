@@ -134,4 +134,31 @@
     <string name="notif_geofence_success_body">Auto-opened on arrival</string>
     <string name="notif_geofence_fail_title">Couldn\'t open garage</string>
     <string name="notif_geofence_fail_body">Tap the Garage Opener app to open manually</string>
+
+    <!-- Battery / unused-app permission instruction dialogs -->
+    <string name="perm_dialog_location_title">Precise location needed</string>
+    <string name="perm_dialog_location_message">On the next screen, make sure to enable Precise location — approximate location isn\'t accurate enough for the auto-open zone to work reliably.</string>
+    <string name="perm_dialog_battery_title">Allow background activity</string>
+    <string name="perm_dialog_battery_message">On the next screen, tap Battery, then select \"Unrestricted\" so the app can open your garage in the background.</string>
+    <string name="perm_dialog_unused_title">Disable \"Pause if unused\"</string>
+    <string name="perm_dialog_unused_message">On the next screen, turn off \"Pause app activity if unused\" so Android doesn\’t revoke permissions when the app hasn\’t been opened for a while.</string>
+    <string name="perm_dialog_ok">Open settings</string>
+    <string name="settings_warn_battery">Background activity restricted — tap to fix</string>
+    <string name="settings_warn_unused">App may be paused when unused — tap to fix</string>
+
+    <!-- Geofence permission onboarding screen -->
+    <string name="onboarding_step_indicator">Step %1$d of %2$d</string>
+    <string name="onboarding_continue">Continue</string>
+    <string name="onboarding_skip">Skip setup</string>
+    <string name="onboarding_cancel">Cancel</string>
+    <string name="onboarding_location_title">Allow precise location</string>
+    <string name="onboarding_location_body">The app needs your precise location to detect when you arrive at your garage. On the next screen, make sure to enable Precise location.</string>
+    <string name="onboarding_bg_location_title">Allow background location</string>
+    <string name="onboarding_bg_location_body">The auto-open zone only works while you\'re driving, so the app needs location access even when it isn\'t open. Choose \"Allow all the time\" on the next screen.</string>
+    <string name="onboarding_notifications_title">Allow notifications</string>
+    <string name="onboarding_notifications_body">You\'ll get a notification each time the garage opens automatically so you know it worked.</string>
+    <string name="onboarding_battery_title">Allow background activity</string>
+    <string name="onboarding_battery_body">On the next screen, look for Battery usage settings and choose the least restrictive option (e.g. \"Unrestricted\" or \"No restrictions\") so the app can open your garage in the background.</string>
+    <string name="onboarding_unused_title">Keep app active</string>
+    <string name="onboarding_unused_body">On the next screen, turn off \"Pause app activity if unused\" so Android doesn\'t revoke permissions when the app hasn\'t been opened for a while.</string>
 </resources>

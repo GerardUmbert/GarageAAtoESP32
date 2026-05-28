@@ -120,4 +120,29 @@
     <string name="settings_share_log_label">Compartir registre de geofence</string>
     <string name="toast_log_empty">El registre és buit — encara no s\'han enregistrat events</string>
     <string name="toast_log_share_title">Compartir registre de geofence</string>
+
+    <string name="perm_dialog_location_title">Cal ubicació precisa</string>
+    <string name="perm_dialog_location_message">A la pantalla següent, assegura\'t d\'activar Ubicació precisa — la ubicació aproximada no és prou exacta perquè la zona d\'obertura automàtica funcioni correctament.</string>
+    <string name="perm_dialog_battery_title">Permet activitat en segon pla</string>
+    <string name="perm_dialog_battery_message">A la pantalla següent, toca Bateria i després selecciona \"Sense restriccions\" perquè l\'app pugui obrir el garatge en segon pla.</string>
+    <string name="perm_dialog_unused_title">Desactiva \"Posa en pausa si no s\'usa\"</string>
+    <string name="perm_dialog_unused_message">A la pantalla següent, desactiva \"Posa en pausa l\'activitat si no s\'usa\" perquè Android no revoqui els permisos quan l\'app porta temps sense obrir-se.</string>
+    <string name="perm_dialog_ok">Obre els ajustos</string>
+    <string name="settings_warn_battery">Activitat en segon pla restringida — toca per corregir</string>
+    <string name="settings_warn_unused">L\'app pot pausar-se si no s\'usa — toca per corregir</string>
+
+    <string name="onboarding_step_indicator">Pas %1$d de %2$d</string>
+    <string name="onboarding_continue">Continua</string>
+    <string name="onboarding_skip">Omet la configuració</string>
+    <string name="onboarding_cancel">Cancel·la</string>
+    <string name="onboarding_location_title">Permet la ubicació precisa</string>
+    <string name="onboarding_location_body">L\'app necessita la teva ubicació precisa per detectar quan arribes al garatge. A la pantalla següent, assegura\'t d\'activar Ubicació precisa.</string>
+    <string name="onboarding_bg_location_title">Permet la ubicació en segon pla</string>
+    <string name="onboarding_bg_location_body">La zona d\'obertura automàtica només funciona mentre condueixes, per la qual cosa l\'app necessita accés a la ubicació fins i tot quan no està oberta. Tria \"Permet sempre\" a la pantalla següent.</string>
+    <string name="onboarding_notifications_title">Permet les notificacions</string>
+    <string name="onboarding_notifications_body">Rebràs una notificació cada vegada que el garatge s\'obri automàticament perquè sàpigues que ha funcionat.</string>
+    <string name="onboarding_battery_title">Permet l\'activitat en segon pla</string>
+    <string name="onboarding_battery_body">A la pantalla següent, busca els ajustos d\'ús de bateria i tria l\'opció menys restrictiva (p. ex. \"Sense restriccions\") perquè l\'app pugui obrir el garatge en segon pla.</string>
+    <string name="onboarding_unused_title">Mantén l\'app activa</string>
+    <string name="onboarding_unused_body">A la pantalla següent, desactiva \"Posa en pausa l\'activitat si no s\'usa\" perquè Android no revoqui els permisos quan l\'app porti temps sense obrir-se.</string>
 </resources>

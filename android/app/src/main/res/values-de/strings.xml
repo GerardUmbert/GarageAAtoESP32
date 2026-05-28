@@ -120,4 +120,29 @@
     <string name="settings_share_log_label">Geofence-Protokoll teilen</string>
     <string name="toast_log_empty">Protokoll ist leer — noch keine Ereignisse aufgezeichnet</string>
     <string name="toast_log_share_title">Geofence-Protokoll teilen</string>
+
+    <string name="perm_dialog_location_title">Genauen Standort erforderlich</string>
+    <string name="perm_dialog_location_message">Aktiviere auf dem nächsten Bildschirm Genauer Standort — ungefährer Standort ist nicht präzise genug, damit die automatische Öffnungszone zuverlässig funktioniert.</string>
+    <string name="perm_dialog_battery_title">Hintergrundaktivität erlauben</string>
+    <string name="perm_dialog_battery_message">Tippe auf dem nächsten Bildschirm auf Akku und wähle dann \"Uneingeschränkt\", damit die App deine Garage im Hintergrund öffnen kann.</string>
+    <string name="perm_dialog_unused_title">\"Pausieren bei Nichtverwendung\" deaktivieren</string>
+    <string name="perm_dialog_unused_message">Deaktiviere auf dem nächsten Bildschirm \"App-Aktivität pausieren, wenn nicht verwendet\", damit Android die Berechtigungen nicht widerruft, wenn die App längere Zeit nicht geöffnet wurde.</string>
+    <string name="perm_dialog_ok">Einstellungen öffnen</string>
+    <string name="settings_warn_battery">Hintergrundaktivität eingeschränkt — tippen zum Beheben</string>
+    <string name="settings_warn_unused">App kann bei Nichtverwendung pausiert werden — tippen zum Beheben</string>
+
+    <string name="onboarding_step_indicator">Schritt %1$d von %2$d</string>
+    <string name="onboarding_continue">Weiter</string>
+    <string name="onboarding_skip">Einrichtung überspringen</string>
+    <string name="onboarding_cancel">Abbrechen</string>
+    <string name="onboarding_location_title">Genauen Standort erlauben</string>
+    <string name="onboarding_location_body">Die App benötigt deinen genauen Standort, um zu erkennen, wann du deine Garage erreichst. Aktiviere auf dem nächsten Bildschirm Genauer Standort.</string>
+    <string name="onboarding_bg_location_title">Standortzugriff im Hintergrund erlauben</string>
+    <string name="onboarding_bg_location_body">Die automatische Öffnungszone funktioniert nur während der Fahrt, daher benötigt die App Standortzugriff auch wenn sie nicht geöffnet ist. Wähle auf dem nächsten Bildschirm \"Immer zulassen\".</string>
+    <string name="onboarding_notifications_title">Benachrichtigungen erlauben</string>
+    <string name="onboarding_notifications_body">Du erhältst eine Benachrichtigung jedes Mal, wenn die Garage automatisch geöffnet wird, damit du weißt, dass es funktioniert hat.</string>
+    <string name="onboarding_battery_title">Hintergrundaktivität erlauben</string>
+    <string name="onboarding_battery_body">Suche auf dem nächsten Bildschirm die Akkunutzungs-Einstellungen und wähle die am wenigsten einschränkende Option (z. B. \"Uneingeschränkt\"), damit die App deine Garage im Hintergrund öffnen kann.</string>
+    <string name="onboarding_unused_title">App aktiv halten</string>
+    <string name="onboarding_unused_body">Deaktiviere auf dem nächsten Bildschirm \"App-Aktivität pausieren, wenn nicht verwendet\", damit Android die Berechtigungen nicht widerruft, wenn die App längere Zeit nicht geöffnet wurde.</string>
 </resources>
