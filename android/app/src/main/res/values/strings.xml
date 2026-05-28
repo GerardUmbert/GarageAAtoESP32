@@ -158,7 +158,7 @@
     <string name="onboarding_notifications_title">Allow notifications</string>
     <string name="onboarding_notifications_body">You\'ll get a notification each time the garage opens automatically so you know it worked.</string>
     <string name="onboarding_battery_title">Allow background activity</string>
-    <string name="onboarding_battery_body">On the next screen, look for Battery usage settings and choose the least restrictive option (e.g. \"Unrestricted\" or \"No restrictions\") so the app can open your garage in the background.</string>
+    <string name="onboarding_battery_body">You\'ll land on the App Info screen. Tap Battery, then choose the least restrictive option available (e.g. \"Unrestricted\" or \"No restrictions\") so the app can open your garage in the background.</string>
     <string name="onboarding_unused_title">Keep app active</string>
     <string name="onboarding_unused_body">On the next screen, turn off \"Pause app activity if unused\" so Android doesn\'t revoke permissions when the app hasn\'t been opened for a while.</string>
 </resources>

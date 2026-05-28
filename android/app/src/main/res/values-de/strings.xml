@@ -142,7 +142,7 @@
     <string name="onboarding_notifications_title">Benachrichtigungen erlauben</string>
     <string name="onboarding_notifications_body">Du erhältst eine Benachrichtigung jedes Mal, wenn die Garage automatisch geöffnet wird, damit du weißt, dass es funktioniert hat.</string>
     <string name="onboarding_battery_title">Hintergrundaktivität erlauben</string>
-    <string name="onboarding_battery_body">Suche auf dem nächsten Bildschirm die Akkunutzungs-Einstellungen und wähle die am wenigsten einschränkende Option (z. B. \"Uneingeschränkt\"), damit die App deine Garage im Hintergrund öffnen kann.</string>
+    <string name="onboarding_battery_body">Du landest auf dem App-Info-Bildschirm. Tippe auf Akku und wähle die am wenigsten einschränkende verfügbare Option (z. B. \"Uneingeschränkt\"), damit die App deine Garage im Hintergrund öffnen kann.</string>
     <string name="onboarding_unused_title">App aktiv halten</string>
     <string name="onboarding_unused_body">Deaktiviere auf dem nächsten Bildschirm \"App-Aktivität pausieren, wenn nicht verwendet\", damit Android die Berechtigungen nicht widerruft, wenn die App längere Zeit nicht geöffnet wurde.</string>
 </resources>

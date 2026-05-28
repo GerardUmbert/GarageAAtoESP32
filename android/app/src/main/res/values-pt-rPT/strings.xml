@@ -142,7 +142,7 @@
     <string name="onboarding_notifications_title">Permitir notificações</string>
     <string name="onboarding_notifications_body">Receberás uma notificação cada vez que a garagem abrir automaticamente para saberes que funcionou.</string>
     <string name="onboarding_battery_title">Permitir atividade em segundo plano</string>
-    <string name="onboarding_battery_body">No ecrã seguinte, procura as definições de utilização de bateria e escolhe a opção menos restritiva (ex. \"Sem restrições\") para que a app possa abrir a garagem em segundo plano.</string>
+    <string name="onboarding_battery_body">Vais aterrar no ecrã de Informações da app. Toca em Bateria e escolhe a opção menos restritiva disponível (ex. \"Sem restrições\") para que a app possa abrir a garagem em segundo plano.</string>
     <string name="onboarding_unused_title">Manter a app ativa</string>
     <string name="onboarding_unused_body">No ecrã seguinte, desativa \"Pausar atividade da app se não utilizada\" para que o Android não revogue as permissões quando a app não for aberta durante algum tempo.</string>
 </resources>

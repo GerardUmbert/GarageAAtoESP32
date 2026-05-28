@@ -142,7 +142,7 @@
     <string name="onboarding_notifications_title">Salli ilmoitukset</string>
     <string name="onboarding_notifications_body">Saat ilmoituksen aina, kun talli avautuu automaattisesti, jotta tiedät sen toimineen.</string>
     <string name="onboarding_battery_title">Salli tausta-aktiviteetti</string>
-    <string name="onboarding_battery_body">Etsi seuraavalta näytöltä akun käyttöasetukset ja valitse vähiten rajoittava vaihtoehto (esim. \"Rajoittamaton\"), jotta sovellus voi avata autotallin taustalla.</string>
+    <string name="onboarding_battery_body">Päädyt Sovellustiedot-näytölle. Napauta Akku ja valitse vähiten rajoittava saatavilla oleva vaihtoehto (esim. \"Rajoittamaton\"), jotta sovellus voi avata autotallin taustalla.</string>
     <string name="onboarding_unused_title">Pidä sovellus aktiivisena</string>
     <string name="onboarding_unused_body">Poista seuraavalla näytöllä käytöstä \"Keskeytä sovelluksen toiminta, jos sitä ei käytetä\", jotta Android ei peruuta lupia sovelluksen pitkän käyttämättömyyden aikana.</string>
 </resources>
