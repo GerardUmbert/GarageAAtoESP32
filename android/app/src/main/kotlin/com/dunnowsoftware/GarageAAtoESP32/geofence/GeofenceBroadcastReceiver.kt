@@ -75,11 +75,15 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
         val aaConnected = com.dunnowsoftware.GarageAAtoESP32.AndroidAutoState.isConnected
         GeofenceLogger.i(context, TAG, "ENTER — device=$deviceAddress speed=${if (enterSpeed >= 0) "${enterSpeed}m/s" else "unknown"} AA connected=$aaConnected lastAutoFire ${enterLastFiredAgoMs}ms ago")
 
-        // Gate 1 — Android Auto must be connected.
-        GeofenceLogger.d(context, TAG, "Gate 1 — AA connected: ${if (aaConnected) "PASS" else "FAIL"}")
+        // Gate 1 — AA connected (priority) OR speed > 20 km/h (fallback). Exactly one applies.
+        val speedKmh = if (enterSpeed >= 0f) enterSpeed * 3.6f else -1f
+        GeofenceLogger.d(context, TAG, "Gate 1 — AA connected: $aaConnected  speed: ${if (speedKmh >= 0) "%.1f km/h".format(speedKmh) else "unknown"}")
         if (!aaConnected) {
-            GeofenceLogger.i(context, TAG, "ENTER suppressed: AA not connected")
-            return
+            if (speedKmh < 20f) {
+                GeofenceLogger.i(context, TAG, "ENTER suppressed: AA not connected and speed ${if (speedKmh >= 0) "%.1f km/h".format(speedKmh) else "unknown"} < 20 km/h")
+                return
+            }
+            GeofenceLogger.i(context, TAG, "AA not connected — speed fallback PASS (%.1f km/h)".format(speedKmh))
         }
 
         fireIfNotDebounced(context, deviceAddress)

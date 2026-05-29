@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.4.6]
+
+### Changed
+- Geofence auto-open now fires even when Android Auto is not connected, provided the geofence ENTER speed exceeds 20 km/h — AA connected remains the priority path; speed is the fallback
+
 ## [1.4.5]
 
 ### Changed
