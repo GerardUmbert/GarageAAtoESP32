@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.4.7]
+
+### Changed
+- Geofence auto-open speed fallback now also checks the last known location speed when the ENTER trigger location reports 0 m/s — geofence delivery can lag 30 s+ under Doze, causing the trigger location to reflect a parked speed even when the user was driving; the fresher last known location reading corrects this
+
 ## [1.4.6]
 
 ### Changed
