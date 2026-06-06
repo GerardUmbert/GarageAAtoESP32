@@ -11,6 +11,7 @@ activityCompose = "1.9.3"
 composeBom = "2024.10.01"
 playServicesLocation = "21.3.0"
 osmdroid = "6.1.20"
+workManager = "2.9.1"
 
 appcompat = "1.7.0"
 
@@ -32,6 +33,7 @@ compose-material-icons-extended = { group = "androidx.compose.material", name = 
 compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 osmdroid = { group = "org.osmdroid", name = "osmdroid-android", version.ref = "osmdroid" }
+work-manager = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workManager" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

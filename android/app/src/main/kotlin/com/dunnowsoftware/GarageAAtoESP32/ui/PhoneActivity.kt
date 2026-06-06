@@ -50,6 +50,7 @@ import androidx.car.app.connection.CarConnection
 import com.dunnowsoftware.GarageAAtoESP32.AndroidAutoState
 import com.dunnowsoftware.GarageAAtoESP32.geofence.GeofenceLogger
 import com.dunnowsoftware.GarageAAtoESP32.geofence.GeofenceManager
+import com.dunnowsoftware.GarageAAtoESP32.geofence.scheduleGeofenceRestore
 import com.dunnowsoftware.GarageAAtoESP32.ui.screens.*
 import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageColors
 import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageTheme
@@ -80,6 +81,8 @@ class PhoneActivity : AppCompatActivity() {
         )
         super.onCreate(savedInstanceState)
         prefs = DevicePreferences(this)
+        GeofenceManager(this).reregisterAll()
+        scheduleGeofenceRestore(this)
         CarConnection(this).type.observe(this) { connectionType ->
             val connected = connectionType == CarConnection.CONNECTION_TYPE_PROJECTION
             AndroidAutoState.isConnected = connected

@@ -5,8 +5,9 @@ import android.content.Context
 import android.content.Intent
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
-            GeofenceManager(context).reregisterAll()
+        when (intent.action) {
+            Intent.ACTION_BOOT_COMPLETED,
+            Intent.ACTION_MY_PACKAGE_REPLACED -> GeofenceManager(context).reregisterAll()
         }
     }
 }

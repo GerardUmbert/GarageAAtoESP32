@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.5.0]
+
+### Fixed
+- Geofence registration is now restored automatically after an app update, a force-stop, or an OEM battery-killer wiping the OS-level fence — previously only a device reboot triggered re-registration. Three recovery paths are now in place: `MY_PACKAGE_REPLACED` broadcast (covers app updates), `reregisterAll()` on every app cold start (covers force-stop and Play Services restarts), and a WorkManager periodic task every 15 minutes (covers OEM process killers without requiring the app to be opened)
+
 ## [1.4.7]
 
 ### Changed

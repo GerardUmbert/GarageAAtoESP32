@@ -93,12 +93,13 @@
             android:name=".geofence.GeofenceBroadcastReceiver"
             android:exported="false" />
 
-        <!-- Re-register geofences after reboot -->
+        <!-- Re-register geofences after reboot or app update -->
         <receiver
             android:name=".geofence.BootReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
 
