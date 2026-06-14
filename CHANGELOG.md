@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.5.1]
+
+### Added
+- Activity Recognition as Gate 3 for geofence auto-open — detects `IN_VEHICLE` state even with screen off and no active GPS, using Google's continuously-running activity classifier
+- `ACTIVITY_RECOGNITION` permission onboarding step during geofence setup flow, with phone-frame illustration and translations in all 8 languages (en, es, ca, de, fr, it, pt, fi)
+
+### Changed
+- Geofence fallback gate chain reordered: Gate 1 AA connected → Gate 2 triggerSpeed ≥ 20 km/h → Gate 3 IN_VEHICLE activity ≥ 50% confidence → Gate 4 lastLocation speed ≥ 20 km/h within 10 min
+- lastLocation rejection logging now shows the raw speed and exact age when a fix is discarded for being older than 10 minutes, instead of the previously opaque `unavailable/stale`
+
 ## [1.5.0]
 
 ### Fixed

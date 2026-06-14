@@ -29,6 +29,7 @@ import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageColors
 enum class OnboardingStepId {
     FINE_LOCATION,
     BACKGROUND_LOCATION,
+    ACTIVITY_RECOGNITION,
     NOTIFICATIONS,
     BATTERY,
     UNUSED_APP,
@@ -437,6 +438,50 @@ private fun BatteryOptionsScene() {
                 }
             }
             if (i < options.lastIndex) Spacer(Modifier.height(3.dp))
+        }
+    }
+}
+
+@Composable
+internal fun ActivityRecognitionIllustration() {
+    PhoneFrame {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color(0xFF2B2F35))
+                .padding(16.dp),
+        ) {
+            Text("Allow physical activity?", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "Detects when you\'re in a vehicle to open your garage automatically.",
+                color = GarageColors.TextDim, fontSize = 11.sp, lineHeight = 16.sp,
+            )
+            Spacer(Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(32.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0xFF2E3338)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("Don't allow", color = GarageColors.TextDim, fontSize = 11.sp)
+                }
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(32.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(GarageColors.Accent),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("Allow", color = GarageColors.AccentDeep, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
+            }
         }
     }
 }

@@ -159,6 +159,8 @@
     <string name="onboarding_notifications_body">You\'ll get a notification each time the garage opens automatically so you know it worked.</string>
     <string name="onboarding_battery_title">Allow background activity</string>
     <string name="onboarding_battery_body">You\'ll land on the App Info screen. Tap Battery, then choose the least restrictive option available (e.g. \"Unrestricted\" or \"No restrictions\") so the app can open your garage in the background.</string>
+    <string name="onboarding_activity_title">Allow physical activity detection</string>
+    <string name="onboarding_activity_body">The app uses activity detection to recognise when you\'re in a vehicle, so it can open the garage even when Android Auto isn\'t connected.</string>
     <string name="onboarding_unused_title">Keep app active</string>
     <string name="onboarding_unused_body">On the next screen, look for an option about pausing or managing the app when unused (e.g. \"Pause app activity if unused\" or \"Manage app if unused\") and turn it off so Android doesn\'t revoke permissions.</string>
 </resources>

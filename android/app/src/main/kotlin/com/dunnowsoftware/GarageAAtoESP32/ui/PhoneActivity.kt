@@ -260,6 +260,9 @@ private fun AppRoot(
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
                         ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED)
                         missing += OnboardingStepId.BACKGROUND_LOCATION
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+                        ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACTIVITY_RECOGNITION) != PackageManager.PERMISSION_GRANTED)
+                        missing += OnboardingStepId.ACTIVITY_RECOGNITION
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
                         ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
                         missing += OnboardingStepId.NOTIFICATIONS
@@ -367,6 +370,10 @@ private fun AppRoot(
                 if (perms[Manifest.permission.ACCESS_FINE_LOCATION] == true) pendingAdvance?.invoke()
                 pendingAdvance = null
             }
+            val activityRecognitionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+                if (granted) pendingAdvance?.invoke()
+                pendingAdvance = null
+            }
 
             GeofencePermissionOnboardingScreen(
                 steps = steps,
@@ -378,6 +385,9 @@ private fun AppRoot(
                         )
                         OnboardingStepId.BACKGROUND_LOCATION -> bgLocationLauncher.launch(
                             Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                        )
+                        OnboardingStepId.ACTIVITY_RECOGNITION -> activityRecognitionLauncher.launch(
+                            Manifest.permission.ACTIVITY_RECOGNITION
                         )
                         OnboardingStepId.NOTIFICATIONS -> notifLauncher.launch(
                             Manifest.permission.POST_NOTIFICATIONS
@@ -635,6 +645,12 @@ private fun buildOnboardingSteps(
             titleRes = R.string.onboarding_bg_location_title,
             bodyRes = R.string.onboarding_bg_location_body,
             illustration = { BackgroundLocationIllustration() },
+        )
+        OnboardingStepId.ACTIVITY_RECOGNITION -> OnboardingStep(
+            id = OnboardingStepId.ACTIVITY_RECOGNITION,
+            titleRes = R.string.onboarding_activity_title,
+            bodyRes = R.string.onboarding_activity_body,
+            illustration = { ActivityRecognitionIllustration() },
         )
         OnboardingStepId.NOTIFICATIONS -> OnboardingStep(
             id = OnboardingStepId.NOTIFICATIONS,

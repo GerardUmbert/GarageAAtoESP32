@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
+import com.google.android.gms.location.DetectedActivity
 import com.google.android.gms.location.GeofencingEvent
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.LocationServices
@@ -75,50 +76,79 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
 
         val aaConnected = com.dunnowsoftware.GarageAAtoESP32.AndroidAutoState.isConnected
 
-        // Gate 1 — AA connected (priority) OR speed > 20 km/h (fallback). Exactly one applies.
-        // Speed is checked against triggeringLocation first; if stale (0 m/s), lastLocation is
-        // queried as a fresher reading — geofence delivery can lag by 30s+ under Doze, by which
-        // point triggeringLocation already reflects a parked speed even if the user was driving.
+        // Gate 1 — AA connected.
         if (aaConnected) {
             GeofenceLogger.i(context, TAG, "ENTER — device=$deviceAddress AA connected=true — Gate 1 PASS")
-        } else {
-            val enterSpeed = event.triggeringLocation?.speed ?: -1f
-            val triggerSpeedKmh = if (enterSpeed >= 0f) enterSpeed * 3.6f else -1f
-            GeofenceLogger.i(context, TAG, "ENTER — device=$deviceAddress AA connected=false triggerSpeed=${if (triggerSpeedKmh >= 0) "%.1f km/h".format(triggerSpeedKmh) else "unknown"}")
-            if (triggerSpeedKmh >= 20f) {
-                GeofenceLogger.i(context, TAG, "Gate 1 — triggerSpeed fallback PASS (%.1f km/h)".format(triggerSpeedKmh))
-            } else {
-                // triggerSpeed too low or unknown — query lastLocation for a fresher reading.
-                val pending = goAsync()
-                Executors.newSingleThreadExecutor().execute {
-                    try {
-                        checkLastLocationAndFire(context, deviceAddress, triggerSpeedKmh)
-                    } finally {
-                        pending.finish()
-                    }
-                }
-                return
-            }
+            fireIfNotDebounced(context, deviceAddress)
+            return
         }
 
-        fireIfNotDebounced(context, deviceAddress)
+        // Gates 2-4 run off the main thread (network/IO calls).
+        val enterSpeed = event.triggeringLocation?.speed ?: -1f
+        val triggerSpeedKmh = if (enterSpeed >= 0f) enterSpeed * 3.6f else -1f
+        GeofenceLogger.i(context, TAG, "ENTER — device=$deviceAddress AA connected=false triggerSpeed=${if (triggerSpeedKmh >= 0) "%.1f km/h".format(triggerSpeedKmh) else "unknown"}")
+        val pending = goAsync()
+        Executors.newSingleThreadExecutor().execute {
+            try {
+                checkFallbackGatesAndFire(context, deviceAddress, triggerSpeedKmh)
+            } finally {
+                pending.finish()
+            }
+        }
     }
 
-    private fun checkLastLocationAndFire(context: Context, deviceAddress: String, triggerSpeedKmh: Float) {
+    private fun checkFallbackGatesAndFire(context: Context, deviceAddress: String, triggerSpeedKmh: Float) {
+        // Gate 2: triggerSpeed — free, already in the geofence event.
+        if (triggerSpeedKmh >= 20f) {
+            GeofenceLogger.i(context, TAG, "Gate 2 triggerSpeed PASS (%.1f km/h)".format(triggerSpeedKmh))
+            fireIfNotDebounced(context, deviceAddress)
+            return
+        }
+
+        // Gate 3: activity recognition — cached by ActivityUpdateReceiver, no I/O needed.
+        val activityType = ActivityUpdateReceiver.lastActivityType(context)
+        val confidence = ActivityUpdateReceiver.lastActivityConfidence(context)
+        val activityAgeMs = ActivityUpdateReceiver.lastActivityAgeMs(context)
+        val activityName = when (activityType) {
+            DetectedActivity.IN_VEHICLE -> "IN_VEHICLE"
+            DetectedActivity.ON_BICYCLE -> "ON_BICYCLE"
+            DetectedActivity.ON_FOOT    -> "ON_FOOT"
+            DetectedActivity.STILL      -> "STILL"
+            DetectedActivity.RUNNING    -> "RUNNING"
+            DetectedActivity.WALKING    -> "WALKING"
+            else -> "UNKNOWN"
+        }
+        val activityAgeStr = if (activityAgeMs >= 0) "${activityAgeMs / 1000}s ago" else "never"
+        GeofenceLogger.d(context, TAG, "Gate 3 activity — $activityName confidence=$confidence% ($activityAgeStr)")
+        if (activityType == DetectedActivity.IN_VEHICLE && confidence >= 50) {
+            GeofenceLogger.i(context, TAG, "Gate 3 activity PASS ($activityName $confidence% $activityAgeStr)")
+            fireIfNotDebounced(context, deviceAddress)
+            return
+        }
+
+        // Gate 4: lastLocation speed — useful only if navigation was recently active.
         try {
             val fusedClient = LocationServices.getFusedLocationProviderClient(context)
             val lastLoc = Tasks.await(fusedClient.lastLocation, 500, TimeUnit.MILLISECONDS)
             val ageMs = if (lastLoc != null) System.currentTimeMillis() - lastLoc.time else -1L
-            val lastSpeedKmh = if (lastLoc != null && lastLoc.hasSpeed() && ageMs in 0..600_000L) lastLoc.speed * 3.6f else -1f
-            GeofenceLogger.d(context, TAG, "Gate 1 lastLocation — speed: ${if (lastSpeedKmh >= 0) "%.1f km/h".format(lastSpeedKmh) else "unavailable"} age: ${if (ageMs >= 0) "${ageMs / 1000}s" else "unavailable"}")
+            val rawSpeedKmh = if (lastLoc != null && lastLoc.hasSpeed()) lastLoc.speed * 3.6f else -1f
+            val lastSpeedKmh = if (rawSpeedKmh >= 0f && ageMs in 0..600_000L) rawSpeedKmh else -1f
+            val ageStr = if (ageMs >= 0) "${ageMs / 1000}s" else "unavailable"
+            val speedStr = when {
+                lastLoc == null -> "unavailable (no fix)"
+                !lastLoc.hasSpeed() -> "unavailable (no speed) age: $ageStr"
+                ageMs !in 0..600_000L -> "stale (%.1f km/h age: $ageStr > 10min)".format(rawSpeedKmh)
+                else -> "%.1f km/h age: $ageStr".format(lastSpeedKmh)
+            }
+            GeofenceLogger.d(context, TAG, "Gate 4 lastLocation — speed: $speedStr")
             if (lastSpeedKmh >= 20f) {
-                GeofenceLogger.i(context, TAG, "AA not connected — lastLocation speed fallback PASS (%.1f km/h, %ds old)".format(lastSpeedKmh, ageMs / 1000))
+                GeofenceLogger.i(context, TAG, "Gate 4 lastLocation speed PASS (%.1f km/h, %ds old)".format(lastSpeedKmh, ageMs / 1000))
                 fireIfNotDebounced(context, deviceAddress)
             } else {
-                GeofenceLogger.i(context, TAG, "ENTER suppressed: AA not connected, triggerSpeed ${if (triggerSpeedKmh >= 0) "%.1f km/h".format(triggerSpeedKmh) else "unknown"}, lastLocation speed ${if (lastSpeedKmh >= 0) "%.1f km/h".format(lastSpeedKmh) else "unavailable/stale"} — both < 20 km/h")
+                GeofenceLogger.i(context, TAG, "ENTER suppressed: AA not connected, triggerSpeed ${if (triggerSpeedKmh >= 0) "%.1f km/h".format(triggerSpeedKmh) else "unknown"}, activity=$activityName($confidence%), lastLocation=$speedStr — all gates failed")
             }
         } catch (e: Exception) {
-            GeofenceLogger.w(context, TAG, "ENTER suppressed: lastLocation query failed (${e.message}), triggerSpeed ${if (triggerSpeedKmh >= 0) "%.1f km/h".format(triggerSpeedKmh) else "unknown"} < 20 km/h")
+            GeofenceLogger.w(context, TAG, "ENTER suppressed: lastLocation query failed (${e.message}), triggerSpeed ${if (triggerSpeedKmh >= 0) "%.1f km/h".format(triggerSpeedKmh) else "unknown"}, activity=$activityName($confidence%) — all gates failed")
         }
     }
 
@@ -138,7 +168,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
 
         val lastFired = prefs.lastAutoFiredAt
         val firedAgoMs = now - lastFired
-        GeofenceLogger.d(context, TAG, "Gate 3 — last successful auto-fire ${firedAgoMs}ms ago (limit=${DEBOUNCE_MS}ms): ${if (firedAgoMs >= DEBOUNCE_MS) "PASS" else "FAIL"}")
+        GeofenceLogger.d(context, TAG, "Debounce — last successful auto-fire ${firedAgoMs}ms ago (limit=${DEBOUNCE_MS}ms): ${if (firedAgoMs >= DEBOUNCE_MS) "PASS" else "FAIL"}")
         if (firedAgoMs < DEBOUNCE_MS) {
             GeofenceLogger.i(context, TAG, "ENTER suppressed: debounce — fired ${firedAgoMs}ms ago")
             return

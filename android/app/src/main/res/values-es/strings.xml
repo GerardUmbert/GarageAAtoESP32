@@ -144,5 +144,7 @@
     <string name="onboarding_battery_title">Permitir actividad en segundo plano</string>
     <string name="onboarding_battery_body">Llegarás a la pantalla de información de la app. Toca Batería y elige la opción menos restrictiva disponible (p. ej. \"Sin restricciones\") para que la app pueda abrir tu garaje en segundo plano.</string>
     <string name="onboarding_unused_title">Mantener la app activa</string>
+    <string name="onboarding_activity_title">Permitir detección de actividad física</string>
+    <string name="onboarding_activity_body">La app usa la detección de actividad para saber cuándo vas en vehículo, así puede abrir el garaje aunque Android Auto no esté conectado.</string>
     <string name="onboarding_unused_body">En la siguiente pantalla, busca una opción sobre pausar o gestionar la app cuando no se usa (p. ej. \"Pausar actividad si no se usa\" o \"Gestionar app si no se usa\") y desactívala para que Android no revoque los permisos.</string>
 </resources>

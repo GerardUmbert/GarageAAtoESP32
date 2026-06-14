@@ -143,6 +143,8 @@
     <string name="onboarding_notifications_body">Receberás uma notificação cada vez que a garagem abrir automaticamente para saberes que funcionou.</string>
     <string name="onboarding_battery_title">Permitir atividade em segundo plano</string>
     <string name="onboarding_battery_body">Vais aterrar no ecrã de Informações da app. Toca em Bateria e escolhe a opção menos restritiva disponível (ex. \"Sem restrições\") para que a app possa abrir a garagem em segundo plano.</string>
+    <string name="onboarding_activity_title">Permitir deteção de atividade física</string>
+    <string name="onboarding_activity_body">A app usa a deteção de atividade para saber quando estás num veículo, para poder abrir a garagem mesmo sem o Android Auto ligado.</string>
     <string name="onboarding_unused_title">Manter a app ativa</string>
     <string name="onboarding_unused_body">No ecrã seguinte, procura uma opção para pausar ou gerir a app quando não utilizada (ex. \"Pausar atividade se não utilizada\" ou \"Gerir app se não utilizada\") e desativa-a para que o Android não revogue as permissões.</string>
 </resources>

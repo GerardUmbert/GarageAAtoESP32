@@ -143,6 +143,8 @@
     <string name="onboarding_notifications_body">Tu recevras une notification à chaque ouverture automatique du garage pour confirmer que ça a fonctionné.</string>
     <string name="onboarding_battery_title">Autoriser l\'activité en arrière-plan</string>
     <string name="onboarding_battery_body">Tu atterriras sur l\'écran Infos appli. Appuie sur Batterie, puis choisis l\'option la moins restrictive disponible (ex. \"Sans restriction\") pour que l\'app puisse ouvrir ton garage en arrière-plan.</string>
+    <string name="onboarding_activity_title">Autoriser la détection d\'activité physique</string>
+    <string name="onboarding_activity_body">L\'app utilise la détection d\'activité pour savoir quand tu es dans un véhicule, afin d\'ouvrir le garage même sans Android Auto connecté.</string>
     <string name="onboarding_unused_title">Garder l\'app active</string>
     <string name="onboarding_unused_body">Sur l\'écran suivant, cherche une option pour mettre en veille ou gérer l\'app si inutilisée (ex. \"Mettre en veille si inutilisée\") et désactive-la pour qu\'Android ne révoque pas les autorisations.</string>
 </resources>

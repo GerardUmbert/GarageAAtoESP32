@@ -144,5 +144,7 @@
     <string name="onboarding_battery_title">Permet l\'activitat en segon pla</string>
     <string name="onboarding_battery_body">Arribaràs a la pantalla d\'informació de l\'app. Toca Bateria i tria l\'opció menys restrictiva disponible (p. ex. \"Sense restriccions\") perquè l\'app pugui obrir el garatge en segon pla.</string>
     <string name="onboarding_unused_title">Mantén l\'app activa</string>
+    <string name="onboarding_activity_title">Permet la detecció d\'activitat física</string>
+    <string name="onboarding_activity_body">L\'app usa la detecció d\'activitat per saber quan vas en vehicle, per poder obrir el garatge encara que l\'Android Auto no estigui connectat.</string>
     <string name="onboarding_unused_body">A la pantalla següent, busca una opció sobre pausar o gestionar l\'app quan no s\'usa (p. ex. \"Posa en pausa l\'activitat si no s\'usa\") i desactiva-la perquè Android no revoqui els permisos.</string>
 </resources>

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
 import com.dunnowsoftware.GarageAAtoESP32.data.PairedDevice
+import com.google.android.gms.location.ActivityRecognition
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.location.LocationServices
@@ -25,6 +26,38 @@ class GeofenceManager(private val context: Context) {
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
         )
+    }
+
+    private fun activityPendingIntent(): PendingIntent {
+        val intent = Intent(context, ActivityUpdateReceiver::class.java)
+        return PendingIntent.getBroadcast(
+            context,
+            1,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+        )
+    }
+
+    fun startActivityUpdates() {
+        try {
+            ActivityRecognition.getClient(context)
+                .requestActivityUpdates(30_000L, activityPendingIntent())
+                .addOnSuccessListener { GeofenceLogger.i(context, TAG, "Activity updates registered (30s interval)") }
+                .addOnFailureListener { GeofenceLogger.w(context, TAG, "Failed to register activity updates: $it") }
+        } catch (e: SecurityException) {
+            GeofenceLogger.w(context, TAG, "Missing ACTIVITY_RECOGNITION permission: $e")
+        }
+    }
+
+    fun stopActivityUpdates() {
+        try {
+            ActivityRecognition.getClient(context)
+                .removeActivityUpdates(activityPendingIntent())
+                .addOnSuccessListener { GeofenceLogger.i(context, TAG, "Activity updates removed") }
+                .addOnFailureListener { GeofenceLogger.w(context, TAG, "Failed to remove activity updates: $it") }
+        } catch (e: SecurityException) {
+            GeofenceLogger.w(context, TAG, "Missing ACTIVITY_RECOGNITION permission on stop: $e")
+        }
     }
 
     fun register(device: PairedDevice) {
@@ -54,6 +87,7 @@ class GeofenceManager(private val context: Context) {
         } catch (e: SecurityException) {
             GeofenceLogger.e(context, TAG, "Missing location permission for geofence registration: $e")
         }
+        startActivityUpdates()
     }
 
     fun unregister(deviceAddress: String) {
@@ -61,6 +95,7 @@ class GeofenceManager(private val context: Context) {
         client.removeGeofences(listOf(GEOFENCE_ID_PREFIX + deviceAddress))
             .addOnSuccessListener { GeofenceLogger.i(context, TAG, "Geofence removed OK for $deviceAddress") }
             .addOnFailureListener { GeofenceLogger.e(context, TAG, "Failed to remove geofence for $deviceAddress: $it") }
+        stopActivityUpdates()
     }
 
     fun reregisterAll() {
@@ -74,6 +109,6 @@ class GeofenceManager(private val context: Context) {
             return
         }
         GeofenceLogger.i(context, TAG, "reregisterAll: re-registering geofence for ${device.address}")
-        register(device)
+        register(device) // also calls startActivityUpdates()
     }
 }
