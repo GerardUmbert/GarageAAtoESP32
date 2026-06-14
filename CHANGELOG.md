@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.6.1]
+
+### Changed
+- Geofence picker now draws the GPS warmup zone (outer geofence at `userRadius + 150 m`) as a dashed ring in a subtler accent colour alongside the existing solid inner circle — lets you visualise exactly how far out the warmup starts without changing the map zoom
+
 ## [1.6.0]
 
 ### Added

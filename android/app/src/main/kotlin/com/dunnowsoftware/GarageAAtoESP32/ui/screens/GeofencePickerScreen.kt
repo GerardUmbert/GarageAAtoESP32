@@ -1,5 +1,6 @@
 package com.dunnowsoftware.GarageAAtoESP32.ui.screens
 
+import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.location.Location
 import androidx.preference.PreferenceManager
@@ -66,8 +67,10 @@ private val CartoDarkTiles = object : OnlineTileSourceBase(
     }
 }
 
-private const val ACCENT_ARGB      = 0xFF2AD4A3.toInt()
-private const val ACCENT_FILL_ARGB = 0x302AD4A3
+private const val ACCENT_ARGB            = 0xFF2AD4A3.toInt()
+private const val ACCENT_FILL_ARGB       = 0x302AD4A3
+private const val ACCENT_OUTER_ARGB      = 0x662AD4A3  // ~40% alpha for the warmup ring
+private const val OUTER_GEOFENCE_OFFSET  = 150.0       // must match GeofenceManager.OUTER_GEOFENCE_OFFSET_M
 
 private const val RADIUS_MIN     = 15f
 private const val RADIUS_MAX     = 75f
@@ -108,9 +111,29 @@ fun GeofencePickerScreen(
     var radiusM by remember { mutableFloatStateOf(initialRadiusM ?: RADIUS_DEFAULT) }
     var mapViewRef by remember { mutableStateOf<MapView?>(null) }
     var geofencePolygon by remember { mutableStateOf<Polygon?>(null) }
+    var outerPolygon by remember { mutableStateOf<Polygon?>(null) }
 
     fun updateCircle(center: GeoPoint, map: MapView) {
         geofencePolygon?.let { map.overlays.remove(it) }
+        outerPolygon?.let { map.overlays.remove(it) }
+
+        val outer = Polygon(map).apply {
+            points = Polygon.pointsAsCircle(center, radiusM.toDouble() + OUTER_GEOFENCE_OFFSET)
+            fillPaint.apply {
+                color = 0x002AD4A3  // transparent fill
+                style = Paint.Style.FILL
+            }
+            outlinePaint.apply {
+                color = ACCENT_OUTER_ARGB
+                strokeWidth = 2f
+                style = Paint.Style.STROKE
+                pathEffect = DashPathEffect(floatArrayOf(14f, 10f), 0f)
+            }
+            isVisible = true
+        }
+        map.overlays.add(outer)
+        outerPolygon = outer
+
         val poly = Polygon(map).apply {
             points = Polygon.pointsAsCircle(center, radiusM.toDouble())
             fillPaint.apply {
