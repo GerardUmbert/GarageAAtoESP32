@@ -269,6 +269,12 @@
       <a href="#voice">Voice commands</a>
       <a href="#quick-settings">Quick Settings tile</a>
 
+      <div class="sidebar-group">Auto-open</div>
+      <a href="#geofence-auto-open">How it works</a>
+      <a href="#geofence-gates">Gate chain</a>
+      <a href="#geofence-warmup">GPS warmup</a>
+      <a href="#geofence-logs">Logs &amp; diagnostics</a>
+
       <div class="sidebar-group">Reference</div>
       <a href="#security">Security model</a>
       <a href="#boards">Supported boards</a>
@@ -582,7 +588,7 @@ Fingerbot arm  ──▶  physically presses fob button</div>
         </table>
 
         <h3>Auto-fire</h3>
-        <p>When the AA screen is active and the presence scan detects the paired device in range, the app fires the open command automatically — once per AA session. This means the gate often starts opening before you've pulled up to it.</p>
+        <p>When the AA screen is active and the presence scan detects the paired device in range, the app fires the open command automatically — once per AA session. This means the gate often starts opening before you've pulled up to it. AA being connected is also the strongest signal in the <a href="#geofence-gates">geofence gate chain</a> — if you use geofence auto-open, the AA path always takes priority.</p>
 
         <h3>Testing without a car</h3>
         <p>Use the Android Auto Desktop Head Unit emulator. Install it via Android Studio: <em>Tools → SDK Manager → SDK Tools → Android Auto Desktop Head Unit Emulator</em>. Start the DHU server on your phone (Android Auto → Developer settings → Start head unit server), then launch the emulator on your PC.</p>
@@ -602,6 +608,95 @@ Fingerbot arm  ──▶  physically presses fob button</div>
         <p>Add the app to your notification shade for one-swipe access: long-press the shade → <strong>Edit tiles</strong> → drag <strong>Garage Opener</strong> into the active area.</p>
         <p>The tile subtitle shows the current state: <em>Sending…</em> → <em>Opened</em> / <em>Failed</em>, then clears after 2 seconds. You can open the garage without unlocking the phone or opening the app.</p>
         <p>There's also a launcher long-press shortcut: long-press the app icon → <strong>Open garage</strong> — launches the app and triggers the opener immediately.</p>
+
+        <!-- ── GEOFENCE AUTO-OPEN ── -->
+        <h2 id="geofence-auto-open">Geofence auto-open</h2>
+        <p>When enabled, the garage opens automatically as you approach — no tap needed. Set it up in <strong>Settings → Auto-open → Garage location</strong>: tap the map to place your garage pin, drag the radius slider (15–75 m), and enable the <strong>Auto-open on arrival</strong> toggle.</p>
+        <p>Two geofences are registered around your garage:</p>
+        <ul>
+          <li><strong>Inner geofence</strong> — at your configured radius. This is the trigger zone.</li>
+          <li><strong>Outer geofence</strong> — at your configured radius + 150 m. This is the GPS warmup zone (shown as a dashed ring in the picker).</li>
+        </ul>
+        <p>When you cross the inner boundary inbound, the app runs a gate chain to decide whether to fire. When you cross the outer boundary inbound, the app pre-warms GPS so speed data is ready by the time the inner geofence fires.</p>
+
+        <h2 id="geofence-gates">Gate chain</h2>
+        <p>Gates are evaluated in order. The first one that passes fires the open. If all fail, the trigger is suppressed and the full reason is written to the log.</p>
+
+        <table>
+          <thead>
+            <tr><th>Gate</th><th>Condition</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong style="color:#2AD4A3">1 — AA connected</strong></td>
+              <td>Android Auto is actively connected</td>
+              <td>Strongest signal — binary OS fact, no GPS needed. Always fires.</td>
+            </tr>
+            <tr>
+              <td><strong>2 — Trigger speed</strong></td>
+              <td>Speed from the geofence event ≥ 20 km/h</td>
+              <td>Only available if GPS was already warm at the moment of crossing. The outer geofence warmup makes this reliable.</td>
+            </tr>
+            <tr>
+              <td><strong>3 — Activity</strong></td>
+              <td><code>IN_VEHICLE</code> with ≥ 50% confidence</td>
+              <td>Cached from Google's Activity Recognition API (30 s updates). Motorbikes often come back <code>UNKNOWN</code> — Gate 2 is more reliable for them.</td>
+            </tr>
+            <tr>
+              <td><strong>4 — Last known speed</strong></td>
+              <td>Most recent location fix ≥ 20 km/h, within 10 min</td>
+              <td>Useful if navigation was recently active. Falls back to this if Gates 2 and 3 both fail.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-note">
+          <div class="callout-icon">ℹ️</div>
+          <p><strong>Why AA is the best gate.</strong> AA being connected is a binary OS-level fact — it's the authoritative signal that you're in a vehicle and driving. It also keeps the phone's location stack warm, so geofence ENTER fires within ~1–2 s of the actual boundary crossing instead of the 30 s–2 min worst-case under Doze.</p>
+        </div>
+
+        <div class="callout callout-warn">
+          <div class="callout-icon">⚠️</div>
+          <p><strong>Why speed is unreliable without AA.</strong> Geofences can fire off cell/WiFi positioning, which produces lat/lng but no speed. Speed requires GPS, which must be actively running. If no app is keeping GPS warm, the geofence event arrives with <code>speed = 0</code>. This is the problem the outer geofence warmup solves.</p>
+        </div>
+
+        <h2 id="geofence-warmup">GPS warmup</h2>
+        <p>The outer geofence fires ~150 m before the inner one. On ENTER, a short-lived foreground service starts requesting location updates at <strong>5 s intervals</strong>. GPS needs at least two consecutive fixes (~10 s) to compute speed. At 30–50 km/h you cross 150 m in 10–18 s — enough lead time to produce a valid speed reading before the inner geofence fires.</p>
+
+        <h3>When warmup is skipped</h3>
+        <ul>
+          <li>Android Auto is connected — GPS is already warm via the AA location stack</li>
+          <li>Activity is <code>STILL</code>, <code>WALKING</code>, or <code>RUNNING</code> — clearly not in a vehicle</li>
+          <li>Activity is <code>UNKNOWN</code> and no prior inner geofence EXIT was recorded — likely still at home (see exit flag below)</li>
+        </ul>
+        <p><code>IN_VEHICLE</code> or <code>ON_BICYCLE</code> always starts warmup regardless of any flag.</p>
+
+        <h3>Exit flag</h3>
+        <p>When the <strong>inner</strong> geofence EXIT fires, a <code>wasOutsideOuterGeofence</code> flag is saved. On the next outer ENTER, <code>UNKNOWN</code> activity only starts warmup if this flag is set — confirming you genuinely left and came back. This prevents spurious GPS drain when you're stationary at home and the OS fires a re-register ENTER with ambiguous activity.</p>
+        <p>If the OS drops the EXIT event (which Android can do under Doze), the flag stays false for that cycle. <code>IN_VEHICLE</code>/<code>ON_BICYCLE</code> still override it, and the next full EXIT+ENTER cycle resets correctly. The flag is an optimistic hint, not a hard gate.</p>
+
+        <h3>Warmup stop conditions</h3>
+        <p>The service stops on whichever comes first:</p>
+        <ol>
+          <li><strong>Outer or inner geofence EXIT</strong> — you left the zone</li>
+          <li><strong>Inner gate pass</strong> — the open fired; warmup is no longer needed</li>
+          <li><strong>5-minute timeout</strong> — safety net for dropped EXIT events. If the app crashes, the location client dies with it — no battery leak.</li>
+        </ol>
+
+        <h3>Debounce</h3>
+        <p>After a successful open, a 10-second debounce prevents re-triggering. The timestamp is shared between the geofence service and the AA car screen via encrypted storage — cross-process races are absorbed. Only confirmed successful opens write the timestamp; failed attempts do not block subsequent triggers.</p>
+
+        <h3>Re-registration</h3>
+        <p>Both geofences are re-registered automatically on boot, app update, cold start, and every ~15 minutes via WorkManager (covers OEM process killers). <code>setInitialTrigger(0)</code> ensures re-registration never fires a spurious ENTER if you're already inside the zone.</p>
+
+        <h2 id="geofence-logs">Logs &amp; diagnostics</h2>
+        <p>Every gate evaluation is written to the geofence log — speeds, activity types, gate results, and suppression reasons. Share it via <strong>Settings → Diagnostics → Share geofence log</strong> to inspect exactly what happened on each approach.</p>
+        <p>The log retains the last 1 000 lines and is exportable as plain text.</p>
+
+        <div class="callout callout-note">
+          <div class="callout-icon">ℹ️</div>
+          <p>Look for lines tagged <code>GeofenceReceiver</code>. A suppressed trigger always ends with <em>"all gates failed"</em> and lists the speed, activity type, and confidence that were checked.</p>
+        </div>
 
         <!-- ── SECURITY ── -->
         <h2 id="security">Security model</h2>
