@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.6.2]
+
+### Fixed
+- Last opened date on the main screen now follows the locale's day/month ordering instead of always using the American month-first format — Catalan (and other non-US locales) now correctly show e.g. "14 juny" instead of "juny 14"
+
 ## [1.6.1]
 
 ### Changed

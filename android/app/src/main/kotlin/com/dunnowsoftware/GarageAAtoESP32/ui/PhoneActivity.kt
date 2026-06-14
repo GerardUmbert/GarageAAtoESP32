@@ -584,7 +584,9 @@ private fun formatTime(ctx: android.content.Context, epochMs: Long): String {
     return if (sameDay) {
         ctx.getString(R.string.main_today, timeFmt.format(Date(epochMs)))
     } else {
-        SimpleDateFormat("MMM d, ", locale).format(Date(epochMs)) + timeFmt.format(Date(epochMs))
+        android.icu.text.DateTimePatternGenerator.getInstance(locale)
+            .getBestPattern("MMMd")
+            .let { SimpleDateFormat(it, locale).format(Date(epochMs)) } + ", " + timeFmt.format(Date(epochMs))
     }
 }
 
