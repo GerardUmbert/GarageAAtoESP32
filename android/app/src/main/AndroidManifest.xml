@@ -116,6 +116,12 @@
             android:exported="false"
             android:foregroundServiceType="location" />
 
+        <!-- Short-lived foreground service that warms up GPS on outer geofence ENTER -->
+        <service
+            android:name=".geofence.GpsWarmupForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
+
     </application>
 
 </manifest>

@@ -115,6 +115,8 @@
     <string name="notif_geofence_success_body">Aberta automaticamente à chegada</string>
     <string name="notif_geofence_fail_title">Não foi possível abrir a garagem</string>
     <string name="notif_geofence_fail_body">Abra a app Garage Opener para abrir manualmente</string>
+    <string name="notif_gps_warmup_title">A aproximar-se da garagem…</string>
+    <string name="notif_gps_warmup_body">A ativar GPS para abertura automática</string>
 
     <string name="settings_diagnostics_header">Diagnóstico</string>
     <string name="settings_share_log_label">Partilhar registo geofence</string>

@@ -73,7 +73,7 @@ Open **Garage Opener** — it will walk you through scanning for your ESP32 and 
 
 Connect your phone to Android Auto. Open **Garage Opener** and tap **Open Garage**.
 
-**Optional — geofence auto-open:** in the phone app, go to Settings → Auto-open, set your garage location on the map, adjust the trigger radius (15–75 m), and enable the toggle. From then on the garage opens automatically when you enter the geofence while Android Auto is connected — no tap needed. A notification is posted when the open fires so you always know it happened.
+**Optional — geofence auto-open:** in the phone app, go to Settings → Auto-open, set your garage location on the map, adjust the trigger radius (15–75 m), and enable the toggle. From then on the garage opens automatically when you approach — no tap needed. The primary trigger is Android Auto being connected; if AA isn't connected the app falls back to speed and activity detection. A notification is posted when the open fires so you always know it happened. See [docs/geofence-auto-open.md](docs/geofence-auto-open.md) for the full trigger logic.
 
 ---
 

@@ -1,0 +1,119 @@
+# Geofence Auto-open
+
+When enabled, the garage opens automatically as you approach — no tap needed. This document describes how the trigger logic works, what gates must pass, and how the GPS warmup system improves reliability without AA.
+
+---
+
+## Setup
+
+In the phone app: **Settings → Auto-open → Garage location** — tap the map to set your garage pin and drag the radius slider (15–75 m). Enable the **Auto-open on arrival** toggle. That's it.
+
+---
+
+## How it triggers
+
+Two geofences are registered around your garage location:
+
+- **Inner geofence** — at your configured radius (15–75 m). This is the trigger zone.
+- **Outer geofence** — at your configured radius + 150 m. This is the GPS warmup zone.
+
+When you cross the **inner geofence** boundary inbound (ENTER transition), the app runs a gate chain to decide whether to fire. When you cross the **outer geofence** inbound, the app warms up GPS so speed data is available by the time the inner geofence fires.
+
+---
+
+## Gate chain (inner geofence ENTER)
+
+Gates are evaluated in order. The first one that passes fires the open; if all fail, the trigger is suppressed.
+
+| Gate | Condition | Notes |
+|------|-----------|-------|
+| **1 — AA connected** | Android Auto is actively connected | Strongest signal — binary OS fact, no GPS needed |
+| **2 — Trigger speed** | Speed from the geofence event ≥ 20 km/h | Only available if GPS was already warm at the moment of crossing |
+| **3 — Activity** | `IN_VEHICLE` with ≥ 50% confidence | Cached from Google's Activity Recognition API (30 s updates) |
+| **4 — Last known speed** | Most recent location fix speed ≥ 20 km/h, within 10 min | Useful if navigation was recently active |
+
+If all four gates fail the trigger is logged as suppressed with the full reason.
+
+### Why AA is the best gate
+
+AA being connected is a binary OS-level fact — it's the authoritative signal that you're in a vehicle and driving. It also keeps the phone's location stack warm (Maps/navigation runs continuously), which means geofence ENTER fires within ~1–2 s of the actual boundary crossing instead of the 30 s–2 min worst-case under Doze.
+
+### Why speed gating is unreliable without AA
+
+Geofences can fire off cell/WiFi positioning, which produces lat/lng but no speed. Speed requires GPS, which must be actively running to have a fresh sample. If no app is keeping GPS warm, the geofence event arrives with `speed = 0` and `lastLocation` also has no speed. This is the problem the outer geofence warmup solves.
+
+### Why motorbike is harder than car
+
+Google's Activity Recognition is tuned primarily for cars. A motorbike's vibration and acceleration profile often comes back as `UNKNOWN` instead of `IN_VEHICLE`, so Gate 3 may fail. Gate 2 (speed) is the reliable path for motorbike riders — which is exactly why GPS warmup matters.
+
+---
+
+## Outer geofence — GPS warmup
+
+The outer geofence fires ~150 m before the inner one. On ENTER, a short-lived foreground service (`GpsWarmupForegroundService`) starts requesting location updates at **5 s intervals**.
+
+GPS needs at least two consecutive fixes (~10 s) to compute speed. At 30–50 km/h you cross 150 m in 10–18 s, giving the GPS stack enough time to produce a valid speed reading before the inner geofence fires.
+
+### Warmup is skipped when
+
+- Android Auto is connected — GPS is already warm via the AA location stack
+- Activity is `STILL`, `WALKING`, or `RUNNING` — clearly not in a vehicle
+- Activity is `UNKNOWN` and no prior outer geofence EXIT was recorded — likely still at home (see exit flag below)
+
+`IN_VEHICLE` or `ON_BICYCLE` always starts the warmup regardless of the exit flag — confident vehicle signals override everything.
+
+### Exit flag
+
+When the **inner** geofence EXIT fires, a `wasOutsideOuterGeofence` boolean is saved to SharedPreferences. The inner geofence is used (not the outer) because it's centered on the actual garage — an inner EXIT confirms you've genuinely left the garage area, whereas an outer EXIT could happen anywhere in the wider warmup zone. On the next outer ENTER:
+
+- If the flag is `true` → you genuinely left and came back → warmup starts for `UNKNOWN` activity too
+- If the flag is `false` → no confirmed departure recorded → `UNKNOWN` activity is treated conservatively and warmup is skipped
+
+This prevents spurious GPS warmup sessions when you're stationary at home and the OS fires an ENTER due to a re-register or GPS jitter, where activity comes back `UNKNOWN`.
+
+**If EXIT is dropped by the OS** (which Android does occasionally under Doze), the flag stays `false`. The consequence is that one approach with `UNKNOWN` activity may miss the warmup — but `IN_VEHICLE`/`ON_BICYCLE` still work, and the next EXIT+ENTER cycle resets correctly. The flag is an optimistic hint, not a hard gate.
+
+### Warmup stop conditions
+
+The service stops on whichever comes first:
+
+1. **Outer geofence EXIT** — you left the outer zone without entering the inner
+2. **Inner gate pass** — the open fired; warmup is no longer needed
+3. **5-minute timeout** — safety net for dropped EXIT events (the OS occasionally fails to deliver EXIT under Doze). If the app crashes, the location client dies with it — no leak.
+
+---
+
+## Debounce
+
+After a successful open, a 10-second debounce prevents re-triggering. Both the geofence service and the AA car screen share the same `lastAutoFiredAt` timestamp in encrypted storage — cross-process races are absorbed.
+
+Only confirmed successful opens (`OpenResult.Success`) write the timestamp. Failed attempts do not block subsequent triggers.
+
+---
+
+## Re-registration
+
+Geofences are re-registered:
+
+- On device boot (`BOOT_COMPLETED`)
+- On app update (`MY_PACKAGE_REPLACED`)
+- On every app cold start
+- Every ~15 minutes via WorkManager (covers OEM process killers)
+
+Both inner and outer geofences are registered together. After an app update, the outer geofence is added automatically on the next re-register cycle — no user action needed.
+
+`setInitialTrigger(0)` is set on all geofencing requests so re-registration does not fire spurious ENTER events if you're already inside the zone.
+
+---
+
+## Notifications
+
+- **Approaching garage…** — shown while the GPS warmup service is active (typically 10–30 s). Disappears automatically when the service stops.
+- **Garage opened** — posted on successful auto-open. Auto-dismisses after 5 s.
+- **Couldn't open garage** — posted if all BLE retry attempts fail. Tap the app to open manually.
+
+---
+
+## Logs
+
+Every gate evaluation is written to the geofence log. Share it via **Settings → Diagnostics → Share geofence log** to inspect exactly what happened on each approach — speeds, activity types, gate results, and suppression reasons are all logged.

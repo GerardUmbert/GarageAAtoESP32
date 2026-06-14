@@ -23,6 +23,8 @@ When GPIO 8 goes HIGH the transistor saturates and shorts the two fob pads — i
 
 Provides galvanic isolation between the ESP32 and fob circuits. Overkill for a 3 V fob but familiar to beginners.
 
+**Recommended relay:** SRD-DC03V-SL-C (3V coil). Works directly with the 3.3V GPIO and power rail of any ESP32 board — no transistor driver or 5V supply needed. Wire VCC to the ESP32 3.3V pin.
+
 ### Relay to ESP32
 
 ```
@@ -177,6 +179,6 @@ Most control over capacity and charging. Good for custom enclosures or when you 
 
 ## Notes
 - **Transistor option**: peak current draw drops to ~20 mA (no relay coil) — better for battery life.
-- **Relay option**: coil draws ~60–80 mA; ensure your power source can supply ≥ 300 mA peak. Use a flyback diode if using a bare coil (most relay modules have one built in).
+- **Relay option**: SRD-DC03V-SL-C coil draws ~60–80 mA; ensure your power source can supply ≥ 300 mA peak. Use a flyback diode if using a bare coil (most relay modules have one built in).
 - **Cap-pulse option**: ESP32 peak draw is unchanged (~20 mA during the brief pulse). The fingerbot has its own battery and isn't powered by the ESP32.
 - Mount in an IP65 waterproof junction box for outdoor use. Route wires through cable glands.

@@ -93,6 +93,14 @@ class DevicePreferences(context: Context) {
         get() = prefs.getLong(KEY_LAST_AUTO_FIRED, 0L)
         set(value) = prefs.edit().putLong(KEY_LAST_AUTO_FIRED, value).apply()
 
+    // Set to true when outer geofence EXIT fires. Used as an optimistic hint
+    // on the next outer ENTER — if false and activity is UNKNOWN, warmup is
+    // skipped (likely still at home). If EXIT was dropped by the OS this stays
+    // false, but IN_VEHICLE/ON_BICYCLE activity still overrides it.
+    var wasOutsideOuterGeofence: Boolean
+        get() = prefs.getBoolean(KEY_OUTSIDE_OUTER_GEOFENCE, false)
+        set(value) = prefs.edit().putBoolean(KEY_OUTSIDE_OUTER_GEOFENCE, value).apply()
+
     val hasPairedDevice: Boolean
         get() = pairedDevice != null
 
@@ -141,9 +149,10 @@ class DevicePreferences(context: Context) {
     }
 
     companion object {
-        private const val KEY_PAIRED_DEVICE     = "paired_device"
-        private const val KEY_DEMO              = "demo_mode"
-        private const val KEY_LAST_OPENED       = "last_opened_at"
-        private const val KEY_LAST_AUTO_FIRED   = "last_auto_fired_at"
+        private const val KEY_PAIRED_DEVICE          = "paired_device"
+        private const val KEY_DEMO                   = "demo_mode"
+        private const val KEY_LAST_OPENED            = "last_opened_at"
+        private const val KEY_LAST_AUTO_FIRED        = "last_auto_fired_at"
+        private const val KEY_OUTSIDE_OUTER_GEOFENCE = "outside_outer_geofence"
     }
 }

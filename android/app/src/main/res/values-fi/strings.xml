@@ -115,6 +115,8 @@
     <string name="notif_geofence_success_body">Avattu automaattisesti saapuessa</string>
     <string name="notif_geofence_fail_title">Tallin avaaminen epäonnistui</string>
     <string name="notif_geofence_fail_body">Avaa Garage Opener -sovellus avataksesi manuaalisesti</string>
+    <string name="notif_gps_warmup_title">Lähestytään tallia…</string>
+    <string name="notif_gps_warmup_body">Valmistellaan GPS automaattista avausta varten</string>
 
     <string name="settings_diagnostics_header">Diagnostiikka</string>
     <string name="settings_share_log_label">Jaa geofence-loki</string>

@@ -12,7 +12,10 @@ import com.google.android.gms.location.LocationServices
 
 private const val TAG = "GeofenceManager"
 const val GEOFENCE_ID_PREFIX = "garage_"
+const val GEOFENCE_OUTER_ID_PREFIX = "garage_outer_"
 const val EXTRA_DEVICE_ADDRESS = "device_address"
+// Outer geofence offset for GPS warmup — added on top of the user-configured radius
+const val OUTER_GEOFENCE_OFFSET_M = 150f
 
 class GeofenceManager(private val context: Context) {
 
@@ -67,7 +70,7 @@ class GeofenceManager(private val context: Context) {
 
         GeofenceLogger.i(context, TAG, "Registering geofence for ${device.address} — lat=$lat lng=$lng radius=${radius}m")
 
-        val geofence = Geofence.Builder()
+        val innerGeofence = Geofence.Builder()
             .setRequestId(GEOFENCE_ID_PREFIX + device.address)
             .setCircularRegion(lat, lng, radius)
             .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT)
@@ -75,9 +78,18 @@ class GeofenceManager(private val context: Context) {
             .setNotificationResponsiveness(5_000)
             .build()
 
+        val outerGeofence = Geofence.Builder()
+            .setRequestId(GEOFENCE_OUTER_ID_PREFIX + device.address)
+            .setCircularRegion(lat, lng, radius + OUTER_GEOFENCE_OFFSET_M)
+            .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT)
+            .setExpirationDuration(Geofence.NEVER_EXPIRE)
+            .setNotificationResponsiveness(5_000)
+            .build()
+
         val request = GeofencingRequest.Builder()
             .setInitialTrigger(0) // do not fire immediately on register
-            .addGeofence(geofence)
+            .addGeofence(innerGeofence)
+            .addGeofence(outerGeofence)
             .build()
 
         try {
@@ -92,7 +104,7 @@ class GeofenceManager(private val context: Context) {
 
     fun unregister(deviceAddress: String) {
         GeofenceLogger.i(context, TAG, "Removing geofence for $deviceAddress")
-        client.removeGeofences(listOf(GEOFENCE_ID_PREFIX + deviceAddress))
+        client.removeGeofences(listOf(GEOFENCE_ID_PREFIX + deviceAddress, GEOFENCE_OUTER_ID_PREFIX + deviceAddress))
             .addOnSuccessListener { GeofenceLogger.i(context, TAG, "Geofence removed OK for $deviceAddress") }
             .addOnFailureListener { GeofenceLogger.e(context, TAG, "Failed to remove geofence for $deviceAddress: $it") }
         stopActivityUpdates()

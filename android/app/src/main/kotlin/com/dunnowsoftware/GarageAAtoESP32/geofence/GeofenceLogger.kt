@@ -8,7 +8,7 @@ import java.util.Date
 import java.util.Locale
 
 private const val LOG_FILE = "geofence.log"
-private const val MAX_LINES = 500
+private const val MAX_LINES = 1000
 private const val TAG = "GeofenceLogger"
 
 object GeofenceLogger {

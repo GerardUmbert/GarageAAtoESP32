@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.6.0]
+
+### Added
+- Outer geofence at `userRadius + 150 m` registered alongside the inner trigger geofence — on ENTER, a `GpsWarmupForegroundService` starts requesting location updates at 5 s intervals so the GPS stack produces fresh speed data before the inner geofence fires. GPS needs at least two fixes (~10 s) to compute speed; the 150 m approach window provides enough lead time at typical speeds (30–50 km/h)
+- GPS warmup is skipped when Android Auto is already connected (GPS already warm via AA), or when the cached activity is STILL, WALKING, or RUNNING — only IN_VEHICLE, ON_BICYCLE, or unknown activity starts the warmup, preventing spurious GPS drain while at home or on foot
+- Outer geofence EXIT sets a `wasOutsideOuterGeofence` flag in SharedPreferences — on the next outer ENTER, UNKNOWN activity only starts warmup if this flag is set (confirming a genuine departure), while IN_VEHICLE/ON_BICYCLE always start warmup regardless; guards against spurious warmup when stationary at home with ambiguous activity
+- Warmup service stops automatically on outer geofence EXIT, on inner gate pass, or after a 5-minute safety timeout — whichever comes first — so GPS is never left running indefinitely if the OS drops an EXIT event
+- New notification strings in all 8 languages for the "Approaching garage…" warmup notification
+
 ## [1.5.1]
 
 ### Added

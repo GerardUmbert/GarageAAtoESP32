@@ -42,23 +42,85 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
         else "no location"
         GeofenceLogger.i(context, TAG, "Geofence transition: $transitionName — IDs: $ids — $locStr")
 
+        val triggeringGeofences = event.triggeringGeofences ?: return
+
         if (event.geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT) {
-            val triggeringGeofences = event.triggeringGeofences ?: return
             for (geofence in triggeringGeofences) {
-                val address = geofence.requestId.removePrefix(GEOFENCE_ID_PREFIX)
-                logExitContext(context, address, event)
+                when {
+                    geofence.requestId.startsWith(GEOFENCE_OUTER_ID_PREFIX) -> {
+                        val address = geofence.requestId.removePrefix(GEOFENCE_OUTER_ID_PREFIX)
+                        GeofenceLogger.i(context, TAG, "Outer geofence EXIT — stopping GPS warmup for $address")
+                        stopGpsWarmup(context)
+                    }
+                    geofence.requestId.startsWith(GEOFENCE_ID_PREFIX) -> {
+                        val address = geofence.requestId.removePrefix(GEOFENCE_ID_PREFIX)
+                        GeofenceLogger.i(context, TAG, "Inner geofence EXIT — setting outside flag and stopping GPS warmup for $address")
+                        DevicePreferences(context).wasOutsideOuterGeofence = true
+                        stopGpsWarmup(context)
+                        logExitContext(context, address, event)
+                    }
+                }
             }
             return
         }
 
         if (event.geofenceTransition != Geofence.GEOFENCE_TRANSITION_ENTER) return
 
-        val triggeringGeofences = event.triggeringGeofences ?: return
-
         for (geofence in triggeringGeofences) {
-            val address = geofence.requestId.removePrefix(GEOFENCE_ID_PREFIX)
-            handleEnter(context, address, event)
+            when {
+                geofence.requestId.startsWith(GEOFENCE_OUTER_ID_PREFIX) -> {
+                    val address = geofence.requestId.removePrefix(GEOFENCE_OUTER_ID_PREFIX)
+                    handleOuterEnter(context, address)
+                }
+                geofence.requestId.startsWith(GEOFENCE_ID_PREFIX) -> {
+                    val address = geofence.requestId.removePrefix(GEOFENCE_ID_PREFIX)
+                    handleEnter(context, address, event)
+                }
+            }
         }
+    }
+
+    private fun handleOuterEnter(context: Context, deviceAddress: String) {
+        if (com.dunnowsoftware.GarageAAtoESP32.AndroidAutoState.isConnected) {
+            GeofenceLogger.i(context, TAG, "Outer geofence ENTER for $deviceAddress — AA connected, GPS already warm, skipping warmup")
+            return
+        }
+        val activityType = ActivityUpdateReceiver.lastActivityType(context)
+        val confidence = ActivityUpdateReceiver.lastActivityConfidence(context)
+        val activityAgeMs = ActivityUpdateReceiver.lastActivityAgeMs(context)
+        val activityAgeStr = if (activityAgeMs >= 0) "${activityAgeMs / 1000}s ago" else "never"
+        val activityName = when (activityType) {
+            DetectedActivity.IN_VEHICLE -> "IN_VEHICLE"
+            DetectedActivity.ON_BICYCLE -> "ON_BICYCLE"
+            DetectedActivity.ON_FOOT    -> "ON_FOOT"
+            DetectedActivity.STILL      -> "STILL"
+            DetectedActivity.RUNNING    -> "RUNNING"
+            DetectedActivity.WALKING    -> "WALKING"
+            else -> "UNKNOWN"
+        }
+        if (activityType == DetectedActivity.STILL || activityType == DetectedActivity.ON_FOOT || activityType == DetectedActivity.WALKING || activityType == DetectedActivity.RUNNING) {
+            GeofenceLogger.i(context, TAG, "Outer geofence ENTER for $deviceAddress — activity=$activityName($confidence%) $activityAgeStr, skipping warmup")
+            return
+        }
+
+        val wasOutside = DevicePreferences(context).wasOutsideOuterGeofence
+        val isConfidentVehicle = activityType == DetectedActivity.IN_VEHICLE || activityType == DetectedActivity.ON_BICYCLE
+        if (!wasOutside && !isConfidentVehicle) {
+            GeofenceLogger.i(context, TAG, "Outer geofence ENTER for $deviceAddress — activity=$activityName($confidence%) $activityAgeStr, no prior EXIT recorded, skipping warmup")
+            return
+        }
+
+        GeofenceLogger.i(context, TAG, "Outer geofence ENTER for $deviceAddress — activity=$activityName($confidence%) $activityAgeStr wasOutside=$wasOutside, starting GPS warmup")
+        DevicePreferences(context).wasOutsideOuterGeofence = false
+        val intent = Intent(context, GpsWarmupForegroundService::class.java)
+        context.startForegroundService(intent)
+    }
+
+    private fun stopGpsWarmup(context: Context) {
+        val intent = Intent(context, GpsWarmupForegroundService::class.java).apply {
+            action = GpsWarmupForegroundService.ACTION_STOP
+        }
+        context.startService(intent)
     }
 
     private fun handleEnter(context: Context, deviceAddress: String, event: GeofencingEvent) {
@@ -175,6 +237,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
         }
 
         GeofenceLogger.i(context, TAG, "All gates passed for $deviceAddress — starting foreground service")
+        stopGpsWarmup(context)
         val serviceIntent = Intent(context, GeofenceForegroundService::class.java).apply {
             putExtra(EXTRA_DEVICE_ADDRESS, deviceAddress)
         }

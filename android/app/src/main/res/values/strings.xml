@@ -134,6 +134,8 @@
     <string name="notif_geofence_success_body">Auto-opened on arrival</string>
     <string name="notif_geofence_fail_title">Couldn\'t open garage</string>
     <string name="notif_geofence_fail_body">Tap the Garage Opener app to open manually</string>
+    <string name="notif_gps_warmup_title">Approaching garage…</string>
+    <string name="notif_gps_warmup_body">Warming up GPS for auto-open</string>
 
     <!-- Battery / unused-app permission instruction dialogs -->
     <string name="perm_dialog_location_title">Precise location needed</string>
