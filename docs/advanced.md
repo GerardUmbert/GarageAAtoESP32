@@ -50,7 +50,7 @@ The following boards have pre-configured environments in `firmware/platformio.in
 | Env name        | Board                  | Default trigger pin |
 |-----------------|------------------------|---------------------|
 | `esp32c3`       | ESP32-C3-DevKitM-1     | GPIO 8              |
-| `lolin32lite`   | Wemos Lolin32 Lite     | GPIO 22             |
+| `lolin32lite`   | Wemos Lolin32 Lite     | GPIO 26             |
 | `esp32dev`      | ESP32-DevKitC          | GPIO 26             |
 | `lolin32`       | Wemos Lolin32          | GPIO 26             |
 | `esp32s3`       | ESP32-S3-DevKitC-1     | GPIO 4              |

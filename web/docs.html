@@ -460,9 +460,10 @@ ESP32 GND     ─────────▶ Emitter (E)
         <p>In firmware: <code>TRIGGER_MODE=MODE_TRANSISTOR</code>, <code>TRIGGER_PIN=8</code></p>
 
         <h3>Option B — Relay module</h3>
+        <p>Recommended relay: <strong>SRD-DC03V-SL-C</strong> (3V coil) — works directly with the ESP32's 3.3V GPIO and power rail. A 5V coil relay will not actuate reliably from 3.3V and requires an additional transistor driver stage.</p>
         <div class="diagram-block">ESP32 GPIO 8  ──▶  Relay IN
 ESP32 GND     ──▶  Relay GND
-ESP32 3.3V    ──▶  Relay VCC
+ESP32 3.3V    ──▶  Relay VCC  (use a 3V coil relay — SRD-DC03V-SL-C)
 
 Fob pad A  ──▶  Relay COM
 Fob pad B  ──▶  Relay NO (Normally Open)</div>

@@ -144,7 +144,7 @@ See [docs/wiring_diagram.md](docs/wiring_diagram.md) for full diagrams, material
   _(must be an ESP32 variant with BLE — the ESP8266 has no Bluetooth. Other ESP32 variants such as the classic ESP32-DevKitC also work; see [docs/advanced.md](docs/advanced.md) for instructions.)_
 - **Trigger mechanism** — pick one based on the table above:
   - Option A: NPN transistor (2N2222 / BC547 / 2N3904, ~$0.10) + 1 kΩ resistor
-  - Option B: 5V relay module (~$1)
+  - Option B: 3V coil relay module, e.g. SRD-DC03V-SL-C (~$1–2) — works directly with 3.3V ESP32 GPIO; a 5V coil relay requires an additional transistor driver
   - Option C: Adaprox / Tuya Fingerbot Plus (model `ADFBB531` or similar, capacitive top button) + ~1 cm² of copper tape + thin wire
   - Option D: NPN transistor or relay module + copper tape (two ~20 mm discs) + thin wire + CR2032 holder + 3D-printed button press clip for your fob model
 - **Garage key fob** — for Options A and B you'll solder two wires to the button pads inside it. For Option C you don't open the fob at all.
@@ -171,10 +171,11 @@ docs/       Wiring diagram, power budget, provisioning guide
 
 ## Wiring
 
-Three options:
+Four options:
 - **A — Transistor** (cheapest, lowest power, requires soldering)
 - **B — Relay module** (more familiar to beginners, requires soldering)
 - **C — Capacitive pulse on a fingerbot** (no soldering, fully reversible — for rented fobs)
+- **D — Fake battery + power-rail switching** (no fingerbot, lower latency, best all-round no-modification option)
 
 See [docs/wiring_diagram.md](docs/wiring_diagram.md) for full diagrams, materials lists, and component notes.
 

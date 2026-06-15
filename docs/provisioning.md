@@ -175,9 +175,11 @@ adb -s <device-id> install app-debug.apk
 
 ---
 
-## Step 7 — Enable Android Auto Developer Mode
+## Step 7 — Enable Android Auto Developer Mode (sideload only)
 
-Sideloaded apps are **blocked from appearing in Android Auto by default**. You must enable developer mode in the Android Auto app to allow unknown sources.
+> **Skip this step if you installed from the Play Store.** This is only needed for sideloaded APKs — Play Store installs work with Android Auto out of the box.
+
+Sideloaded apps are blocked from appearing in Android Auto by default. Enable developer mode once to allow them:
 
 1. Open the **Android Auto** app on your phone.
 2. Tap the **≡ hamburger menu** (top-left) → **Settings**.
@@ -192,17 +194,14 @@ Sideloaded apps are **blocked from appearing in Android Auto by default**. You m
 
 ## Step 8 — Configure the app (one-time phone setup)
 
-1. Open **Garage Opener** on your phone (it appears in your app drawer after sideloading).
-2. Tap **Settings**.
-3. Enter your PIN — must exactly match `USER_PIN` in `config.h`.
-4. Tap **Save PIN**.
-5. Tap **Scan for Garage** — the app scans for BLE devices advertising the garage service.
-   - Make sure the ESP32 is powered on and within ~10 m.
-   - Scan runs for 15 seconds.
-6. Tap your device in the list (e.g., "Garage-Main") to save it.
-   - The main screen now shows the saved device name.
+1. Open **Garage Opener** on your phone.
+2. The app opens an onboarding flow automatically on first launch — follow the steps on screen:
+   - **Welcome** — overview of what the app does. Tap **Continue**.
+   - **Pair your opener** — the app starts a BLE scan with a radar visual. Make sure the ESP32 is powered on and within ~10 m. Tap your device when it appears to pair it.
+   - The app asks for your PIN — enter the same value you used as `USER_PIN` when flashing. This is stored encrypted on your phone and never transmitted.
+3. After pairing, the main screen shows the paired device name and a presence indicator. You're done.
 
-Grant Bluetooth permissions if prompted (required for BLE scan).
+Grant Bluetooth and location permissions when prompted — these are required for the BLE scan.
 
 ---
 
@@ -277,7 +276,7 @@ The PIN never appears in the repository or the APK. Each person enters it manual
 | Relay / transistor never clicks | Wrong `TRIGGER_MODE` | Set `MODE_TRANSISTOR` for transistor, `MODE_RELAY` for relay module |
 | Fingerbot never triggers (cap-pulse) | Pad coupling weak | Increase `RELAY_PULSE_MS`, enlarge pad, or add ESP32 GND wire to fingerbot chassis |
 | nRF Connect: Status always `00` | PIN mismatch | Verify `USER_PIN` in `config.h` exactly matches app PIN |
-| App not appearing in Android Auto | Unknown sources not enabled | Repeat Step 6; confirm "Unknown sources" is on |
+| App not appearing in Android Auto | Unknown sources not enabled (sideload only) | Repeat Step 7; confirm "Unknown sources" is on in AA Developer settings. Play Store installs don't need this. |
 | BLE scan finds nothing | ESP32 not advertising | Check power; check Serial Monitor; move phone closer |
 | Scan times out immediately | BLE permission denied | Go to phone Settings → Apps → Garage Opener → Permissions → allow Location + Nearby devices |
 | `adb: device unauthorized` | USB debugging not accepted | Unlock phone, tap Allow on the dialog |
