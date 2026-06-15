@@ -68,7 +68,8 @@ class GeofenceManager(private val context: Context) {
         val lng = device.geofenceLng ?: return
         val radius = device.geofenceRadiusM ?: return
 
-        GeofenceLogger.i(context, TAG, "Registering geofence for ${device.address} — lat=$lat lng=$lng inner=${radius}m outer=${radius + OUTER_GEOFENCE_OFFSET_M}m")
+        val outerOffset = device.geofenceOuterOffsetM
+        GeofenceLogger.i(context, TAG, "Registering geofence for ${device.address} — lat=$lat lng=$lng inner=${radius}m outer=${radius + outerOffset}m")
 
         val innerGeofence = Geofence.Builder()
             .setRequestId(GEOFENCE_ID_PREFIX + device.address)
@@ -80,7 +81,7 @@ class GeofenceManager(private val context: Context) {
 
         val outerGeofence = Geofence.Builder()
             .setRequestId(GEOFENCE_OUTER_ID_PREFIX + device.address)
-            .setCircularRegion(lat, lng, radius + OUTER_GEOFENCE_OFFSET_M)
+            .setCircularRegion(lat, lng, radius + outerOffset)
             .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT)
             .setExpirationDuration(Geofence.NEVER_EXPIRE)
             .setNotificationResponsiveness(5_000)

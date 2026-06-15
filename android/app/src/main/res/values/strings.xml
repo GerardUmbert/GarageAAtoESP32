@@ -123,6 +123,8 @@
     <string name="geofence_picker_subtitle">Tap the map to set where the door opens automatically</string>
     <string name="geofence_picker_radius_label">RADIUS</string>
     <string name="geofence_picker_radius_pill_suffix">radius</string>
+    <string name="geofence_picker_outer_label">WARMUP RING</string>
+    <string name="geofence_picker_outer_pill_suffix">warmup</string>
     <string name="geofence_picker_save">Save</string>
 
     <!-- Geofence notifications -->

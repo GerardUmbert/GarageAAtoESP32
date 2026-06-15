@@ -104,6 +104,8 @@
     <string name="geofence_picker_subtitle">Toca el mapa per definir on s\'obre la porta automàticament</string>
     <string name="geofence_picker_radius_label">RADI</string>
     <string name="geofence_picker_radius_pill_suffix">radi</string>
+    <string name="geofence_picker_outer_label">ANELL D\'ESCALFAMENT</string>
+    <string name="geofence_picker_outer_pill_suffix">escalfament</string>
     <string name="geofence_picker_save">Desa</string>
 
     <!-- Geofence notifications -->

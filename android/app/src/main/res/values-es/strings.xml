@@ -104,6 +104,8 @@
     <string name="geofence_picker_subtitle">Toca el mapa para definir dónde se abre la puerta automáticamente</string>
     <string name="geofence_picker_radius_label">RADIO</string>
     <string name="geofence_picker_radius_pill_suffix">radio</string>
+    <string name="geofence_picker_outer_label">ANILLO DE CALENTAMIENTO</string>
+    <string name="geofence_picker_outer_pill_suffix">calentamiento</string>
     <string name="geofence_picker_save">Guardar</string>
 
     <!-- Geofence notifications -->

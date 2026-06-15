@@ -104,6 +104,8 @@
     <string name="geofence_picker_subtitle">Touchez la carte pour définir où la porte s\'ouvre automatiquement</string>
     <string name="geofence_picker_radius_label">RAYON</string>
     <string name="geofence_picker_radius_pill_suffix">rayon</string>
+    <string name="geofence_picker_outer_label">ANNEAU DE PRÉCHAUFFAGE</string>
+    <string name="geofence_picker_outer_pill_suffix">préchauffage</string>
     <string name="geofence_picker_save">Enregistrer</string>
 
     <!-- Geofence notifications -->

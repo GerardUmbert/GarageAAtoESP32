@@ -70,11 +70,13 @@ private val CartoDarkTiles = object : OnlineTileSourceBase(
 private const val ACCENT_ARGB            = 0xFF2AD4A3.toInt()
 private const val ACCENT_FILL_ARGB       = 0x302AD4A3
 private const val ACCENT_OUTER_ARGB      = 0x662AD4A3  // ~40% alpha for the warmup ring
-private const val OUTER_GEOFENCE_OFFSET  = 150.0       // must match GeofenceManager.OUTER_GEOFENCE_OFFSET_M
 
-private const val RADIUS_MIN     = 15f
-private const val RADIUS_MAX     = 75f
-private const val RADIUS_DEFAULT = 40f
+private const val RADIUS_MIN        = 15f
+private const val RADIUS_MAX        = 75f
+private const val RADIUS_DEFAULT    = 40f
+private const val OUTER_OFFSET_MIN  = 15f   // slider bottom (actual outer = inner + this)
+private const val OUTER_OFFSET_MAX  = 1000f
+private const val OUTER_OFFSET_DEFAULT = 150f
 private const val DEFAULT_ZOOM   = 17.0  // used only when centering on user location with no pin
 private const val CIRCLE_PADDING = 0.55  // fraction of map viewport the circle should fill
 
@@ -89,9 +91,10 @@ fun GeofencePickerScreen(
     initialLat: Double?,
     initialLng: Double?,
     initialRadiusM: Float?,
+    initialOuterOffsetM: Float?,
     deviceName: String?,
     deviceAddress: String?,
-    onSave: (lat: Double, lng: Double, radiusM: Float) -> Unit,
+    onSave: (lat: Double, lng: Double, radiusM: Float, outerOffsetM: Float) -> Unit,
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -109,6 +112,7 @@ fun GeofencePickerScreen(
         )
     }
     var radiusM by remember { mutableFloatStateOf(initialRadiusM ?: RADIUS_DEFAULT) }
+    var outerOffsetM by remember { mutableFloatStateOf(initialOuterOffsetM ?: OUTER_OFFSET_DEFAULT) }
     var mapViewRef by remember { mutableStateOf<MapView?>(null) }
     var geofencePolygon by remember { mutableStateOf<Polygon?>(null) }
     var outerPolygon by remember { mutableStateOf<Polygon?>(null) }
@@ -118,7 +122,7 @@ fun GeofencePickerScreen(
         outerPolygon?.let { map.overlays.remove(it) }
 
         val outer = Polygon(map).apply {
-            points = Polygon.pointsAsCircle(center, radiusM.toDouble() + OUTER_GEOFENCE_OFFSET)
+            points = Polygon.pointsAsCircle(center, radiusM.toDouble() + outerOffsetM.toDouble())
             fillPaint.apply {
                 color = 0x002AD4A3  // transparent fill
                 style = Paint.Style.FILL
@@ -191,7 +195,7 @@ fun GeofencePickerScreen(
                     .background(if (canSave) GarageColors.Accent else Color.Transparent)
                     .clickable(enabled = canSave) {
                         vibrate(ctx, HAPTIC_TAP)
-                        onSave(pickedPoint!!.latitude, pickedPoint!!.longitude, radiusM)
+                        onSave(pickedPoint!!.latitude, pickedPoint!!.longitude, radiusM, outerOffsetM)
                     }
                     .padding(horizontal = 16.dp, vertical = 6.dp),
             ) {
@@ -321,6 +325,23 @@ fun GeofencePickerScreen(
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                 )
+                Text(
+                    text = "·",
+                    color = GarageColors.TextFaint,
+                    fontSize = 13.sp,
+                )
+                Box(
+                    modifier = Modifier
+                        .size(7.dp)
+                        .clip(CircleShape)
+                        .background(Color(ACCENT_OUTER_ARGB)),
+                )
+                Text(
+                    text = "${(radiusM + outerOffsetM).roundToInt()} m ${stringResource(R.string.geofence_picker_outer_pill_suffix)}",
+                    color = GarageColors.Text,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                )
             }
 
             // Coordinates chip — bottom-center, only when pin placed
@@ -385,6 +406,59 @@ fun GeofencePickerScreen(
                 colors = SliderDefaults.colors(
                     thumbColor = GarageColors.Accent,
                     activeTrackColor = GarageColors.Accent,
+                    inactiveTrackColor = GarageColors.Surface2,
+                ),
+                thumb = {
+                    Box(
+                        modifier = Modifier
+                            .size(26.dp)
+                            .clip(CircleShape)
+                            .background(Color.White),
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        // Outer geofence (warmup ring) slider
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.geofence_picker_outer_label),
+                    color = GarageColors.TextDim,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    letterSpacing = 0.8.sp,
+                )
+                Text(
+                    text = "${OUTER_OFFSET_MIN.roundToInt()} m — ${OUTER_OFFSET_MAX.roundToInt()} m",
+                    color = GarageColors.TextFaint,
+                    fontSize = 12.sp,
+                )
+            }
+            @OptIn(ExperimentalMaterial3Api::class)
+            Slider(
+                value = outerOffsetM,
+                onValueChange = { v ->
+                    outerOffsetM = v
+                    val p = pickedPoint ?: return@Slider
+                    val map = mapViewRef ?: return@Slider
+                    updateCircle(p, map)
+                },
+                valueRange = OUTER_OFFSET_MIN..OUTER_OFFSET_MAX,
+                colors = SliderDefaults.colors(
+                    thumbColor = Color(ACCENT_OUTER_ARGB),
+                    activeTrackColor = Color(ACCENT_OUTER_ARGB),
                     inactiveTrackColor = GarageColors.Surface2,
                 ),
                 thumb = {

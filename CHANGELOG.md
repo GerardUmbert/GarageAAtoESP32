@@ -6,6 +6,11 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ## [1.6.2]
 
+### Added
+- Geofence picker now has a second "Warmup ring" slider controlling the outer geofence radius independently, from 15 m to 1 000 m above the inner radius — previously fixed at `inner + 150 m`
+- Outer ring size is shown in the top-left map pill alongside the inner radius, and is persisted per device in preferences
+- The dashed outer ring on the map updates live as the new slider is dragged
+
 ### Fixed
 - Last opened date on the main screen now follows the locale's day/month ordering instead of always using the American month-first format — Catalan (and other non-US locales) now correctly show e.g. "14 juny" instead of "juny 14"
 

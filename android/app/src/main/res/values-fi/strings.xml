@@ -104,6 +104,8 @@
     <string name="geofence_picker_subtitle">Napauta karttaa määrittääksesi automaattisen avauksen alueen</string>
     <string name="geofence_picker_radius_label">SÄDE</string>
     <string name="geofence_picker_radius_pill_suffix">säde</string>
+    <string name="geofence_picker_outer_label">LÄMMITYSRENGAS</string>
+    <string name="geofence_picker_outer_pill_suffix">lämmitys</string>
     <string name="geofence_picker_save">Tallenna</string>
 
     <!-- Geofence notifications -->

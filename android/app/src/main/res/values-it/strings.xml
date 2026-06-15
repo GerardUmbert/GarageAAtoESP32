@@ -104,6 +104,8 @@
     <string name="geofence_picker_subtitle">Tocca la mappa per definire dove si apre la porta automaticamente</string>
     <string name="geofence_picker_radius_label">RAGGIO</string>
     <string name="geofence_picker_radius_pill_suffix">raggio</string>
+    <string name="geofence_picker_outer_label">ANELLO DI RISCALDAMENTO</string>
+    <string name="geofence_picker_outer_pill_suffix">riscaldamento</string>
     <string name="geofence_picker_save">Salva</string>
 
     <!-- Geofence notifications -->

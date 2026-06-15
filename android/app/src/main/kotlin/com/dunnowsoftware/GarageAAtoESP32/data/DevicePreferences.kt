@@ -21,6 +21,7 @@ data class PairedDevice(
     val geofenceLat: Double? = null,
     val geofenceLng: Double? = null,
     val geofenceRadiusM: Float? = null,
+    val geofenceOuterOffsetM: Float = 150f,
     val geofenceEnabled: Boolean = false,
 ) {
     val hasGeofence: Boolean
@@ -52,6 +53,7 @@ class DevicePreferences(context: Context) {
                     geofenceLat = if (o.has("geofence_lat")) o.getDouble("geofence_lat") else null,
                     geofenceLng = if (o.has("geofence_lng")) o.getDouble("geofence_lng") else null,
                     geofenceRadiusM = if (o.has("geofence_radius_m")) o.getDouble("geofence_radius_m").toFloat() else null,
+                    geofenceOuterOffsetM = if (o.has("geofence_outer_offset_m")) o.getDouble("geofence_outer_offset_m").toFloat() else 150f,
                     geofenceEnabled = o.optBoolean("geofence_enabled", false),
                 )
             } catch (_: Throwable) {
@@ -69,6 +71,7 @@ class DevicePreferences(context: Context) {
                     if (value.geofenceLat != null) put("geofence_lat", value.geofenceLat)
                     if (value.geofenceLng != null) put("geofence_lng", value.geofenceLng)
                     if (value.geofenceRadiusM != null) put("geofence_radius_m", value.geofenceRadiusM.toDouble())
+                    put("geofence_outer_offset_m", value.geofenceOuterOffsetM.toDouble())
                     put("geofence_enabled", value.geofenceEnabled)
                 }.toString()
                 prefs.edit().putString(KEY_PAIRED_DEVICE, json).apply()
@@ -120,12 +123,13 @@ class DevicePreferences(context: Context) {
         pairedDevice = current.copy(password = newPassword)
     }
 
-    fun updateGeofence(lat: Double, lng: Double, radiusM: Float) {
+    fun updateGeofence(lat: Double, lng: Double, radiusM: Float, outerOffsetM: Float) {
         val current = pairedDevice ?: return
         pairedDevice = current.copy(
             geofenceLat = lat,
             geofenceLng = lng,
             geofenceRadiusM = radiusM,
+            geofenceOuterOffsetM = outerOffsetM,
         )
     }
 

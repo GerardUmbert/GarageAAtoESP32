@@ -104,6 +104,8 @@
     <string name="geofence_picker_subtitle">Tippe auf die Karte, um den automatischen Öffnungsbereich festzulegen</string>
     <string name="geofence_picker_radius_label">RADIUS</string>
     <string name="geofence_picker_radius_pill_suffix">Radius</string>
+    <string name="geofence_picker_outer_label">AUFWÄRMRING</string>
+    <string name="geofence_picker_outer_pill_suffix">Aufwärm</string>
     <string name="geofence_picker_save">Speichern</string>
 
     <!-- Geofence notifications -->

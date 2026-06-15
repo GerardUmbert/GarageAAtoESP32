@@ -429,10 +429,11 @@ private fun AppRoot(
                 initialLat = device?.geofenceLat,
                 initialLng = device?.geofenceLng,
                 initialRadiusM = device?.geofenceRadiusM,
+                initialOuterOffsetM = device?.geofenceOuterOffsetM,
                 deviceName = device?.name,
                 deviceAddress = device?.address,
-                onSave = { lat, lng, radius ->
-                    prefs.updateGeofence(lat, lng, radius)
+                onSave = { lat, lng, radius, outerOffset ->
+                    prefs.updateGeofence(lat, lng, radius, outerOffset)
                     val updated = prefs.pairedDevice
                     if (updated?.isGeofenceActive == true) {
                         GeofenceManager(ctx).register(updated)
