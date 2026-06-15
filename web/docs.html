@@ -38,6 +38,10 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+  </script>
 
   <style>
     *, *::before, *::after { box-sizing: border-box; }
@@ -619,6 +623,36 @@ Fingerbot arm  ──▶  physically presses fob button</div>
           <li><strong>Outer geofence</strong> — at your configured radius + 150 m. This is the GPS warmup zone (shown as a dashed ring in the picker).</li>
         </ul>
         <p>When you cross the inner boundary inbound, the app runs a gate chain to decide whether to fire. When you cross the outer boundary inbound, the app pre-warms GPS so speed data is ready by the time the inner geofence fires.</p>
+
+        <div class="mermaid">
+flowchart TD
+    OE([Outer ENTER]) --> AA_OUTER{"AA connected?"}
+    AA_OUTER -->|yes| SKIP_WARM["Skip warmup\n(GPS already warm)"]
+    AA_OUTER -->|no| ACT_OUTER{"Activity?"}
+    ACT_OUTER -->|"STILL / ON_FOOT\nWALKING / RUNNING"| SKIP_WARM2["Skip warmup"]
+    ACT_OUTER -->|"IN_VEHICLE\nON_BICYCLE"| WARM["Start GPS warmup"]
+    ACT_OUTER -->|UNKNOWN| WAS_OUT{"wasOutside\nflag set?"}
+    WAS_OUT -->|no| SKIP_WARM3["Skip warmup"]
+    WAS_OUT -->|yes| WARM
+
+    IE([Inner ENTER]) --> PAIRED{"Paired device &amp;\ngeofence active?"}
+    PAIRED -->|no| DROP["Drop"]
+    PAIRED -->|yes| AA_INNER{"AA connected?"}
+    AA_INNER -->|yes| DEBOUNCE
+    AA_INNER -->|no| G2{"Gate 2\ntriggerSpeed ≥ 20 km/h?"}
+    G2 -->|yes| DEBOUNCE
+    G2 -->|no| G3{"Gate 3\nIN_VEHICLE ≥ 50%?"}
+    G3 -->|yes| DEBOUNCE
+    G3 -->|no| G4{"Gate 4\nlastLocation ≥ 20 km/h\n&amp; &lt; 10 min old?"}
+    G4 -->|yes| DEBOUNCE
+    G4 -->|no| SUPPRESS["Suppress"]
+
+    DEBOUNCE{"Last fire\n&lt; 10 s ago?"}
+    DEBOUNCE -->|yes| SUPPRESS2["Suppress"]
+    DEBOUNCE -->|no| FIRE["🔓 Fire BLE open"]
+
+    EXIT(["Inner or Outer EXIT"]) --> SET_OUT["Set wasOutside = true\nStop GPS warmup"]
+        </div>
 
         <h2 id="geofence-gates">Gate chain</h2>
         <p>Gates are evaluated in order. The first one that passes fires the open. If all fail, the trigger is suppressed and the full reason is written to the log.</p>

@@ -19,6 +19,36 @@ Two geofences are registered around your garage location:
 
 When you cross the **inner geofence** boundary inbound (ENTER transition), the app runs a gate chain to decide whether to fire. When you cross the **outer geofence** inbound, the app warms up GPS so speed data is available by the time the inner geofence fires.
 
+```mermaid
+flowchart TD
+    OE([Outer ENTER]) --> AA_OUTER{"AA connected?"}
+    AA_OUTER -->|yes| SKIP_WARM["Skip warmup\n(GPS already warm)"]
+    AA_OUTER -->|no| ACT_OUTER{"Activity?"}
+    ACT_OUTER -->|"STILL / ON_FOOT\nWALKING / RUNNING"| SKIP_WARM2["Skip warmup"]
+    ACT_OUTER -->|"IN_VEHICLE / ON_BICYCLE"| WARM["Start GPS warmup"]
+    ACT_OUTER -->|UNKNOWN| WAS_OUT{"wasOutside\nflag set?"}
+    WAS_OUT -->|no| SKIP_WARM3["Skip warmup"]
+    WAS_OUT -->|yes| WARM
+
+    IE([Inner ENTER]) --> PAIRED{"Paired device &\ngeofence active?"}
+    PAIRED -->|no| DROP["Drop"]
+    PAIRED -->|yes| AA_INNER{"AA connected?"}
+    AA_INNER -->|yes| DEBOUNCE
+    AA_INNER -->|no| G2{"Gate 2\ntriggerSpeed ≥ 20 km/h?"}
+    G2 -->|yes| DEBOUNCE
+    G2 -->|no| G3{"Gate 3\nIN_VEHICLE ≥ 50%?"}
+    G3 -->|yes| DEBOUNCE
+    G3 -->|no| G4{"Gate 4\nlastLocation ≥ 20 km/h\n& < 10 min old?"}
+    G4 -->|yes| DEBOUNCE
+    G4 -->|no| SUPPRESS["Suppress"]
+
+    DEBOUNCE{"Last fire\n< 10 s ago?"}
+    DEBOUNCE -->|yes| SUPPRESS2["Suppress"]
+    DEBOUNCE -->|no| FIRE["🔓 Fire BLE open"]
+
+    EXIT(["Inner or Outer EXIT"]) --> SET_OUT["Set wasOutside = true\nStop GPS warmup"]
+```
+
 ---
 
 ## Gate chain (inner geofence ENTER)

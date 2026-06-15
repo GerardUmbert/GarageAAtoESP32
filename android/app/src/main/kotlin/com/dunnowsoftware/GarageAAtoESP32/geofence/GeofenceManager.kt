@@ -68,7 +68,7 @@ class GeofenceManager(private val context: Context) {
         val lng = device.geofenceLng ?: return
         val radius = device.geofenceRadiusM ?: return
 
-        GeofenceLogger.i(context, TAG, "Registering geofence for ${device.address} — lat=$lat lng=$lng radius=${radius}m")
+        GeofenceLogger.i(context, TAG, "Registering geofence for ${device.address} — lat=$lat lng=$lng inner=${radius}m outer=${radius + OUTER_GEOFENCE_OFFSET_M}m")
 
         val innerGeofence = Geofence.Builder()
             .setRequestId(GEOFENCE_ID_PREFIX + device.address)
