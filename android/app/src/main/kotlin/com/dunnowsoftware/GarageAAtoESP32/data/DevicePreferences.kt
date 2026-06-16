@@ -21,7 +21,7 @@ data class PairedDevice(
     val geofenceLat: Double? = null,
     val geofenceLng: Double? = null,
     val geofenceRadiusM: Float? = null,
-    val geofenceOuterOffsetM: Float = 150f,
+    val geofenceOuterOffsetM: Float = 250f,
     val geofenceEnabled: Boolean = false,
 ) {
     val hasGeofence: Boolean
@@ -53,7 +53,7 @@ class DevicePreferences(context: Context) {
                     geofenceLat = if (o.has("geofence_lat")) o.getDouble("geofence_lat") else null,
                     geofenceLng = if (o.has("geofence_lng")) o.getDouble("geofence_lng") else null,
                     geofenceRadiusM = if (o.has("geofence_radius_m")) o.getDouble("geofence_radius_m").toFloat() else null,
-                    geofenceOuterOffsetM = if (o.has("geofence_outer_offset_m")) o.getDouble("geofence_outer_offset_m").toFloat() else 150f,
+                    geofenceOuterOffsetM = if (o.has("geofence_outer_offset_m")) o.getDouble("geofence_outer_offset_m").toFloat() else 250f,
                     geofenceEnabled = o.optBoolean("geofence_enabled", false),
                 )
             } catch (_: Throwable) {

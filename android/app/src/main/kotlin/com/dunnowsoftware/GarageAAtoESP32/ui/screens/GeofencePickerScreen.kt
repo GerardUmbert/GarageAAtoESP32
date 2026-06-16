@@ -76,7 +76,7 @@ private const val RADIUS_MAX        = 75f
 private const val RADIUS_DEFAULT    = 40f
 private const val OUTER_OFFSET_MIN  = 15f   // slider bottom (actual outer = inner + this)
 private const val OUTER_OFFSET_MAX  = 1000f
-private const val OUTER_OFFSET_DEFAULT = 150f
+private const val OUTER_OFFSET_DEFAULT = 250f
 private const val DEFAULT_ZOOM   = 17.0  // used only when centering on user location with no pin
 private const val CIRCLE_PADDING = 0.55  // fraction of map viewport the circle should fill
 

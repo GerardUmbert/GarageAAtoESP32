@@ -15,7 +15,7 @@ In the phone app: **Settings → Auto-open → Garage location** — tap the map
 Two geofences are registered around your garage location:
 
 - **Inner geofence** — at your configured radius (15–75 m). This is the trigger zone.
-- **Outer geofence** — at your configured radius + 150 m. This is the GPS warmup zone.
+- **Outer geofence** — at your configured radius + warmup ring offset (default 250 m, adjustable 15–1000 m). This is the GPS warmup zone.
 
 When you cross the **inner geofence** boundary inbound (ENTER transition), the app runs a gate chain to decide whether to fire. When you cross the **outer geofence** inbound, the app warms up GPS so speed data is available by the time the inner geofence fires.
 
@@ -83,9 +83,9 @@ Google's Activity Recognition is tuned primarily for cars. A motorbike's vibrati
 
 ## Outer geofence — GPS warmup
 
-The outer geofence fires ~150 m before the inner one. On ENTER, a short-lived foreground service (`GpsWarmupForegroundService`) starts requesting location updates at **5 s intervals**.
+The outer geofence fires at the configured warmup ring offset before the inner one (default 250 m, adjustable 15–1000 m via the slider in the geofence picker). On ENTER, a short-lived foreground service (`GpsWarmupForegroundService`) starts requesting location updates at **5 s intervals**.
 
-GPS needs at least two consecutive fixes (~10 s) to compute speed. At 30–50 km/h you cross 150 m in 10–18 s, giving the GPS stack enough time to produce a valid speed reading before the inner geofence fires.
+GPS needs at least two consecutive fixes (~10 s) to compute speed. At 30–50 km/h you cross the default 250 m offset in 18–30 s, giving the GPS stack enough time to produce a valid speed reading before the inner geofence fires.
 
 ### Warmup is skipped when
 

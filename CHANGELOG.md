@@ -6,6 +6,9 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ## [1.6.3]
 
+### Changed
+- Default warmup ring offset raised from 150 m to 250 m, giving the GPS stack more lead time to produce a valid speed reading before the inner geofence fires
+
 ### Fixed
 - Geofence auto-open fallback trigger speed lowered from 20 km/h to 12 km/h (Gates 2 and 4), so a more gradual approach into the garage is still recognised as driving
 - GPS warmup now stops itself early once cached activity reads `ON_FOOT`, `WALKING`, or `RUNNING` at ≥ 75% confidence (after a 30 s grace period) instead of always running the full 5-minute timeout, saving battery when you've clearly left the vehicle before reaching the inner geofence

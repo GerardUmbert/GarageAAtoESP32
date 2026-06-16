@@ -620,7 +620,7 @@ Fingerbot arm  ──▶  physically presses fob button</div>
         <p>Two geofences are registered around your garage:</p>
         <ul>
           <li><strong>Inner geofence</strong> — at your configured radius. This is the trigger zone.</li>
-          <li><strong>Outer geofence</strong> — at your configured radius + 150 m. This is the GPS warmup zone (shown as a dashed ring in the picker).</li>
+          <li><strong>Outer geofence</strong> — at your configured radius + warmup ring offset (default 250 m, adjustable 15–1000 m). This is the GPS warmup zone (shown as a dashed ring in the picker).</li>
         </ul>
         <p>When you cross the inner boundary inbound, the app runs a gate chain to decide whether to fire. When you cross the outer boundary inbound, the app pre-warms GPS so speed data is ready by the time the inner geofence fires.</p>
 
@@ -699,7 +699,7 @@ flowchart TD
         </div>
 
         <h2 id="geofence-warmup">GPS warmup</h2>
-        <p>The outer geofence fires ~150 m before the inner one. On ENTER, a short-lived foreground service starts requesting location updates at <strong>5 s intervals</strong>. GPS needs at least two consecutive fixes (~10 s) to compute speed. At 30–50 km/h you cross 150 m in 10–18 s — enough lead time to produce a valid speed reading before the inner geofence fires.</p>
+        <p>The outer geofence fires at the configured warmup ring offset before the inner one (default 250 m, adjustable 15–1000 m via the slider in the geofence picker). On ENTER, a short-lived foreground service starts requesting location updates at <strong>5 s intervals</strong>. GPS needs at least two consecutive fixes (~10 s) to compute speed. At 30–50 km/h you cross the default 250 m offset in 18–30 s — enough lead time to produce a valid speed reading before the inner geofence fires.</p>
 
         <h3>When warmup is skipped</h3>
         <ul>
