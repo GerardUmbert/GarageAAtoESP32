@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.6.3]
+
+### Fixed
+- Geofence auto-open fallback trigger speed lowered from 20 km/h to 12 km/h (Gates 2 and 4), so a more gradual approach into the garage is still recognised as driving
+- GPS warmup now stops itself early once cached activity reads `ON_FOOT`, `WALKING`, or `RUNNING` at ≥ 75% confidence (after a 30 s grace period) instead of always running the full 5-minute timeout, saving battery when you've clearly left the vehicle before reaching the inner geofence
+- `STILL` is intentionally excluded from the early-stop check — an idling car at a red light or stop sign is indistinguishable from a parked one to the motion sensors, so only gait-based activities (which a car cannot produce) are trusted to stop warmup early
+
 ## [1.6.2]
 
 ### Added

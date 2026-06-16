@@ -8,6 +8,7 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import com.dunnowsoftware.GarageAAtoESP32.R
+import com.google.android.gms.location.DetectedActivity
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
@@ -20,10 +21,16 @@ private const val NOTIF_ID = 1002
 private const val TIMEOUT_MS = 5 * 60 * 1000L  // 5 minutes
 private const val INTERVAL_MS = 5_000L
 
+// Don't consider stopping early until the warmup has had time for at least one fresh activity update.
+private const val EARLY_STOP_GRACE_MS = 30_000L
+private const val EARLY_STOP_MIN_CONFIDENCE = 75
+private const val EARLY_STOP_MAX_ACTIVITY_AGE_MS = 30_000L
+
 class GpsWarmupForegroundService : Service() {
 
     private val fusedClient by lazy { LocationServices.getFusedLocationProviderClient(this) }
     private val timeoutHandler = Handler(Looper.getMainLooper())
+    private var startedAt = 0L
 
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
@@ -36,6 +43,28 @@ class GpsWarmupForegroundService : Service() {
                 GeofenceLogger.d(this@GpsWarmupForegroundService, TAG,
                     "GPS warmup fix — no speed yet acc=%.1fm".format(loc.accuracy))
             }
+            checkEarlyStop()
+        }
+    }
+
+    private fun checkEarlyStop() {
+        if (System.currentTimeMillis() - startedAt < EARLY_STOP_GRACE_MS) return
+
+        val activityType = ActivityUpdateReceiver.lastActivityType(this)
+        val confidence = ActivityUpdateReceiver.lastActivityConfidence(this)
+        val ageMs = ActivityUpdateReceiver.lastActivityAgeMs(this)
+        // STILL is deliberately excluded — an idling car at a red light or stop sign is
+        // indistinguishable from a parked one to the motion sensors, so STILL is not a safe
+        // "definitely not driving" signal. ON_FOOT/WALKING/RUNNING involve gait motion a car can't produce.
+        val activityName = when (activityType) {
+            DetectedActivity.ON_FOOT -> "ON_FOOT"
+            DetectedActivity.WALKING -> "WALKING"
+            DetectedActivity.RUNNING -> "RUNNING"
+            else -> null
+        }
+        if (activityName != null && confidence >= EARLY_STOP_MIN_CONFIDENCE && ageMs in 0..EARLY_STOP_MAX_ACTIVITY_AGE_MS) {
+            GeofenceLogger.i(this, TAG, "GPS warmup early stop — activity=$activityName confidence=$confidence% (${ageMs / 1000}s ago)")
+            stopSelf()
         }
     }
 
@@ -54,6 +83,7 @@ class GpsWarmupForegroundService : Service() {
         }
 
         GeofenceLogger.i(this, TAG, "Starting GPS warmup — ${INTERVAL_MS}ms interval, ${TIMEOUT_MS / 1000}s timeout")
+        startedAt = System.currentTimeMillis()
         startForeground(NOTIF_ID, buildNotification())
 
         val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, INTERVAL_MS)

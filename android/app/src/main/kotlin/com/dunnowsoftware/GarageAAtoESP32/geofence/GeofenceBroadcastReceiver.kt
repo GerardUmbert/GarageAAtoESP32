@@ -17,6 +17,9 @@ private const val TAG = "GeofenceReceiver"
 // Debounce: don't re-trigger if a successful auto-open happened within this window.
 private const val DEBOUNCE_MS = 10_000L
 
+// Minimum speed (km/h) treated as "driving towards the garage" for the fallback gates.
+private const val MIN_TRIGGER_SPEED_KMH = 12f
+
 class GeofenceBroadcastReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -161,7 +164,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
 
     private fun checkFallbackGatesAndFire(context: Context, deviceAddress: String, triggerSpeedKmh: Float) {
         // Gate 2: triggerSpeed — free, already in the geofence event.
-        if (triggerSpeedKmh >= 20f) {
+        if (triggerSpeedKmh >= MIN_TRIGGER_SPEED_KMH) {
             GeofenceLogger.i(context, TAG, "Gate 2 triggerSpeed PASS (%.1f km/h)".format(triggerSpeedKmh))
             fireIfNotDebounced(context, deviceAddress)
             return
@@ -203,7 +206,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
                 else -> "%.1f km/h age: $ageStr".format(lastSpeedKmh)
             }
             GeofenceLogger.d(context, TAG, "Gate 4 lastLocation — speed: $speedStr")
-            if (lastSpeedKmh >= 20f) {
+            if (lastSpeedKmh >= MIN_TRIGGER_SPEED_KMH) {
                 GeofenceLogger.i(context, TAG, "Gate 4 lastLocation speed PASS (%.1f km/h, %ds old)".format(lastSpeedKmh, ageMs / 1000))
                 fireIfNotDebounced(context, deviceAddress)
             } else {

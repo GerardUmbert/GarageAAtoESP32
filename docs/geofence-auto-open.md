@@ -34,11 +34,11 @@ flowchart TD
     PAIRED -->|no| DROP["Drop"]
     PAIRED -->|yes| AA_INNER{"AA connected?"}
     AA_INNER -->|yes| DEBOUNCE
-    AA_INNER -->|no| G2{"Gate 2\ntriggerSpeed ≥ 20 km/h?"}
+    AA_INNER -->|no| G2{"Gate 2\ntriggerSpeed ≥ 12 km/h?"}
     G2 -->|yes| DEBOUNCE
     G2 -->|no| G3{"Gate 3\nIN_VEHICLE ≥ 50%?"}
     G3 -->|yes| DEBOUNCE
-    G3 -->|no| G4{"Gate 4\nlastLocation ≥ 20 km/h\n& < 10 min old?"}
+    G3 -->|no| G4{"Gate 4\nlastLocation ≥ 12 km/h\n& < 10 min old?"}
     G4 -->|yes| DEBOUNCE
     G4 -->|no| SUPPRESS["Suppress"]
 
@@ -47,6 +47,9 @@ flowchart TD
     DEBOUNCE -->|no| FIRE["🔓 Fire BLE open"]
 
     EXIT(["Inner or Outer EXIT"]) --> SET_OUT["Set wasOutside = true\nStop GPS warmup"]
+
+    WARM --> EARLYCHK{"Every 5s fix:\nactivity ON_FOOT/WALKING/\nRUNNING ≥ 75% & < 30s old?\n(after 30s grace)"}
+    EARLYCHK -->|yes| EARLYSTOP["Stop GPS warmup early\n(no fire — inner gate still decides)"]
 ```
 
 ---
@@ -58,9 +61,9 @@ Gates are evaluated in order. The first one that passes fires the open; if all f
 | Gate | Condition | Notes |
 |------|-----------|-------|
 | **1 — AA connected** | Android Auto is actively connected | Strongest signal — binary OS fact, no GPS needed |
-| **2 — Trigger speed** | Speed from the geofence event ≥ 20 km/h | Only available if GPS was already warm at the moment of crossing |
+| **2 — Trigger speed** | Speed from the geofence event ≥ 12 km/h | Only available if GPS was already warm at the moment of crossing |
 | **3 — Activity** | `IN_VEHICLE` with ≥ 50% confidence | Cached from Google's Activity Recognition API (30 s updates) |
-| **4 — Last known speed** | Most recent location fix speed ≥ 20 km/h, within 10 min | Useful if navigation was recently active |
+| **4 — Last known speed** | Most recent location fix speed ≥ 12 km/h, within 10 min | Useful if navigation was recently active |
 
 If all four gates fail the trigger is logged as suppressed with the full reason.
 
@@ -109,7 +112,8 @@ The service stops on whichever comes first:
 
 1. **Outer geofence EXIT** — you left the outer zone without entering the inner
 2. **Inner gate pass** — the open fired; warmup is no longer needed
-3. **5-minute timeout** — safety net for dropped EXIT events (the OS occasionally fails to deliver EXIT under Doze). If the app crashes, the location client dies with it — no leak.
+3. **Early activity stop** — after a 30 s grace period, if a GPS fix arrives while cached activity reads `ON_FOOT`, `WALKING`, or `RUNNING` at ≥ 75% confidence and that reading is < 30 s old, the warmup stops itself. This is a battery/GPS-usage optimization, not a trigger — it never fires the open; the inner geofence gate chain is still the only thing that can do that. `STILL` is deliberately excluded from this check: an idling car at a red light is indistinguishable from a parked one to the motion sensors, so it isn't a safe "definitely not driving" signal — only gait-based activities (which a car cannot produce) are trusted to stop warmup early. Speed alone is also deliberately not used, since the outer radius can span multiple stop signs or red lights where speed legitimately drops to 0 mid-approach.
+4. **5-minute timeout** — safety net for dropped EXIT events (the OS occasionally fails to deliver EXIT under Doze). If the app crashes, the location client dies with it — no leak.
 
 ---
 
