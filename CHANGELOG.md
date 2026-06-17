@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.6.4]
+
+### Fixed
+- Android Auto connection state is now tracked from the `Application` class instead of `PhoneActivity` — previously, if the app UI was not open when AA connected, `isConnected` stayed `false` for the entire drive and Gate 1 (AA-gated auto-open) never fired; the fallback speed gate (Gate 2) still triggered when speed was sufficient, but AA-connected users were never getting the preferred AA path
+
 ## [1.6.3]
 
 ### Changed

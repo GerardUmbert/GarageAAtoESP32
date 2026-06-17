@@ -46,8 +46,6 @@ import com.dunnowsoftware.GarageAAtoESP32.data.getSavedLocaleTag
 import com.dunnowsoftware.GarageAAtoESP32.data.localeListFromTag
 import com.dunnowsoftware.GarageAAtoESP32.data.saveLocaleTag
 import androidx.core.content.FileProvider
-import androidx.car.app.connection.CarConnection
-import com.dunnowsoftware.GarageAAtoESP32.AndroidAutoState
 import com.dunnowsoftware.GarageAAtoESP32.geofence.GeofenceLogger
 import com.dunnowsoftware.GarageAAtoESP32.geofence.GeofenceManager
 import com.dunnowsoftware.GarageAAtoESP32.geofence.scheduleGeofenceRestore
@@ -83,11 +81,6 @@ class PhoneActivity : AppCompatActivity() {
         prefs = DevicePreferences(this)
         GeofenceManager(this).reregisterAll()
         scheduleGeofenceRestore(this)
-        CarConnection(this).type.observe(this) { connectionType ->
-            val connected = connectionType == CarConnection.CONNECTION_TYPE_PROJECTION
-            AndroidAutoState.isConnected = connected
-            GeofenceLogger.i(this, "PhoneActivity", "AA connection type=$connectionType connected=$connected")
-        }
         if (intent?.getBooleanExtra("voice_open", false) == true) shortcutOpenPending.value = true
         setContent {
             GarageTheme {
