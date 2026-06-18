@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.6.6]
+
+### Fixed
+- `ON_BICYCLE` activity at ≥ 50% confidence now passes Gate 3 and triggers the auto-open, same as `IN_VEHICLE` — Android classifies motorbikes as `ON_BICYCLE` at low speed, so a motorbike approaching the garage was incorrectly blocked when trigger speed was below 12 km/h
+
 ## [1.6.5]
 
 ### Fixed

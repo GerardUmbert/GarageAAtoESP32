@@ -193,7 +193,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
         }
         val activityAgeStr = if (activityAgeMs >= 0) "${activityAgeMs / 1000}s ago" else "never"
         GeofenceLogger.d(context, TAG, "Gate 3 activity — $activityName confidence=$confidence% ($activityAgeStr)")
-        if (activityType == DetectedActivity.IN_VEHICLE && confidence >= 50) {
+        if ((activityType == DetectedActivity.IN_VEHICLE || activityType == DetectedActivity.ON_BICYCLE) && confidence >= 50) {
             GeofenceLogger.i(context, TAG, "Gate 3 activity PASS ($activityName $confidence% $activityAgeStr)")
             fireIfNotDebounced(context, deviceAddress)
             return
