@@ -21,6 +21,11 @@ private const val GEOFENCE_MAX_ATTEMPTS = 8
 
 class GeofenceForegroundService : Service() {
 
+    companion object {
+        const val ACTION_STOP = "com.dunnowsoftware.GarageAAtoESP32.geofence.ACTION_STOP_GEOFENCE_SERVICE"
+    }
+
+    @Volatile private var cancelled = false
     private lateinit var bleManager: GarageBleManager
 
     override fun onCreate() {
@@ -30,6 +35,15 @@ class GeofenceForegroundService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == ACTION_STOP) {
+            GeofenceLogger.i(this, TAG, "Stop requested via EXIT — aborting BLE attempts")
+            cancelled = true
+            bleManager.cleanup()
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            stopSelf(startId)
+            return START_NOT_STICKY
+        }
+
         val deviceAddress = intent?.getStringExtra(EXTRA_DEVICE_ADDRESS)
         if (deviceAddress == null) {
             GeofenceLogger.w(this, TAG, "onStartCommand: no device address in intent — stopping")
@@ -90,6 +104,9 @@ class GeofenceForegroundService : Service() {
                         GeofenceLogger.w(this, TAG, "BLE open AUTH FAILURE for $address — wrong password, not retrying")
                         stopForeground(STOP_FOREGROUND_REMOVE)
                         postResultNotification(success = false)
+                        stopSelf(startId)
+                    } else if (cancelled) {
+                        GeofenceLogger.i(this, TAG, "BLE session aborted — EXIT received while retrying")
                         stopSelf(startId)
                     } else {
                         val remaining = attemptsLeft - sessionAttemptCount

@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.6.5]
+
+### Fixed
+- Inner geofence EXIT now immediately stops any in-progress BLE open attempts — previously, if the opener did not respond before the car left the geofence, the service kept retrying for up to ~75 s after exit (e.g. driving past home without stopping)
+
 ## [1.6.4]
 
 ### Fixed

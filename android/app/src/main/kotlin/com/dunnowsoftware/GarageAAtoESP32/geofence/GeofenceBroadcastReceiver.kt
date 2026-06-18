@@ -60,6 +60,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
                         GeofenceLogger.i(context, TAG, "Inner geofence EXIT — setting outside flag and stopping GPS warmup for $address")
                         DevicePreferences(context).wasOutsideOuterGeofence = true
                         stopGpsWarmup(context)
+                        stopGeofenceService(context)
                         logExitContext(context, address, event)
                     }
                 }
@@ -122,6 +123,13 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
     private fun stopGpsWarmup(context: Context) {
         val intent = Intent(context, GpsWarmupForegroundService::class.java).apply {
             action = GpsWarmupForegroundService.ACTION_STOP
+        }
+        context.startService(intent)
+    }
+
+    private fun stopGeofenceService(context: Context) {
+        val intent = Intent(context, GeofenceForegroundService::class.java).apply {
+            action = GeofenceForegroundService.ACTION_STOP
         }
         context.startService(intent)
     }
