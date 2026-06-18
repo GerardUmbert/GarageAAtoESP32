@@ -36,7 +36,7 @@ flowchart TD
     AA_INNER -->|yes| DEBOUNCE
     AA_INNER -->|no| G2{"Gate 2\ntriggerSpeed ≥ 12 km/h?"}
     G2 -->|yes| DEBOUNCE
-    G2 -->|no| G3{"Gate 3\nIN_VEHICLE ≥ 50%?"}
+    G2 -->|no| G3{"Gate 3\nIN_VEHICLE or ON_BICYCLE ≥ 50%?"}
     G3 -->|yes| DEBOUNCE
     G3 -->|no| G4{"Gate 4\nlastLocation ≥ 12 km/h\n& < 10 min old?"}
     G4 -->|yes| DEBOUNCE
@@ -62,7 +62,7 @@ Gates are evaluated in order. The first one that passes fires the open; if all f
 |------|-----------|-------|
 | **1 — AA connected** | Android Auto is actively connected | Strongest signal — binary OS fact, no GPS needed |
 | **2 — Trigger speed** | Speed from the geofence event ≥ 12 km/h | Only available if GPS was already warm at the moment of crossing |
-| **3 — Activity** | `IN_VEHICLE` with ≥ 50% confidence | Cached from Google's Activity Recognition API (30 s updates) |
+| **3 — Activity** | `IN_VEHICLE` or `ON_BICYCLE` with ≥ 50% confidence | `ON_BICYCLE` is included because Android classifies motorbikes as `ON_BICYCLE` at low speed |
 | **4 — Last known speed** | Most recent location fix speed ≥ 12 km/h, within 10 min | Useful if navigation was recently active |
 
 If all four gates fail the trigger is logged as suppressed with the full reason.
@@ -75,9 +75,9 @@ AA being connected is a binary OS-level fact — it's the authoritative signal t
 
 Geofences can fire off cell/WiFi positioning, which produces lat/lng but no speed. Speed requires GPS, which must be actively running to have a fresh sample. If no app is keeping GPS warm, the geofence event arrives with `speed = 0` and `lastLocation` also has no speed. This is the problem the outer geofence warmup solves.
 
-### Why motorbike is harder than car
+### Motorbike support
 
-Google's Activity Recognition is tuned primarily for cars. A motorbike's vibration and acceleration profile often comes back as `UNKNOWN` instead of `IN_VEHICLE`, so Gate 3 may fail. Gate 2 (speed) is the reliable path for motorbike riders — which is exactly why GPS warmup matters.
+Android classifies motorbikes as `ON_BICYCLE` at low speed rather than `IN_VEHICLE`. Gate 3 accepts both, so a motorbike approaching at any speed will pass on activity confidence alone. Gate 2 (trigger speed ≥ 12 km/h) remains a parallel path for higher-speed approaches.
 
 ---
 

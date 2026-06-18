@@ -641,7 +641,7 @@ flowchart TD
     AA_INNER -->|yes| DEBOUNCE
     AA_INNER -->|no| G2{"Gate 2\ntriggerSpeed ≥ 12 km/h?"}
     G2 -->|yes| DEBOUNCE
-    G2 -->|no| G3{"Gate 3\nIN_VEHICLE ≥ 50%?"}
+    G2 -->|no| G3{"Gate 3\nIN_VEHICLE or ON_BICYCLE ≥ 50%?"}
     G3 -->|yes| DEBOUNCE
     G3 -->|no| G4{"Gate 4\nlastLocation ≥ 12 km/h\n&amp; &lt; 10 min old?"}
     G4 -->|yes| DEBOUNCE
@@ -677,8 +677,8 @@ flowchart TD
             </tr>
             <tr>
               <td><strong>3 — Activity</strong></td>
-              <td><code>IN_VEHICLE</code> with ≥ 50% confidence</td>
-              <td>Cached from Google's Activity Recognition API (30 s updates). Motorbikes often come back <code>UNKNOWN</code> — Gate 2 is more reliable for them.</td>
+              <td><code>IN_VEHICLE</code> or <code>ON_BICYCLE</code> with ≥ 50% confidence</td>
+              <td>Cached from Google's Activity Recognition API (30 s updates). Android classifies motorbikes as <code>ON_BICYCLE</code> at low speed — both activity types are accepted.</td>
             </tr>
             <tr>
               <td><strong>4 — Last known speed</strong></td>
