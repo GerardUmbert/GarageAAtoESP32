@@ -151,4 +151,22 @@
     <string name="onboarding_activity_title">Permitir detección de actividad física</string>
     <string name="onboarding_activity_body">La app usa la detección de actividad para saber cuándo vas en vehículo, así puede abrir el garaje aunque Android Auto no esté conectado.</string>
     <string name="onboarding_unused_body">En la siguiente pantalla, busca una opción sobre pausar o gestionar la app cuando no se usa (p. ej. \"Pausar actividad si no se usa\" o \"Gestionar app si no se usa\") y desactívala para que Android no revoque los permisos.</string>
+
+    <!-- Open history screen -->
+    <string name="history_title">Historial de aperturas</string>
+    <string name="history_empty">Aún no hay aperturas registradas.</string>
+    <string name="history_trigger_manual_phone">Manual · Teléfono</string>
+    <string name="history_trigger_manual_aa">Manual · Android Auto</string>
+    <string name="history_trigger_auto">Automático</string>
+    <string name="history_outcome_success">Abierto</string>
+    <string name="history_outcome_failed">Error</string>
+    <string name="history_outcome_suppressed">Suprimido</string>
+    <string name="history_detail_gate">Activado via %1$s</string>
+    <string name="history_detail_suppressed">Motivo: %1$s</string>
+    <string name="history_device_label">Apertura: %1$s</string>
+    <string name="history_fail_ble">Sin respuesta del abridor</string>
+    <string name="history_fail_auth">Contraseña incorrecta — autenticación fallida</string>
+    <string name="history_day_today">Hoy</string>
+    <string name="history_day_yesterday">Ayer</string>
+    <string name="history_day_last_week">El %1$s pasado</string>
 </resources>

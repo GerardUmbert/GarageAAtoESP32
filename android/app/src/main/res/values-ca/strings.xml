@@ -151,4 +151,22 @@
     <string name="onboarding_activity_title">Permet la detecció d\'activitat física</string>
     <string name="onboarding_activity_body">L\'app usa la detecció d\'activitat per saber quan vas en vehicle, per poder obrir el garatge encara que l\'Android Auto no estigui connectat.</string>
     <string name="onboarding_unused_body">A la pantalla següent, busca una opció sobre pausar o gestionar l\'app quan no s\'usa (p. ex. \"Posa en pausa l\'activitat si no s\'usa\") i desactiva-la perquè Android no revoqui els permisos.</string>
+
+    <!-- Open history screen -->
+    <string name="history_title">Historial d\'obertures</string>
+    <string name="history_empty">Encara no hi ha obertures registrades.</string>
+    <string name="history_trigger_manual_phone">Manual · Telèfon</string>
+    <string name="history_trigger_manual_aa">Manual · Android Auto</string>
+    <string name="history_trigger_auto">Automàtic</string>
+    <string name="history_outcome_success">Obert</string>
+    <string name="history_outcome_failed">Error</string>
+    <string name="history_outcome_suppressed">Suprimit</string>
+    <string name="history_detail_gate">Activat via %1$s</string>
+    <string name="history_detail_suppressed">Motiu: %1$s</string>
+    <string name="history_device_label">Obertura: %1$s</string>
+    <string name="history_fail_ble">Sense resposta de l\'obertura</string>
+    <string name="history_fail_auth">Contrasenya incorrecta — autenticació fallida</string>
+    <string name="history_day_today">Avui</string>
+    <string name="history_day_yesterday">Ahir</string>
+    <string name="history_day_last_week">%1$s passat</string>
 </resources>

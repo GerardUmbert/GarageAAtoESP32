@@ -42,6 +42,10 @@ import com.dunnowsoftware.GarageAAtoESP32.R
 import com.dunnowsoftware.GarageAAtoESP32.ble.GarageBleManager
 import com.dunnowsoftware.GarageAAtoESP32.ble.OpenResult
 import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
+import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryEntry
+import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryStore
+import com.dunnowsoftware.GarageAAtoESP32.data.OpenOutcome
+import com.dunnowsoftware.GarageAAtoESP32.data.TriggerSource
 import com.dunnowsoftware.GarageAAtoESP32.data.getSavedLocaleTag
 import com.dunnowsoftware.GarageAAtoESP32.data.localeListFromTag
 import com.dunnowsoftware.GarageAAtoESP32.data.saveLocaleTag
@@ -128,6 +132,17 @@ class PhoneActivity : AppCompatActivity() {
             return
         }
         bleManager.connectAndOpen(paired.address, paired.password) { result ->
+            val outcome = if (result is OpenResult.Success) OpenOutcome.SUCCESS else OpenOutcome.FAILED_BLE
+            OpenHistoryStore.append(
+                this,
+                OpenHistoryEntry(
+                    timestampMs   = System.currentTimeMillis(),
+                    deviceAddress = paired.address,
+                    deviceName    = paired.name,
+                    trigger       = TriggerSource.MANUAL_PHONE,
+                    outcome       = outcome,
+                ),
+            )
             runOnUiThread { onResult(result) }
         }
     }
@@ -143,6 +158,7 @@ private sealed interface Route {
     data object ScanAnother    : Route
     data object Language       : Route
     data object GeofencePicker : Route
+    data object History        : Route
     data class GeofenceOnboarding(
         val stepIds: List<String>,
         val afterPickerNeeded: Boolean,
@@ -242,6 +258,7 @@ private fun AppRoot(
             onTriggerOpen = onTriggerOpen,
             shortcutOpenPending = shortcutOpenPending,
             onSettings = { push(Route.Settings) },
+            onHistory = { push(Route.History) },
         )
 
         Route.Settings -> {
@@ -445,6 +462,11 @@ private fun AppRoot(
             },
             onBack = { pop() },
         )
+
+        Route.History -> HistoryScreen(
+            deviceAddress = remember(stateBust) { prefs.pairedDevice?.address },
+            onBack = { pop() },
+        )
     }
 }
 
@@ -455,6 +477,7 @@ private fun MainHost(
     onTriggerOpen: ((OpenResult) -> Unit) -> Unit,
     shortcutOpenPending: androidx.compose.runtime.MutableState<Boolean>,
     onSettings: () -> Unit,
+    onHistory: () -> Unit,
 ) {
     val ctx = androidx.compose.ui.platform.LocalContext.current
     var openState by remember { mutableStateOf(OpenState.Idle) }
@@ -507,6 +530,7 @@ private fun MainHost(
         presence = presence,
         lastOpenedLabel = lastOpened.takeIf { it > 0 }?.let { formatTime(ctx, it) },
         onSettings = onSettings,
+        onHistory = onHistory,
         onOpen = {
             if (openState != OpenState.Idle) return@MainScreen
             openState = OpenState.Sending
@@ -600,6 +624,7 @@ private fun routeKey(r: Route): String = when (r) {
     Route.Settings       -> "settings"
     Route.Language       -> "language"
     Route.GeofencePicker -> "geofence_picker"
+    Route.History        -> "history"
     is Route.GeofenceOnboarding -> "geo_onboard:${r.stepIds.joinToString(",")}:${r.afterPickerNeeded}"
 }
 
@@ -612,6 +637,7 @@ private fun keyRoute(k: String): Route = when {
     k == "settings"         -> Route.Settings
     k == "language"         -> Route.Language
     k == "geofence_picker"  -> Route.GeofencePicker
+    k == "history"          -> Route.History
     k.startsWith("geo_onboard:") -> {
         val payload = k.removePrefix("geo_onboard:")
         val lastColon = payload.lastIndexOf(':')

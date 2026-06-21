@@ -12,6 +12,10 @@ import com.dunnowsoftware.GarageAAtoESP32.ble.BleScanner
 import com.dunnowsoftware.GarageAAtoESP32.ble.GarageBleManager
 import com.dunnowsoftware.GarageAAtoESP32.ble.OpenResult
 import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
+import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryEntry
+import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryStore
+import com.dunnowsoftware.GarageAAtoESP32.data.OpenOutcome
+import com.dunnowsoftware.GarageAAtoESP32.data.TriggerSource
 
 class GarageScreen(carContext: CarContext) : Screen(carContext) {
 
@@ -222,7 +226,21 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
             carContext.mainExecutor.execute {
                 when (result) {
                     is OpenResult.Success -> {
-                        prefs().lastAutoFiredAt = System.currentTimeMillis()
+                        val ts = System.currentTimeMillis()
+                        val p = prefs()
+                        p.lastAutoFiredAt = ts
+                        p.pairedDevice?.let { dev ->
+                            OpenHistoryStore.append(
+                                carContext,
+                                OpenHistoryEntry(
+                                    timestampMs   = ts,
+                                    deviceAddress = dev.address,
+                                    deviceName    = dev.name,
+                                    trigger       = TriggerSource.MANUAL_AA,
+                                    outcome       = OpenOutcome.SUCCESS,
+                                ),
+                            )
+                        }
                         uiState = UiState.SUCCESS
                         invalidate()
                         Handler(Looper.getMainLooper()).postDelayed({
@@ -230,6 +248,18 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
                         }, 2000)
                     }
                     is OpenResult.Failure -> {
+                        prefs().pairedDevice?.let { dev ->
+                            OpenHistoryStore.append(
+                                carContext,
+                                OpenHistoryEntry(
+                                    timestampMs   = System.currentTimeMillis(),
+                                    deviceAddress = dev.address,
+                                    deviceName    = dev.name,
+                                    trigger       = TriggerSource.MANUAL_AA,
+                                    outcome       = OpenOutcome.FAILED_BLE,
+                                ),
+                            )
+                        }
                         uiState = UiState.FAILURE
                         failureReason = result.reason
                         invalidate()

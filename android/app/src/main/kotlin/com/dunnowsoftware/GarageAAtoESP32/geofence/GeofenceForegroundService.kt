@@ -10,6 +10,11 @@ import com.dunnowsoftware.GarageAAtoESP32.R
 import com.dunnowsoftware.GarageAAtoESP32.ble.GarageBleManager
 import com.dunnowsoftware.GarageAAtoESP32.ble.OpenResult
 import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
+import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryEntry
+import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryStore
+import com.dunnowsoftware.GarageAAtoESP32.data.OpenOutcome
+import com.dunnowsoftware.GarageAAtoESP32.data.TriggerSource
+import com.dunnowsoftware.GarageAAtoESP32.geofence.EXTRA_DEVICE_ADDRESS
 
 private const val TAG = "GeofenceService"
 private const val CHANNEL_ID = "geofence_auto_open"
@@ -23,6 +28,7 @@ class GeofenceForegroundService : Service() {
 
     companion object {
         const val ACTION_STOP = "com.dunnowsoftware.GarageAAtoESP32.geofence.ACTION_STOP_GEOFENCE_SERVICE"
+        const val EXTRA_GATE_DETAIL = "gate_detail"
     }
 
     @Volatile private var cancelled = false
@@ -51,13 +57,14 @@ class GeofenceForegroundService : Service() {
             return START_NOT_STICKY
         }
 
+        val gateDetail = intent.getStringExtra(EXTRA_GATE_DETAIL)
         GeofenceLogger.i(this, TAG, "Service started for $deviceAddress — budget $GEOFENCE_MAX_ATTEMPTS attempts")
         startForeground(NOTIF_ID, buildOngoingNotification())
-        fireOpen(deviceAddress, startId)
+        fireOpen(deviceAddress, gateDetail, startId)
         return START_NOT_STICKY
     }
 
-    private fun fireOpen(deviceAddress: String, startId: Int) {
+    private fun fireOpen(deviceAddress: String, gateDetail: String?, startId: Int) {
         val prefs = DevicePreferences(this)
         val device = prefs.pairedDevice
         if (device == null || device.address != deviceAddress) {
@@ -66,12 +73,23 @@ class GeofenceForegroundService : Service() {
             return
         }
 
-        attemptSession(device.address, device.password, attemptsLeft = GEOFENCE_MAX_ATTEMPTS, startId)
+        attemptSession(device.address, device.name, device.password, gateDetail, attemptsLeft = GEOFENCE_MAX_ATTEMPTS, startId)
     }
 
-    private fun attemptSession(address: String, password: String, attemptsLeft: Int, startId: Int) {
+    private fun attemptSession(address: String, deviceName: String, password: String, gateDetail: String?, attemptsLeft: Int, startId: Int) {
         if (attemptsLeft <= 0) {
             GeofenceLogger.w(this, TAG, "All $GEOFENCE_MAX_ATTEMPTS attempts exhausted for $address — giving up")
+            OpenHistoryStore.append(
+                this,
+                OpenHistoryEntry(
+                    timestampMs   = System.currentTimeMillis(),
+                    deviceAddress = address,
+                    deviceName    = deviceName,
+                    trigger       = TriggerSource.AUTO_GEOFENCE,
+                    outcome       = OpenOutcome.FAILED_BLE,
+                    detail        = gateDetail,
+                ),
+            )
             stopForeground(STOP_FOREGROUND_REMOVE)
             postResultNotification(success = false)
             stopSelf(startId)
@@ -95,6 +113,17 @@ class GeofenceForegroundService : Service() {
                     val ts = System.currentTimeMillis()
                     GeofenceLogger.i(this, TAG, "BLE open SUCCESS for $address — writing lastAutoFiredAt=$ts")
                     DevicePreferences(this).lastAutoFiredAt = ts
+                    OpenHistoryStore.append(
+                        this,
+                        OpenHistoryEntry(
+                            timestampMs   = ts,
+                            deviceAddress = address,
+                            deviceName    = deviceName,
+                            trigger       = TriggerSource.AUTO_GEOFENCE,
+                            outcome       = OpenOutcome.SUCCESS,
+                            detail        = gateDetail,
+                        ),
+                    )
                     stopForeground(STOP_FOREGROUND_REMOVE)
                     postResultNotification(success = true)
                     stopSelf(startId)
@@ -102,6 +131,17 @@ class GeofenceForegroundService : Service() {
                 is OpenResult.Failure -> {
                     if (result.isAuthFailure) {
                         GeofenceLogger.w(this, TAG, "BLE open AUTH FAILURE for $address — wrong password, not retrying")
+                        OpenHistoryStore.append(
+                            this,
+                            OpenHistoryEntry(
+                                timestampMs   = System.currentTimeMillis(),
+                                deviceAddress = address,
+                                deviceName    = deviceName,
+                                trigger       = TriggerSource.AUTO_GEOFENCE,
+                                outcome       = OpenOutcome.FAILED_BLE,
+                                detail        = "AUTH_FAILURE",
+                            ),
+                        )
                         stopForeground(STOP_FOREGROUND_REMOVE)
                         postResultNotification(success = false)
                         stopSelf(startId)
@@ -111,7 +151,7 @@ class GeofenceForegroundService : Service() {
                     } else {
                         val remaining = attemptsLeft - sessionAttemptCount
                         GeofenceLogger.d(this, TAG, "BLE session failed (${result.reason}) — ${remaining} attempts left, chaining next session")
-                        attemptSession(address, password, remaining, startId)
+                        attemptSession(address, deviceName, password, gateDetail, remaining, startId)
                     }
                 }
             }

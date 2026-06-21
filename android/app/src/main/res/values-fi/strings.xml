@@ -151,4 +151,22 @@
     <string name="onboarding_activity_body">Sovellus käyttää aktiivisuuden tunnistusta havaitakseen, kun olet ajoneuvossa, jotta se voi avata tallin ilman Android Auto -yhteyttä.</string>
     <string name="onboarding_unused_title">Pidä sovellus aktiivisena</string>
     <string name="onboarding_unused_body">Etsi seuraavalta näytöltä vaihtoehto sovelluksen keskeyttämisestä tai hallinnasta käyttämattomana (esim. \"Keskeytä toiminta jos ei käytetä\") ja poista se käytöstä, jotta Android ei peruuta lupia.</string>
+
+    <!-- Open history screen -->
+    <string name="history_title">Avaushistoria</string>
+    <string name="history_empty">Ei vielä tallennettuja avauksia.</string>
+    <string name="history_trigger_manual_phone">Manuaalinen · Puhelin</string>
+    <string name="history_trigger_manual_aa">Manuaalinen · Android Auto</string>
+    <string name="history_trigger_auto">Automaattinen</string>
+    <string name="history_outcome_success">Avattu</string>
+    <string name="history_outcome_failed">Epäonnistui</string>
+    <string name="history_outcome_suppressed">Estetty</string>
+    <string name="history_detail_gate">Laukaistiin kautta %1$s</string>
+    <string name="history_detail_suppressed">Syy: %1$s</string>
+    <string name="history_device_label">Avain: %1$s</string>
+    <string name="history_fail_ble">Ei vastausta avaimelta</string>
+    <string name="history_fail_auth">Väärä salasana — todennus epäonnistui</string>
+    <string name="history_day_today">Tänään</string>
+    <string name="history_day_yesterday">Eilen</string>
+    <string name="history_day_last_week">Viime %1$s</string>
 </resources>

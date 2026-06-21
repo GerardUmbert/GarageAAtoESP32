@@ -167,4 +167,22 @@
     <string name="onboarding_activity_body">The app uses activity detection to recognise when you\'re in a vehicle, so it can open the garage even when Android Auto isn\'t connected.</string>
     <string name="onboarding_unused_title">Keep app active</string>
     <string name="onboarding_unused_body">On the next screen, look for an option about pausing or managing the app when unused (e.g. \"Pause app activity if unused\" or \"Manage app if unused\") and turn it off so Android doesn\'t revoke permissions.</string>
+
+    <!-- Open history screen -->
+    <string name="history_title">Open history</string>
+    <string name="history_empty">No opens recorded yet.</string>
+    <string name="history_trigger_manual_phone">Manual · Phone</string>
+    <string name="history_trigger_manual_aa">Manual · Android Auto</string>
+    <string name="history_trigger_auto">Automatic</string>
+    <string name="history_outcome_success">Opened</string>
+    <string name="history_outcome_failed">Failed</string>
+    <string name="history_outcome_suppressed">Suppressed</string>
+    <string name="history_detail_gate">Triggered via %1$s</string>
+    <string name="history_detail_suppressed">Reason: %1$s</string>
+    <string name="history_device_label">Opener: %1$s</string>
+    <string name="history_fail_ble">No response from opener</string>
+    <string name="history_fail_auth">Wrong password — authentication failed</string>
+    <string name="history_day_today">Today</string>
+    <string name="history_day_yesterday">Yesterday</string>
+    <string name="history_day_last_week">Last %1$s</string>
 </resources>

@@ -4,6 +4,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
+import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryEntry
+import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryStore
+import com.dunnowsoftware.GarageAAtoESP32.data.OpenOutcome
+import com.dunnowsoftware.GarageAAtoESP32.data.TriggerSource
 import com.google.android.gms.location.DetectedActivity
 import com.google.android.gms.location.GeofencingEvent
 import com.google.android.gms.location.Geofence
@@ -152,7 +156,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
         // Gate 1 — AA connected.
         if (aaConnected) {
             GeofenceLogger.i(context, TAG, "ENTER — device=$deviceAddress AA connected=true — Gate 1 PASS")
-            fireIfNotDebounced(context, deviceAddress)
+            fireIfNotDebounced(context, deviceAddress, gateDetail = "AA_CONNECTED")
             return
         }
 
@@ -171,10 +175,12 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
     }
 
     private fun checkFallbackGatesAndFire(context: Context, deviceAddress: String, triggerSpeedKmh: Float) {
+        val device = DevicePreferences(context).pairedDevice
+
         // Gate 2: triggerSpeed — free, already in the geofence event.
         if (triggerSpeedKmh >= MIN_TRIGGER_SPEED_KMH) {
             GeofenceLogger.i(context, TAG, "Gate 2 triggerSpeed PASS (%.1f km/h)".format(triggerSpeedKmh))
-            fireIfNotDebounced(context, deviceAddress)
+            fireIfNotDebounced(context, deviceAddress, gateDetail = "SPEED")
             return
         }
 
@@ -195,7 +201,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
         GeofenceLogger.d(context, TAG, "Gate 3 activity — $activityName confidence=$confidence% ($activityAgeStr)")
         if ((activityType == DetectedActivity.IN_VEHICLE || activityType == DetectedActivity.ON_BICYCLE) && confidence >= 50) {
             GeofenceLogger.i(context, TAG, "Gate 3 activity PASS ($activityName $confidence% $activityAgeStr)")
-            fireIfNotDebounced(context, deviceAddress)
+            fireIfNotDebounced(context, deviceAddress, gateDetail = activityName)
             return
         }
 
@@ -216,12 +222,40 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
             GeofenceLogger.d(context, TAG, "Gate 4 lastLocation — speed: $speedStr")
             if (lastSpeedKmh >= MIN_TRIGGER_SPEED_KMH) {
                 GeofenceLogger.i(context, TAG, "Gate 4 lastLocation speed PASS (%.1f km/h, %ds old)".format(lastSpeedKmh, ageMs / 1000))
-                fireIfNotDebounced(context, deviceAddress)
+                fireIfNotDebounced(context, deviceAddress, gateDetail = "LAST_LOCATION_SPEED")
             } else {
+                val suppressReason = "activity=$activityName($confidence%), triggerSpeed=${if (triggerSpeedKmh >= 0) "%.1f km/h".format(triggerSpeedKmh) else "unknown"}"
                 GeofenceLogger.i(context, TAG, "ENTER suppressed: AA not connected, triggerSpeed ${if (triggerSpeedKmh >= 0) "%.1f km/h".format(triggerSpeedKmh) else "unknown"}, activity=$activityName($confidence%), lastLocation=$speedStr — all gates failed")
+                if (device != null) {
+                    OpenHistoryStore.append(
+                        context,
+                        OpenHistoryEntry(
+                            timestampMs   = System.currentTimeMillis(),
+                            deviceAddress = deviceAddress,
+                            deviceName    = device.name,
+                            trigger       = TriggerSource.AUTO_GEOFENCE,
+                            outcome       = OpenOutcome.SUPPRESSED,
+                            detail        = suppressReason,
+                        ),
+                    )
+                }
             }
         } catch (e: Exception) {
+            val suppressReason = "activity=$activityName($confidence%), triggerSpeed=${if (triggerSpeedKmh >= 0) "%.1f km/h".format(triggerSpeedKmh) else "unknown"}"
             GeofenceLogger.w(context, TAG, "ENTER suppressed: lastLocation query failed (${e.message}), triggerSpeed ${if (triggerSpeedKmh >= 0) "%.1f km/h".format(triggerSpeedKmh) else "unknown"}, activity=$activityName($confidence%) — all gates failed")
+            if (device != null) {
+                OpenHistoryStore.append(
+                    context,
+                    OpenHistoryEntry(
+                        timestampMs   = System.currentTimeMillis(),
+                        deviceAddress = deviceAddress,
+                        deviceName    = device.name,
+                        trigger       = TriggerSource.AUTO_GEOFENCE,
+                        outcome       = OpenOutcome.SUPPRESSED,
+                        detail        = suppressReason,
+                    ),
+                )
+            }
         }
     }
 
@@ -235,7 +269,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
         GeofenceLogger.i(context, TAG, "EXIT — device=$deviceAddress speed=${if (speed >= 0) "${speed}m/s" else "unknown"} AA connected=$aaConnected lastAutoFire ${lastFiredAgoMs}ms ago")
     }
 
-    private fun fireIfNotDebounced(context: Context, deviceAddress: String) {
+    private fun fireIfNotDebounced(context: Context, deviceAddress: String, gateDetail: String?) {
         val prefs = DevicePreferences(context)
         val now = System.currentTimeMillis()
 
@@ -251,6 +285,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
         stopGpsWarmup(context)
         val serviceIntent = Intent(context, GeofenceForegroundService::class.java).apply {
             putExtra(EXTRA_DEVICE_ADDRESS, deviceAddress)
+            if (gateDetail != null) putExtra(GeofenceForegroundService.EXTRA_GATE_DETAIL, gateDetail)
         }
         context.startForegroundService(serviceIntent)
     }

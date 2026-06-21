@@ -151,4 +151,22 @@
     <string name="onboarding_activity_body">L\'app usa il rilevamento delle attività per sapere quando sei in un veicolo, così può aprire il garage anche senza Android Auto connesso.</string>
     <string name="onboarding_unused_title">Mantieni l\'app attiva</string>
     <string name="onboarding_unused_body">Nella schermata successiva, cerca un\'opzione per sospendere o gestire l\'app se inutilizzata (es. \"Sospendi attività se inutilizzata\") e disattivala in modo che Android non revochi i permessi.</string>
+
+    <!-- Open history screen -->
+    <string name="history_title">Cronologia aperture</string>
+    <string name="history_empty">Nessuna apertura registrata ancora.</string>
+    <string name="history_trigger_manual_phone">Manuale · Telefono</string>
+    <string name="history_trigger_manual_aa">Manuale · Android Auto</string>
+    <string name="history_trigger_auto">Automatico</string>
+    <string name="history_outcome_success">Aperto</string>
+    <string name="history_outcome_failed">Fallito</string>
+    <string name="history_outcome_suppressed">Soppresso</string>
+    <string name="history_detail_gate">Attivato via %1$s</string>
+    <string name="history_detail_suppressed">Motivo: %1$s</string>
+    <string name="history_device_label">Apricancello: %1$s</string>
+    <string name="history_fail_ble">Nessuna risposta dall\'apricancello</string>
+    <string name="history_fail_auth">Password errata — autenticazione fallita</string>
+    <string name="history_day_today">Oggi</string>
+    <string name="history_day_yesterday">Ieri</string>
+    <string name="history_day_last_week">%1$s scorso</string>
 </resources>

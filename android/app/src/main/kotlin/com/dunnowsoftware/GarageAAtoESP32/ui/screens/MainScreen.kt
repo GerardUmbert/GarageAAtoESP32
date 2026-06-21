@@ -46,6 +46,7 @@ fun MainScreen(
     lastOpenedLabel: String?,
     onOpen: () -> Unit,
     onSettings: () -> Unit,
+    onHistory: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -123,7 +124,7 @@ fun MainScreen(
 
             Spacer(Modifier.weight(1f))
 
-            LastOpenedRow(lastOpenedLabel = lastOpenedLabel)
+            LastOpenedRow(lastOpenedLabel = lastOpenedLabel, onClick = onHistory)
         }
     }
 }
@@ -271,13 +272,18 @@ private fun CrossGlyph(color: Color, sizeDp: Dp) {
 }
 
 @Composable
-private fun LastOpenedRow(lastOpenedLabel: String?) {
+private fun LastOpenedRow(lastOpenedLabel: String?, onClick: () -> Unit) {
+    val ctx = LocalContext.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(GarageColors.Surface)
             .border(1.dp, GarageColors.Hairline, RoundedCornerShape(16.dp))
+            .clickable {
+                vibrate(ctx, HAPTIC_TAP)
+                onClick()
+            }
             .padding(horizontal = 18.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -296,5 +302,10 @@ private fun LastOpenedRow(lastOpenedLabel: String?) {
                 fontFamily = if (lastOpenedLabel != null) FontFamily.Monospace else FontFamily.Default,
             )
         }
+        Text(
+            text = "›",
+            color = GarageColors.TextFaint,
+            fontSize = 18.sp,
+        )
     }
 }

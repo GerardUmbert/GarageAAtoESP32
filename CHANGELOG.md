@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.7.0]
+
+### Added
+- **Open history log** — every open event is now recorded persistently (max 200 entries). Tap the "Last opened" row on the main screen to open the history timeline. Each entry shows the time, trigger source (manual phone, manual Android Auto, or automatic geofence), and outcome (opened / failed / suppressed). Tap any row to expand full detail: date, opener name and MAC address, which gate triggered the auto-open, failure reason, or suppression context. History is scoped to the paired device so it is ready for multi-device filtering in a future release
+- **Date separators in history** — entries are grouped by day with localised headers: Today, Yesterday, Last Wednesday / Dimecres passat / Mercredi dernier (within 7 days), and day + date number for older entries, across all 8 supported languages
+
 ## [1.6.6]
 
 ### Fixed
