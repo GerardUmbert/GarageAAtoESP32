@@ -1,5 +1,10 @@
 package com.dunnowsoftware.GarageAAtoESP32.ui.screens
 
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+import android.content.Context
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
@@ -20,12 +25,14 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import com.dunnowsoftware.GarageAAtoESP32.R
 import com.dunnowsoftware.GarageAAtoESP32.ui.HAPTIC_TAP
@@ -130,7 +137,42 @@ fun MainScreen(
 }
 
 @Composable
+private fun rememberYaw(): Float {
+    val ctx = LocalContext.current
+    var yaw by remember { mutableFloatStateOf(0f) }
+    DisposableEffect(Unit) {
+        val sensorManager = ctx.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        val sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
+        val rotationMatrix = FloatArray(9)
+        val orientation = FloatArray(3)
+        val listener = object : SensorEventListener {
+            override fun onSensorChanged(event: SensorEvent) {
+                SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
+                SensorManager.getOrientation(rotationMatrix, orientation)
+                // orientation[2] = roll — negative when tilted right, positive left
+                val rollDeg = Math.toDegrees(orientation[2].toDouble()).toFloat()
+                yaw = rollDeg.coerceIn(-30f, 30f)
+            }
+            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+        }
+        sensor?.let { sensorManager.registerListener(listener, it, SensorManager.SENSOR_DELAY_GAME) }
+        onDispose { sensorManager.unregisterListener(listener) }
+    }
+    return yaw
+}
+
+@Composable
 private fun HeroButton(state: OpenState, onClick: () -> Unit) {
+    val rawYaw = rememberYaw()
+    // Freeze at 0 during confirmation/failure so the check/cross glyphs always face forward.
+    // When state returns to Idle the sensor resumes from current phone orientation naturally.
+    val targetYaw = if (state == OpenState.Idle || state == OpenState.Sending) rawYaw else 0f
+    val smoothYaw by animateFloatAsState(
+        targetValue = targetYaw,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow),
+        label = "yaw",
+    )
+    val density = LocalDensity.current.density
     val ringColor by animateColorAsState(
         targetValue = when (state) {
             OpenState.Idle    -> GarageColors.Text
@@ -174,7 +216,13 @@ private fun HeroButton(state: OpenState, onClick: () -> Unit) {
             when (state) {
                 OpenState.Opened -> CheckGlyph(color = GarageColors.AccentDeep, sizeDp = 84.dp)
                 OpenState.Failed -> CrossGlyph(color = GarageColors.DangerDeep, sizeDp = 84.dp)
-                else -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                else -> Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.graphicsLayer {
+                        rotationY = -smoothYaw * 0.4f
+                        cameraDistance = 6f * density
+                    },
+                ) {
                     GMark(
                         size = 72.dp,
                         color = if (state == OpenState.Sending) GarageColors.Accent else GarageColors.Text,

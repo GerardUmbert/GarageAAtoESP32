@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.7.1]
+
+### Changed
+- Main screen button contents (logo and label) now respond to device tilt with a 3D perspective rotation, giving a subtle depth effect as the phone is tilted sideways. The effect is clamped to ±30° visually but mapped to a wider physical range so normal everyday tilts produce a gentle response. Rotation snaps to flat during open confirmation and error states.
+
 ## [1.7.0]
 
 ### Added
