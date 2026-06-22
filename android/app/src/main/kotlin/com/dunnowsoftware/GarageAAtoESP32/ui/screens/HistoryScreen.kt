@@ -54,6 +54,8 @@ fun HistoryScreen(
             OpenHistoryStore.readAll(ctx)
     }
     var accordionMode by remember { mutableStateOf(true) }
+    val expandedKey = remember { mutableStateOf<Long?>(null) }
+    LaunchedEffect(accordionMode) { expandedKey.value = null }
 
     LazyColumn(
         modifier = Modifier
@@ -114,8 +116,6 @@ fun HistoryScreen(
             val yesterday = dayKey(System.currentTimeMillis() - 86_400_000L)
             val weekAgo = System.currentTimeMillis() - 7 * 86_400_000L
 
-            val expandedKey = remember { mutableStateOf<Long?>(null) }
-            LaunchedEffect(accordionMode) { expandedKey.value = null }
             val activeKey = if (accordionMode) expandedKey else null
 
             grouped.forEach { (dayKey, dayEntries) ->
