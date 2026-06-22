@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.7.2]
+
+### Added
+- **Accordion toggle in open history** — a button in the top-right of the history screen (⇊/⇅) switches between accordion mode (one entry expanded at a time) and multi-expand mode (any number open). Tapping the active entry always collapses it. Switching modes collapses all open entries. Button styled consistently with the main screen settings button (36 dp circle, hairline border, haptic tap)
+
 ## [1.7.1]
 
 ### Changed

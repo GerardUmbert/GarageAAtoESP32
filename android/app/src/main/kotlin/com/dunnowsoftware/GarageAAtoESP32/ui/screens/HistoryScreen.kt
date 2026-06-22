@@ -33,6 +33,8 @@ import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryEntry
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryStore
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenOutcome
 import com.dunnowsoftware.GarageAAtoESP32.data.TriggerSource
+import com.dunnowsoftware.GarageAAtoESP32.ui.HAPTIC_TAP
+import com.dunnowsoftware.GarageAAtoESP32.ui.vibrate
 import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageColors
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -51,6 +53,7 @@ fun HistoryScreen(
         else
             OpenHistoryStore.readAll(ctx)
     }
+    var accordionMode by remember { mutableStateOf(true) }
 
     LazyColumn(
         modifier = Modifier
@@ -59,7 +62,30 @@ fun HistoryScreen(
             .padding(horizontal = 24.dp),
         contentPadding = PaddingValues(bottom = 24.dp),
     ) {
-        item { TopBar(onBack = onBack) }
+        item {
+            TopBar(
+                onBack = onBack,
+                right = {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .border(1.dp, GarageColors.HairlineStrong, CircleShape)
+                            .clickable {
+                                vibrate(ctx, HAPTIC_TAP)
+                                accordionMode = !accordionMode
+                            },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = if (accordionMode) "⇊" else "⇅",
+                            color = GarageColors.Text,
+                            fontSize = 16.sp,
+                        )
+                    }
+                },
+            )
+        }
 
         item {
             Text(
@@ -88,6 +114,10 @@ fun HistoryScreen(
             val yesterday = dayKey(System.currentTimeMillis() - 86_400_000L)
             val weekAgo = System.currentTimeMillis() - 7 * 86_400_000L
 
+            val expandedKey = remember { mutableStateOf<Long?>(null) }
+            LaunchedEffect(accordionMode) { expandedKey.value = null }
+            val activeKey = if (accordionMode) expandedKey else null
+
             grouped.forEach { (dayKey, dayEntries) ->
                 val firstTs = dayEntries.first().timestampMs
                 val label = when (dayKey) {
@@ -106,7 +136,10 @@ fun HistoryScreen(
                     DateSeparator(label = label)
                 }
                 items(dayEntries, key = { it.timestampMs }) { entry ->
-                    HistoryRow(entry = entry)
+                    HistoryRow(
+                        entry = entry,
+                        expandedKey = activeKey,
+                    )
                 }
             }
         }
@@ -145,8 +178,14 @@ private fun DateSeparator(label: String) {
 }
 
 @Composable
-private fun HistoryRow(entry: OpenHistoryEntry) {
-    var expanded by remember { mutableStateOf(false) }
+private fun HistoryRow(entry: OpenHistoryEntry, expandedKey: MutableState<Long?>?) {
+    var localExpanded by remember { mutableStateOf(false) }
+    val expanded = if (expandedKey != null) expandedKey.value == entry.timestampMs else localExpanded
+    val onToggle: () -> Unit = if (expandedKey != null) {
+        { expandedKey.value = if (expandedKey.value == entry.timestampMs) null else entry.timestampMs }
+    } else {
+        { localExpanded = !localExpanded }
+    }
 
     val dotColor = when (entry.outcome) {
         OpenOutcome.SUCCESS    -> GarageColors.Accent
@@ -180,7 +219,7 @@ private fun HistoryRow(entry: OpenHistoryEntry) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { expanded = !expanded },
+            .clickable { onToggle() },
     ) {
         val lineColor = GarageColors.Hairline
         // Dot centre: 16dp top padding + ~10dp (half of ~20dp line height for 14sp text)
