@@ -164,7 +164,7 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
             .build()
 
         return PaneTemplate.Builder(pane)
-            .setHeaderAction(Action.APP_ICON)
+            .setHeader(Header.Builder().setStartHeaderAction(Action.APP_ICON).build())
             .build()
     }
 
@@ -174,14 +174,14 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
         else
             carContext.getString(R.string.aa_connecting_attempt, connectAttempt, GarageBleManager.MAX_ATTEMPTS)
         return MessageTemplate.Builder(msg)
-            .setHeaderAction(Action.APP_ICON)
+            .setHeader(Header.Builder().setStartHeaderAction(Action.APP_ICON).build())
             .setLoading(true)
             .build()
     }
 
     private fun buildMessage(text: String, isError: Boolean): Template {
         val template = MessageTemplate.Builder(text)
-            .setHeaderAction(Action.APP_ICON)
+            .setHeader(Header.Builder().setStartHeaderAction(Action.APP_ICON).build())
 
         if (isError) {
             template.addAction(

@@ -14,8 +14,8 @@ android {
         applicationId = "com.dunnowsoftware.GarageAAtoESP32"
         minSdk = 29
         targetSdk = 35
-        versionCode = 51
-        versionName = "1.7.2"
+        versionCode = 52
+        versionName = "1.7.3"
     }
 
     buildFeatures {
@@ -97,5 +97,6 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
     implementation(libs.compose.material.icons.extended)
+    implementation(libs.foundation)
     debugImplementation(libs.compose.ui.tooling)
 }

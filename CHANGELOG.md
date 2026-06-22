@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.7.3]
+
+### Changed
+- Sticky date headers in open history — day labels pin to the top of the screen while scrolling through entries
+- Bumped Compose BOM to 2025.05.00 (foundation 1.8.1) to enable sticky header support
+- Accordion toggle button icon vertically centred in its circle
+- Fixed deprecated `setHeaderAction` calls in Android Auto screen (replaced with `setHeader`)
+
 ## [1.7.2]
 
 ### Added

@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -41,6 +42,7 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HistoryScreen(
     deviceAddress: String?,
@@ -83,6 +85,7 @@ fun HistoryScreen(
                             text = if (accordionMode) "⇊" else "⇅",
                             color = GarageColors.Text,
                             fontSize = 16.sp,
+                            lineHeight = 16.sp,
                         )
                     }
                 },
@@ -132,7 +135,7 @@ fun HistoryScreen(
                         }
                     }
                 }
-                item(key = "sep_$dayKey") {
+                stickyHeader(key = "sep_$dayKey") {
                     DateSeparator(label = label)
                 }
                 items(dayEntries, key = { it.timestampMs }) { entry ->
@@ -153,26 +156,18 @@ private fun dayKey(ms: Long): String {
 
 @Composable
 private fun DateSeparator(label: String) {
-    // Sits at the left, with a Bg-coloured background that masks the timeline line behind it
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .background(GarageColors.Bg)
             .padding(top = 8.dp, bottom = 4.dp),
     ) {
-        // Mask the line in the canvas column behind the label
-        Box(
-            modifier = Modifier
-                .width(32.dp)
-                .fillMaxHeight()
-                .background(GarageColors.Bg),
-        )
         Text(
             text = label.uppercase(),
             color = GarageColors.TextFaint,
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
             letterSpacing = 1.2.sp,
-            modifier = Modifier.padding(start = 0.dp),
         )
     }
 }
