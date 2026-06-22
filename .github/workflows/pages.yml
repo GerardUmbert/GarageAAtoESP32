@@ -23,3 +23,5 @@ jobs:
           publish_dir: ./web
           publish_branch: gh-pages
           force_orphan: false
+          user_name: github-actions[bot]
+          user_email: github-actions[bot]@users.noreply.github.com
