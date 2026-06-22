@@ -164,9 +164,22 @@
     <string name="history_detail_gate">Ativado via %1$s</string>
     <string name="history_detail_suppressed">Motivo: %1$s</string>
     <string name="history_device_label">Abridor: %1$s</string>
-    <string name="history_fail_ble">Sem resposta do abridor</string>
+    <string name="history_fail_ble">Sem resposta do ESP32</string>
     <string name="history_fail_auth">Palavra-passe incorreta — autenticação falhada</string>
     <string name="history_day_today">Hoje</string>
     <string name="history_day_yesterday">Ontem</string>
     <string name="history_day_last_week">%1$s passada</string>
+
+    <string name="history_gate_aa_connected">🚗 Android Auto ligado</string>
+    <string name="history_gate_speed">⚡ Velocidade na chegada</string>
+    <string name="history_gate_last_location_speed">📍 Velocidade de localização recente</string>
+
+    <string name="history_suppressed_activity_in_vehicle">🚗 Em veículo</string>
+    <string name="history_suppressed_activity_on_foot">🚶 A pé</string>
+    <string name="history_suppressed_activity_walking">🚶 A caminhar</string>
+    <string name="history_suppressed_activity_running">🏃 A correr</string>
+    <string name="history_suppressed_activity_on_bicycle">🚲 De bicicleta</string>
+    <string name="history_suppressed_activity_still">🧍 Parado</string>
+    <string name="history_suppressed_activity_unknown">❓ Desconhecido</string>
+    <string name="history_suppressed_detail">%1$s (%2$d%%) · %3$s — demasiado lento</string>
 </resources>

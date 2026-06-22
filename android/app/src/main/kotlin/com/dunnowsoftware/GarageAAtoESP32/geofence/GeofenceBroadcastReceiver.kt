@@ -224,7 +224,8 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
                 GeofenceLogger.i(context, TAG, "Gate 4 lastLocation speed PASS (%.1f km/h, %ds old)".format(lastSpeedKmh, ageMs / 1000))
                 fireIfNotDebounced(context, deviceAddress, gateDetail = "LAST_LOCATION_SPEED")
             } else {
-                val suppressReason = "activity=$activityName($confidence%), triggerSpeed=${if (triggerSpeedKmh >= 0) "%.1f km/h".format(triggerSpeedKmh) else "unknown"}"
+                val speedToken = if (triggerSpeedKmh >= 0) "%.1f".format(triggerSpeedKmh) else "-1"
+                val suppressToken = "SUPPRESSED_V2:$activityName:$confidence:$speedToken"
                 GeofenceLogger.i(context, TAG, "ENTER suppressed: AA not connected, triggerSpeed ${if (triggerSpeedKmh >= 0) "%.1f km/h".format(triggerSpeedKmh) else "unknown"}, activity=$activityName($confidence%), lastLocation=$speedStr — all gates failed")
                 if (device != null) {
                     OpenHistoryStore.append(
@@ -235,13 +236,14 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
                             deviceName    = device.name,
                             trigger       = TriggerSource.AUTO_GEOFENCE,
                             outcome       = OpenOutcome.SUPPRESSED,
-                            detail        = suppressReason,
+                            detail        = suppressToken,
                         ),
                     )
                 }
             }
         } catch (e: Exception) {
-            val suppressReason = "activity=$activityName($confidence%), triggerSpeed=${if (triggerSpeedKmh >= 0) "%.1f km/h".format(triggerSpeedKmh) else "unknown"}"
+            val speedToken = if (triggerSpeedKmh >= 0) "%.1f".format(triggerSpeedKmh) else "-1"
+            val suppressToken = "SUPPRESSED_V2:$activityName:$confidence:$speedToken"
             GeofenceLogger.w(context, TAG, "ENTER suppressed: lastLocation query failed (${e.message}), triggerSpeed ${if (triggerSpeedKmh >= 0) "%.1f km/h".format(triggerSpeedKmh) else "unknown"}, activity=$activityName($confidence%) — all gates failed")
             if (device != null) {
                 OpenHistoryStore.append(
@@ -252,7 +254,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
                         deviceName    = device.name,
                         trigger       = TriggerSource.AUTO_GEOFENCE,
                         outcome       = OpenOutcome.SUPPRESSED,
-                        detail        = suppressReason,
+                        detail        = suppressToken,
                     ),
                 )
             }

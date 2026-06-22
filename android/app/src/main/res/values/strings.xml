@@ -180,9 +180,25 @@
     <string name="history_detail_gate">Triggered via %1$s</string>
     <string name="history_detail_suppressed">Reason: %1$s</string>
     <string name="history_device_label">Opener: %1$s</string>
-    <string name="history_fail_ble">No response from opener</string>
+    <string name="history_fail_ble">No response from the ESP32</string>
     <string name="history_fail_auth">Wrong password — authentication failed</string>
     <string name="history_day_today">Today</string>
     <string name="history_day_yesterday">Yesterday</string>
     <string name="history_day_last_week">Last %1$s</string>
+
+    <!-- Gate labels for success/fail detail -->
+    <string name="history_gate_aa_connected">🚗 Android Auto connected</string>
+    <string name="history_gate_speed">⚡ Speed at entry</string>
+    <string name="history_gate_last_location_speed">📍 Recent location speed</string>
+
+    <!-- Suppressed detail — activity labels (emoji included) -->
+    <string name="history_suppressed_activity_in_vehicle">🚗 In vehicle</string>
+    <string name="history_suppressed_activity_on_foot">🚶 On foot</string>
+    <string name="history_suppressed_activity_walking">🚶 Walking</string>
+    <string name="history_suppressed_activity_running">🏃 Running</string>
+    <string name="history_suppressed_activity_on_bicycle">🚲 On bicycle</string>
+    <string name="history_suppressed_activity_still">🧍 Still</string>
+    <string name="history_suppressed_activity_unknown">❓ Unknown</string>
+    <!-- %1$s = activity label, %2$d = confidence %, %3$s = speed (e.g. "2.0 km/h") -->
+    <string name="history_suppressed_detail">%1$s (%2$d%%) · %3$s — too slow</string>
 </resources>

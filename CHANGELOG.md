@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.7.1]
+
+### Changed
+- **History: suppressed entries now show a readable one-liner** — instead of raw internal variables (`activity=ON_FOOT(97%), triggerSpeed=2,0 km/h`), suppressed geofence events now display an emoji label, confidence, and speed in a single line, e.g. `🚶 On foot (97%) · 2.0 km/h — too slow`
+- **History: gate labels for success and failed entries are now human-readable** — `AA_CONNECTED`, `SPEED`, `IN_VEHICLE`, `ON_BICYCLE`, and `LAST_LOCATION_SPEED` are replaced with translated, emoji-prefixed labels (e.g. `🚗 Android Auto connected`, `⚡ Speed at entry`, `📍 Recent location speed`). Activity labels are shared between gate and suppression contexts so they are consistent
+- **History: BLE failure message clarified** — "No response from opener" changed to "No response from the ESP32" across all 8 languages, removing the ambiguous "opener/obertura" reference
+- All label and detail strings are fully translated across all 8 supported languages (English, Catalan, Spanish, French, German, Italian, Finnish, Portuguese)
+- Old history entries display gracefully with no migration required
+
 ## [1.7.0]
 
 ### Added

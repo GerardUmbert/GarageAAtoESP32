@@ -263,7 +263,7 @@ private fun HistoryRow(entry: OpenHistoryEntry) {
                                 Text(text = reason, color = GarageColors.DangerPastel, fontSize = 12.sp)
                                 if (entry.detail != null && entry.detail != "AUTH_FAILURE") {
                                     Text(
-                                        text = stringResource(R.string.history_detail_gate, entry.detail),
+                                        text = formatGateDetail(entry.detail),
                                         color = GarageColors.TextDim,
                                         fontSize = 12.sp,
                                     )
@@ -272,7 +272,7 @@ private fun HistoryRow(entry: OpenHistoryEntry) {
                             OpenOutcome.SUCCESS -> {
                                 if (entry.detail != null) {
                                     Text(
-                                        text = stringResource(R.string.history_detail_gate, entry.detail),
+                                        text = formatGateDetail(entry.detail),
                                         color = GarageColors.TextDim,
                                         fontSize = 12.sp,
                                     )
@@ -281,7 +281,7 @@ private fun HistoryRow(entry: OpenHistoryEntry) {
                             OpenOutcome.SUPPRESSED -> {
                                 if (entry.detail != null) {
                                     Text(
-                                        text = stringResource(R.string.history_detail_suppressed, entry.detail),
+                                        text = formatSuppressedDetail(entry.detail),
                                         color = GarageColors.TextDim,
                                         fontSize = 12.sp,
                                     )
@@ -312,6 +312,45 @@ private fun OutcomeChip(text: String, color: Color) {
             letterSpacing = 0.3.sp,
         )
     }
+}
+
+@Composable
+private fun formatGateDetail(detail: String): String {
+    val resId = when (detail) {
+        "AA_CONNECTED"       -> R.string.history_gate_aa_connected
+        "SPEED"              -> R.string.history_gate_speed
+        "LAST_LOCATION_SPEED"-> R.string.history_gate_last_location_speed
+        "IN_VEHICLE"         -> R.string.history_suppressed_activity_in_vehicle
+        "ON_BICYCLE"         -> R.string.history_suppressed_activity_on_bicycle
+        else                 -> null
+    }
+    return if (resId != null) stringResource(resId)
+    else stringResource(R.string.history_detail_gate, detail)
+}
+
+@Composable
+private fun formatSuppressedDetail(detail: String): String {
+    val prefix = "SUPPRESSED_V2:"
+    if (!detail.startsWith(prefix)) {
+        // Legacy entries: show as-is under the old "Reason: …" label
+        return stringResource(R.string.history_detail_suppressed, detail)
+    }
+    val parts = detail.removePrefix(prefix).split(":")
+    if (parts.size < 3) return stringResource(R.string.history_detail_suppressed, detail)
+    val activityKey = parts[0]
+    val confidence = parts[1].toIntOrNull() ?: 0
+    val speedKmh = parts[2].toFloatOrNull() ?: -1f
+    val activityLabel = stringResource(when (activityKey) {
+        "IN_VEHICLE"  -> R.string.history_suppressed_activity_in_vehicle
+        "ON_FOOT"     -> R.string.history_suppressed_activity_on_foot
+        "WALKING"     -> R.string.history_suppressed_activity_walking
+        "RUNNING"     -> R.string.history_suppressed_activity_running
+        "ON_BICYCLE"  -> R.string.history_suppressed_activity_on_bicycle
+        "STILL"       -> R.string.history_suppressed_activity_still
+        else          -> R.string.history_suppressed_activity_unknown
+    })
+    val speedStr = if (speedKmh >= 0f) "%.1f km/h".format(speedKmh) else "? km/h"
+    return stringResource(R.string.history_suppressed_detail, activityLabel, confidence, speedStr)
 }
 
 @Composable
