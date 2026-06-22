@@ -15,6 +15,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.SwapVert
+import androidx.compose.material.icons.outlined.UnfoldLess
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -81,11 +85,11 @@ fun HistoryScreen(
                             },
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(
-                            text = if (accordionMode) "⇊" else "⇅",
-                            color = GarageColors.Text,
-                            fontSize = 16.sp,
-                            lineHeight = 16.sp,
+                        Icon(
+                            imageVector = if (accordionMode) Icons.Outlined.UnfoldLess else Icons.Outlined.SwapVert,
+                            contentDescription = null,
+                            tint = GarageColors.Text,
+                            modifier = Modifier.size(18.dp),
                         )
                     }
                 },
