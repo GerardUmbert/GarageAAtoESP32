@@ -75,7 +75,7 @@ On Linux: `ls /dev/ttyUSB* /dev/ttyACM*` after plugging in the board.
    ```cpp
    #define DEVICE_NAME  "Garage-Main"
    ```
-4. Set `TRIGGER_MODE` to match your hardware: `MODE_TRANSISTOR` (Option A), `MODE_RELAY` (Option B), or `MODE_CAP_PULSE` (Option C — fingerbot, no soldering).
+4. Set `TRIGGER_MODE` to match your hardware: `MODE_RELAY_HIGH` (recommended — most relay modules), `MODE_RELAY` (older opto-isolated relay modules), or `MODE_TRANSISTOR` (transistor).
 5. Wait for PlatformIO to finish indexing (status bar bottom-left).
 6. Click the **→ Upload** arrow in the PlatformIO toolbar, or press `Ctrl+Alt+U`.
 7. Watch the terminal for `Leaving... Hard resetting via RTS pin...` — that means success.
@@ -273,8 +273,8 @@ The PIN never appears in the repository or the APK. Each person enters it manual
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | Serial Monitor shows nothing | Wrong baud rate or wrong port | Set 115200 baud; check port in PlatformIO |
-| Relay / transistor never clicks | Wrong `TRIGGER_MODE` | Set `MODE_TRANSISTOR` for transistor, `MODE_RELAY` for relay module |
-| Fingerbot never triggers (cap-pulse) | Pad coupling weak | Increase `RELAY_PULSE_MS`, enlarge pad, or add ESP32 GND wire to fingerbot chassis |
+| Relay never clicks | Wrong `TRIGGER_MODE` | Use `MODE_RELAY_HIGH` for most modules; try `MODE_RELAY` if it triggers inverted |
+| Transistor never clicks | Wrong `TRIGGER_MODE` | Set `MODE_TRANSISTOR` |
 | nRF Connect: Status always `00` | PIN mismatch | Verify `USER_PIN` in `config.h` exactly matches app PIN |
 | App not appearing in Android Auto | Unknown sources not enabled (sideload only) | Repeat Step 7; confirm "Unknown sources" is on in AA Developer settings. Play Store installs don't need this. |
 | BLE scan finds nothing | ESP32 not advertising | Check power; check Serial Monitor; move phone closer |

@@ -569,7 +569,7 @@
           </svg>
         </div>
         <h3 style="font-size:17px;font-weight:700;color:#F3F5F7;margin-bottom:8px" data-i18n="feat4_h">Geofence auto-open</h3>
-        <p style="font-size:14px;color:#5A6169;line-height:1.65" data-i18n="feat4_p">Set a radius on the map in Settings. When you enter the zone with Android Auto connected, the gate opens automatically — no tap, no phone interaction. A notification confirms every auto-fire.</p>
+        <p style="font-size:14px;color:#5A6169;line-height:1.65" data-i18n="feat4_p">Set a radius on the map in Settings. When you enter the zone the gate opens automatically — no tap, no phone interaction. Works with or without Android Auto: if AA is connected it fires on the car screen; otherwise it uses speed and activity detection. A notification confirms every auto-fire.</p>
       </div>
 
       <!-- Feature 5 -->
@@ -621,8 +621,8 @@
           <div class="step-line" style="height:60px;margin-top:4px"></div>
         </div>
         <div style="padding-top:10px">
-          <div style="font-size:17px;font-weight:700;color:#F3F5F7;margin-bottom:4px" data-i18n="step1_h">You tap the car screen (or say the word)</div>
-          <div style="font-size:14px;color:#5A6169;line-height:1.6" data-i18n="step1_p">One button on your Android Auto display. Or just ask Google — "Open the garage" works in 8 languages.</div>
+          <div style="font-size:17px;font-weight:700;color:#F3F5F7;margin-bottom:4px" data-i18n="step1_h">You tap, speak, or just drive up</div>
+          <div style="font-size:14px;color:#5A6169;line-height:1.6" data-i18n="step1_p">One button on your Android Auto display, a voice command ("Open the garage" in 8 languages), or nothing at all — with geofence auto-open enabled the app fires automatically when you approach.</div>
         </div>
       </div>
 
@@ -675,49 +675,49 @@
       <h2 class="reveal font-extrabold tracking-tight leading-tight" style="font-size:clamp(2rem,4vw,3rem)">
         <span data-i18n="hw_h2_a">Three trigger options.</span><br/><span class="grad-text" data-i18n="hw_h2_b">One firmware.</span>
       </h2>
-      <p class="reveal mt-4 mx-auto" style="color:#8A939C;max-width:480px;line-height:1.65" data-i18n="hw_sub">The ESP32 firmware handles all three — pick the one that fits your situation.</p>
+      <p class="reveal mt-4 mx-auto" style="color:#8A939C;max-width:480px;line-height:1.65" data-i18n="hw_sub">The ESP32 firmware handles all three — pick the one that fits your situation. The relay module is recommended for most setups.</p>
     </div>
 
     <div class="grid md:grid-cols-3 gap-5">
 
-      <!-- Option A -->
+      <!-- Option A — Relay (recommended) -->
       <div class="card-accent reveal p-7">
         <div class="flex items-center gap-3 mb-5">
           <div style="width:36px;height:36px;border-radius:50%;background:rgba(42,212,163,0.15);display:flex;align-items:center;justify-content:center;font-weight:800;color:#2AD4A3">A</div>
           <span class="chip" style="font-size:11px" data-i18n="hw_a_badge">Recommended</span>
         </div>
-        <h3 style="font-size:18px;font-weight:700;color:#F3F5F7;margin-bottom:8px" data-i18n="hw_a_h">Transistor</h3>
-        <p style="font-size:14px;color:#5A6169;line-height:1.65;margin-bottom:16px" data-i18n="hw_a_p">A single NPN transistor shorts the fob's button pads. Cheapest, lowest power, fastest response. Requires opening the fob and soldering 3 wires.</p>
+        <h3 style="font-size:18px;font-weight:700;color:#F3F5F7;margin-bottom:8px" data-i18n="hw_a_h">Relay module</h3>
+        <p style="font-size:14px;color:#5A6169;line-height:1.65;margin-bottom:16px" data-i18n="hw_a_p">A small relay module shorts the fob's button pads when triggered. Beginner-friendly — the module's onboard driver handles everything, no transistor biasing needed. Use a 3V coil (e.g. Songle SRD-03VDC-SL-C) directly on the ESP32's 3.3V rail.</p>
         <div class="flex flex-wrap gap-2">
-          <span style="font-size:11px;color:#5A6169;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:3px 8px" data-i18n="hw_a_t1">~$0.10</span>
+          <span style="font-size:11px;color:#5A6169;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:3px 8px" data-i18n="hw_a_t1">~$1–2</span>
           <span style="font-size:11px;color:#5A6169;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:3px 8px" data-i18n="hw_a_t2">Soldering required</span>
         </div>
       </div>
 
-      <!-- Option B -->
+      <!-- Option B — Power-rail switching (renter-friendly) -->
       <div class="card reveal p-7">
         <div class="flex items-center gap-3 mb-5">
           <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-weight:800;color:#8A939C">B</div>
+          <span style="font-size:11px;color:#2AD4A3;background:rgba(42,212,163,0.08);border:1px solid rgba(42,212,163,0.20);border-radius:999px;padding:4px 10px;font-weight:600" data-i18n="hw_b_badge">Renter-friendly</span>
         </div>
-        <h3 style="font-size:18px;font-weight:700;color:#F3F5F7;margin-bottom:8px" data-i18n="hw_b_h">Relay module</h3>
-        <p style="font-size:14px;color:#5A6169;line-height:1.65;margin-bottom:16px" data-i18n="hw_b_p">Same idea as A but with a 5V relay module — galvanic isolation, more beginner-friendly. Slightly more power draw and cost. Same wiring complexity.</p>
+        <h3 style="font-size:18px;font-weight:700;color:#F3F5F7;margin-bottom:8px" data-i18n="hw_b_h">Relay + power switching</h3>
+        <p style="font-size:14px;color:#5A6169;line-height:1.65;margin-bottom:16px" data-i18n="hw_b_p">Same relay module as Option A, but instead of shorting the button pads, it switches the fob's battery ground rail. Copper tape discs slide into the battery slot — no soldering inside the fob. A small clip holds the button depressed. The fob fires every time it gets power. Fully reversible.</p>
         <div class="flex flex-wrap gap-2">
-          <span style="font-size:11px;color:#5A6169;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:3px 8px" data-i18n="hw_b_t1">~$1</span>
-          <span style="font-size:11px;color:#5A6169;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:3px 8px" data-i18n="hw_b_t2">Soldering required</span>
+          <span style="font-size:11px;color:#2AD4A3;background:rgba(42,212,163,0.08);border:1px solid rgba(42,212,163,0.20);border-radius:6px;padding:3px 8px" data-i18n="hw_b_t1">No fob modification</span>
+          <span style="font-size:11px;color:#5A6169;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:3px 8px" data-i18n="hw_b_t2">~$1–2</span>
         </div>
       </div>
 
-      <!-- Option C -->
+      <!-- Option C — Transistor (advanced) -->
       <div class="card reveal p-7">
         <div class="flex items-center gap-3 mb-5">
           <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-weight:800;color:#8A939C">C</div>
-          <span style="font-size:11px;color:#5A6169;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:999px;padding:4px 10px;font-weight:600" data-i18n="hw_c_badge">No soldering</span>
         </div>
-        <h3 style="font-size:18px;font-weight:700;color:#F3F5F7;margin-bottom:8px" data-i18n="hw_c_h">Capacitive pulse</h3>
-        <p style="font-size:14px;color:#5A6169;line-height:1.65;margin-bottom:16px" data-i18n="hw_c_p">ESP32 sends a charge pulse to a piece of copper tape on the capacitive button of a Fingerbot Plus — which then presses the fob mechanically. Nothing is opened or soldered. Fully reversible.</p>
+        <h3 style="font-size:18px;font-weight:700;color:#F3F5F7;margin-bottom:8px" data-i18n="hw_c_h">Transistor</h3>
+        <p style="font-size:14px;color:#5A6169;line-height:1.65;margin-bottom:16px" data-i18n="hw_c_p">A single NPN transistor shorts the fob's button pads. Lowest power draw (~20 mA vs ~70 mA for relay). Requires understanding transistor biasing and a 1 kΩ base resistor. Best if power budget is critical.</p>
         <div class="flex flex-wrap gap-2">
-          <span style="font-size:11px;color:#2AD4A3;background:rgba(42,212,163,0.08);border:1px solid rgba(42,212,163,0.20);border-radius:6px;padding:3px 8px" data-i18n="hw_c_t1">Renter-friendly</span>
-          <span style="font-size:11px;color:#5A6169;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:3px 8px" data-i18n="hw_c_t2">+0.5–1s latency</span>
+          <span style="font-size:11px;color:#5A6169;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:3px 8px" data-i18n="hw_c_t1">~$0.10</span>
+          <span style="font-size:11px;color:#5A6169;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:3px 8px" data-i18n="hw_c_t2">Advanced</span>
         </div>
       </div>
 

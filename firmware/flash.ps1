@@ -305,20 +305,19 @@ if ($Port -ne "") {
 
 Write-Step "Step 4/7 - Choose your trigger mechanism..."
 Write-Host ""
-Write-Host "  [1] Transistor          - NPN transistor wired into the fob (soldering required, recommended)" -ForegroundColor White
-Write-Host "  [2] Relay active-low    - relay module that triggers on LOW  (older/opto-isolated modules)"   -ForegroundColor White
-Write-Host "  [3] Relay active-high   - relay module that triggers on HIGH (most common, e.g. JQC-3FF)"     -ForegroundColor White
-Write-Host "  [4] Capacitive pad      - copper tape on a Fingerbot's button (no soldering, renter-friendly)" -ForegroundColor White
+Write-Host "  [1] Relay active-high   - relay module that triggers on HIGH (recommended, most common)" -ForegroundColor White
+Write-Host "  [2] Relay active-low    - relay module that triggers on LOW  (older/opto-isolated modules)" -ForegroundColor White
+Write-Host "  [3] Transistor          - NPN transistor wired into the fob button pads (advanced)" -ForegroundColor White
 Write-Host ""
 
 $triggerChoice = Read-Host "  Enter number (default: 1)"
 if ([string]::IsNullOrWhiteSpace($triggerChoice)) { $triggerChoice = "1" }
 
 $triggerMode = switch ($triggerChoice) {
-    "1" { "MODE_TRANSISTOR" }
+    "1" { "MODE_RELAY_HIGH" }
     "2" { "MODE_RELAY"      }
-    "3" { "MODE_RELAY_HIGH" }
-    "4" { "MODE_CAP_PULSE"  }
+    "3" { "MODE_TRANSISTOR" }
+    "4" { "MODE_CAP_PULSE"  } # hidden, kept for backwards compatibility
     default {
         Write-Fail "Invalid selection. Please run flash.bat again."
         exit 1

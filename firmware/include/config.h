@@ -28,7 +28,7 @@
 #define MODE_RELAY_HIGH    4
 
 #ifndef TRIGGER_MODE
-#define TRIGGER_MODE       MODE_TRANSISTOR
+#define TRIGGER_MODE       MODE_RELAY_HIGH
 #endif
 
 // ── Hardware ──────────────────────────────────────────────────────────────────

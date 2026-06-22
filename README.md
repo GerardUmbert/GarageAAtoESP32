@@ -30,7 +30,7 @@ This project exists for a specific situation: you use a **shared or communal gar
 
 This gives you a hands-free way to open the door from your car's Android Auto screen without touching your phone. It works entirely over Bluetooth — no internet, no cloud, no subscription, no hub. The ESP32 presses the fob button for you when you tap the screen — either riding in the car itself powered off the car's USB / 12V socket (recommended for a single car / single user), or fixed near the entrance powered by a USB charger or battery (better for shared garages with multiple users or multiple vehicles). See [Two ways to deploy](#two-ways-to-deploy) for the trade-offs.
 
-There are **three ways** to do the actual button-press, including one that requires no soldering and doesn't modify the fob — important if you have to give it back when you move out. See [Choose your trigger mechanism](#choose-your-trigger-mechanism) below.
+There are **three ways** to do the actual button-press. The recommended option (relay module) is beginner-friendly and works for most setups. Option B requires no soldering inside the fob — important if you have to give it back when you move out. See [Choose your trigger mechanism](#choose-your-trigger-mechanism) below.
 
 It is **not** a replacement for a proper smart garage opener — if you own the garage and have access to the motor, there are better, cleaner solutions. This is specifically for the case where you have no choice but to use the fob.
 
@@ -73,7 +73,7 @@ Open **Garage Opener** — it will walk you through scanning for your ESP32 and 
 
 Connect your phone to Android Auto. Open **Garage Opener** and tap **Open Garage**.
 
-**Optional — geofence auto-open:** in the phone app, go to Settings → Auto-open, set your garage location on the map, adjust the trigger radius (15–75 m), and enable the toggle. From then on the garage opens automatically when you approach — no tap needed. The primary trigger is Android Auto being connected; if AA isn't connected the app falls back to speed and activity detection. A notification is posted when the open fires so you always know it happened. See [docs/geofence-auto-open.md](docs/geofence-auto-open.md) for the full trigger logic.
+**Optional — geofence auto-open:** in the phone app, go to Settings → Auto-open, set your garage location on the map, adjust the trigger radius (15–75 m), and enable the toggle. From then on the garage opens automatically when you approach — no tap, no phone interaction needed. Works with or without Android Auto: if AA is connected it fires via the car screen; otherwise it falls back to speed and activity detection. A notification is posted when the open fires so you always know it happened. See [docs/geofence-auto-open.md](docs/geofence-auto-open.md) for the full trigger logic.
 
 ---
 
@@ -83,18 +83,23 @@ The ESP32 supports **three ways** to press the fob's button. Pick the one that f
 
 | Option | Soldering required? | Fob modified? | Best for |
 |---|---|---|---|
-| **A — Transistor** | Yes (3 wires inside the fob) | Yes | You own the fob and want the cheapest, lowest-power, most reliable setup |
-| **B — Relay module** | Yes (3 wires inside the fob) | Yes | Same as A but you prefer galvanic isolation or already have a relay module |
-| **C — Capacitive pulse on a fingerbot** | **No** | **No** | You rent the fob and want zero assembly beyond sticking things together |
-| **D — Fake battery + power-rail switching** | Minimal (solder wires to copper tape only, outside fob) | **No** | You **rent** the fob and want a cleaner, lower-latency, no-fingerbot solution — best all-round no-modification option |
+| **A — Relay module** *(recommended)* | Yes (3 wires to fob button pads) | Yes | Anyone who can solder — beginner-friendly, reliable, galvanically isolated |
+| **B — Fake battery + power-rail switching** | Minimal (copper tape only, outside fob) | **No** | You **rent** the fob and want a clean, low-latency, no-fingerbot solution |
+| **C — Transistor** | Yes (3 wires inside the fob) | Yes | Advanced — lower power draw than relay, but more finicky to wire |
 
-### Option A — Transistor (recommended if you can solder)
+### Option A — Relay module *(recommended)*
 
-A single small NPN transistor (2N2222, BC547, etc.) shorts the fob's two button pads when triggered by an ESP32 GPIO. Cheapest path, lowest power draw, fastest response. Requires opening the fob and soldering 3 wires.
+Connect a small relay module between the ESP32 and the fob's button pads. The relay shorts the two pads when triggered — identical to pressing the button. No knowledge of transistor biasing needed; the relay module's onboard driver handles everything.
 
-### Option B — Relay module
+**Use a 3V coil relay** (e.g. Songle SRD-03VDC-SL-C) — works directly with the ESP32's 3.3V GPIO and power rail. A 5V coil relay also works if you power VCC from the board's 5V/VIN pin.
 
-Same idea as Option A but with a 5 V relay module instead of a transistor. Slightly more familiar to beginners, but draws more power (relay coil ~60–80 mA) and costs a bit more. Same wiring complexity.
+Wire: ESP32 GND → relay GND, ESP32 3.3V → relay VCC, ESP32 GPIO 26 → relay IN. Fob button pad A → relay COM, fob button pad B → relay NO.
+
+This is also the right approach for **power-rail switching** (Option D in older docs): instead of shorting the button pads, connect COM/NO in series with the fob's battery ground rail — the fob has its button held down mechanically and fires every time it gets power. Renter-friendly, no fob modification required.
+
+### Option C — Transistor *(advanced)*
+
+A single NPN transistor (2N2222, BC547, etc.) shorts the fob's two button pads. Lowest power draw (~20 mA vs ~60–80 mA for relay coil), but requires understanding transistor biasing and a 1 kΩ base resistor. Suitable if power budget is critical or you already have transistors on hand.
 
 ### Option C — Capacitive pulse on a fingerbot (no soldering)
 
@@ -143,11 +148,10 @@ See [docs/wiring_diagram.md](docs/wiring_diagram.md) for full diagrams, material
 - **ESP32-C3 development board** — e.g., ESP32-C3 SuperMini, XIAO ESP32C3, ESP32-C3-DevKitM-1 (default build target)
   _(must be an ESP32 variant with BLE — the ESP8266 has no Bluetooth. Other ESP32 variants such as the classic ESP32-DevKitC also work; see [docs/advanced.md](docs/advanced.md) for instructions.)_
 - **Trigger mechanism** — pick one based on the table above:
-  - Option A: NPN transistor (2N2222 / BC547 / 2N3904, ~$0.10) + 1 kΩ resistor
-  - Option B: 3V coil relay module, e.g. SRD-DC03V-SL-C (~$1–2) — works directly with 3.3V ESP32 GPIO; a 5V coil relay requires an additional transistor driver
-  - Option C: Adaprox / Tuya Fingerbot Plus (model `ADFBB531` or similar, capacitive top button) + ~1 cm² of copper tape + thin wire
-  - Option D: NPN transistor or relay module + copper tape (two ~20 mm discs) + thin wire + CR2032 holder + 3D-printed button press clip for your fob model
-- **Garage key fob** — for Options A and B you'll solder two wires to the button pads inside it. For Option C you don't open the fob at all.
+  - Option A *(recommended)*: relay module with 3V coil, e.g. Songle SRD-03VDC-SL-C (~$1–2) — works directly with ESP32 3.3V GPIO and power rail
+  - Option B: relay module (same as A) + copper tape (two ~20 mm discs) for fake battery contacts + thin wire — no soldering inside the fob
+  - Option C: NPN transistor (2N2222 / BC547 / 2N3904, ~$0.10) + 1 kΩ resistor
+- **Garage key fob** — for Options A and C you'll solder two wires to the button pads inside it. For Option B you don't open the fob at all.
 - **Power source** — pick one based on where you're deploying:
   - Wall outlet + any USB phone charger (simplest — if there's a socket nearby at the garage)
   - Solar power bank (self-sustaining, no maintenance — for at-garage deployments without a socket)
