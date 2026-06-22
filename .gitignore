@@ -2,6 +2,8 @@
 firmware/.pio/
 firmware/.vscode/
 firmware/test-qr.ps1
+firmware/platformio.build.ini
+firmware/platformio.ini.bak
 
 # Android
 android/.gradle/

@@ -42,7 +42,9 @@
 // Pulse duration. For MODE_TRANSISTOR / MODE_RELAY this is how long the fob
 // button is held "pressed". For MODE_CAP_PULSE this is how long the conductive
 // pad is driven before being released to high-Z.
+#ifndef RELAY_PULSE_MS
 #define RELAY_PULSE_MS     500
+#endif
 
 // MODE_CAP_PULSE only: capacitive sensors look for a touch *and* release edge,
 // so after the pulse the pin is set to INPUT (high-Z) instead of being driven

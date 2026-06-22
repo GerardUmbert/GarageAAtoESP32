@@ -8,12 +8,12 @@ $placeholder = "change-me-before-flashing"
 
 # Supported boards: env name → friendly label + default trigger pin
 $supportedBoards = [ordered]@{
-    "esp32c3"     = @{ Label = "ESP32-C3-DevKitM-1 (default)"; Pin = 8;  LedPin = 8;  LedOn = 1 }
-    "lolin32lite" = @{ Label = "Wemos Lolin32 Lite";            Pin = 26; LedPin = 22; LedOn = 0 }
-    "esp32dev"    = @{ Label = "ESP32-DevKitC";                 Pin = 26; LedPin = 2;  LedOn = 1 }
-    "lolin32"     = @{ Label = "Wemos Lolin32";                 Pin = 26; LedPin = 5;  LedOn = 0 }
-    "esp32s3"     = @{ Label = "ESP32-S3-DevKitC-1";            Pin = 4;  LedPin = $null; LedOn = $null }
-    "nodemcu32s"  = @{ Label = "NodeMCU ESP32-S";               Pin = 26; LedPin = 2;  LedOn = 1 }
+    "esp32c3"     = @{ Label = "ESP32-C3-DevKitM-1 (default)"; Pin = 8;  LedPin = 8;  LedOn = 1; PioBoard = "esp32-c3-devkitm-1" }
+    "lolin32lite" = @{ Label = "Wemos Lolin32 Lite";            Pin = 26; LedPin = 22; LedOn = 0; PioBoard = "lolin32_lite"       }
+    "esp32dev"    = @{ Label = "ESP32-DevKitC";                 Pin = 26; LedPin = 2;  LedOn = 1; PioBoard = "esp32dev"           }
+    "lolin32"     = @{ Label = "Wemos Lolin32";                 Pin = 26; LedPin = 5;  LedOn = 0; PioBoard = "lolin32"            }
+    "esp32s3"     = @{ Label = "ESP32-S3-DevKitC-1";            Pin = 4;  LedPin = $null; LedOn = $null; PioBoard = "esp32-s3-devkitc-1" }
+    "nodemcu32s"  = @{ Label = "NodeMCU ESP32-S";               Pin = 26; LedPin = 2;  LedOn = 1; PioBoard = "nodemcu-32s"        }
 }
 
 # Known ESP32 USB adapter VID/PID pairs
@@ -401,14 +401,14 @@ Write-Host ""
 Write-Host "  How long the ESP32 holds the fob button pressed." -ForegroundColor Gray
 Write-Host "  Too short: fob doesn't register and the door stays closed." -ForegroundColor Gray
 Write-Host "  Too long: fob may double-trigger if it re-arms quickly." -ForegroundColor Gray
-Write-Host "  Default: 500 ms. Try 300 ms for snappy fobs, 800 ms for slow ones. Valid range: 100-2000 ms." -ForegroundColor Gray
+Write-Host "  Default: 500 ms. Try 300 ms for snappy fobs, 800 ms for slow ones. Valid range: 100-20000 ms." -ForegroundColor Gray
 $pulseInput = Read-Host "  Pulse duration in ms (default: 500)"
 if ([string]::IsNullOrWhiteSpace($pulseInput)) {
     $pulseDuration = 500
 } else {
     $parsed = 0
-    if (-not [int]::TryParse($pulseInput, [ref]$parsed) -or $parsed -lt 100 -or $parsed -gt 2000) {
-        Write-Fail "Pulse duration must be a number between 100 and 2000 ms."
+    if (-not [int]::TryParse($pulseInput, [ref]$parsed) -or $parsed -lt 100 -or $parsed -gt 20000) {
+        Write-Fail "Pulse duration must be a number between 100 and 20000 ms."
         exit 1
     }
     $pulseDuration = $parsed
@@ -431,6 +431,13 @@ if ([string]::IsNullOrWhiteSpace($deviceNameInput)) {
 }
 Write-OK "Device name: $deviceName"
 
+# Debug mode
+Write-Host ""
+Write-Host "  Enable debug output on serial? (y/N)" -ForegroundColor Gray
+$debugInput = Read-Host "  Debug mode"
+$debugLevel = if ($debugInput -eq "y" -or $debugInput -eq "Y") { 1 } else { 0 }
+if ($debugLevel -eq 1) { Write-OK "Debug: ON (connect serial monitor at 115200 baud)" } else { Write-OK "Debug: OFF" }
+
 # --- Step 7: Compile and flash -----------------------------------------------
 
 Write-Step "Step 7/7 - Compiling and flashing..."
@@ -441,14 +448,40 @@ Write-Host ""
 
 $ledPin = $supportedBoards[$Board].LedPin
 $ledOn  = $supportedBoards[$Board].LedOn
-$ledFlags = if ($null -ne $ledPin) { " -DLED_PIN=$ledPin -DLED_ON_LEVEL=$ledOn" } else { "" }
-$extraFlags = "-DCORE_DEBUG_LEVEL=0 -DTRIGGER_MODE=$triggerMode -DTRIGGER_PIN=$triggerPin -DUSER_PIN=\`"$pin\`" -DDEVICE_NAME=\`"$deviceName\`" -DSLEEP_DURATION_S=$sleepDuration -DRELAY_PULSE_MS=$pulseDuration$ledFlags"
+
+$buildIniFile = Join-Path $PSScriptRoot "platformio.build.ini"
+$ledFlagsIni = if ($null -ne $ledPin) { "`n    -DLED_PIN=$ledPin`n    -DLED_ON_LEVEL=$ledOn" } else { "" }
+$buildIni = @"
+[env]
+platform = espressif32
+framework = arduino
+lib_deps =
+    h2zero/NimBLE-Arduino @ ^1.4.2
+monitor_speed = 115200
+
+[env:$Board]
+board = $($supportedBoards[$Board].PioBoard)
+build_flags =
+    -DCORE_DEBUG_LEVEL=$debugLevel
+    -DTRIGGER_MODE=$triggerMode
+    -DTRIGGER_PIN=$triggerPin
+    -DUSER_PIN=\`"$pin\`"
+    -DDEVICE_NAME=\`"$deviceName\`"
+    -DSLEEP_DURATION_S=$sleepDuration
+    -DRELAY_PULSE_MS=$pulseDuration$ledFlagsIni
+
+[env:native]
+platform = native
+test_build_src = false
+"@
+
+[System.IO.File]::WriteAllText($buildIniFile, $buildIni, [System.Text.Encoding]::ASCII)
 
 $flashSuccess = $false
-$env:PLATFORMIO_BUILD_FLAGS = $extraFlags
-Invoke-Pio @("run", "-e", $Board, "--target", "upload", "--upload-port", $Port)
+Invoke-Pio @("run", "-c", $buildIniFile, "-e", $Board, "--target", "clean")
+Invoke-Pio @("run", "-c", $buildIniFile, "-e", $Board, "--target", "upload", "--upload-port", $Port)
 if ($LASTEXITCODE -eq 0) { $flashSuccess = $true }
-$env:PLATFORMIO_BUILD_FLAGS = $null
+Remove-Item $buildIniFile -ErrorAction SilentlyContinue
 
 # --- Done --------------------------------------------------------------------
 

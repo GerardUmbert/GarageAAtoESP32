@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.7.6]
+
+### Changed
+- Warmup ring minimum raised from 15 m to 200 m above the inner geofence — the previous minimum was too small for Android's geofence accuracy and could cause both rings to fire simultaneously, skipping GPS warmup entirely
+- Warmup ring default raised from 250 m to 400 m for better reliability at higher approach speeds (motorbike, fast road)
+- Firmware: relay pulse duration now correctly passed through to the build — was always compiling as 500 ms regardless of flash script selection
+- Firmware: pulse duration cap raised from 2000 ms to 20000 ms in flash script
+- Firmware: flash script now auto-cleans build cache before each flash to prevent stale builds
+- Firmware: watchdog fed during long relay pulses to prevent ESP32 reset mid-pulse
+- Firmware: optional debug serial output added to flash script (y/N prompt)
+
 ## [1.7.5]
 
 ### Fixed
