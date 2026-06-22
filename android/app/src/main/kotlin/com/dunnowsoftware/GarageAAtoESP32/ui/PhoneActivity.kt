@@ -1,8 +1,10 @@
 package com.dunnowsoftware.GarageAAtoESP32.ui
 
 import android.Manifest
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.PowerManager
@@ -50,9 +52,11 @@ import com.dunnowsoftware.GarageAAtoESP32.data.getSavedLocaleTag
 import com.dunnowsoftware.GarageAAtoESP32.data.localeListFromTag
 import com.dunnowsoftware.GarageAAtoESP32.data.saveLocaleTag
 import androidx.core.content.FileProvider
+import com.dunnowsoftware.GarageAAtoESP32.geofence.GeofenceForegroundService
 import com.dunnowsoftware.GarageAAtoESP32.geofence.GeofenceLogger
 import com.dunnowsoftware.GarageAAtoESP32.geofence.GeofenceManager
 import com.dunnowsoftware.GarageAAtoESP32.geofence.scheduleGeofenceRestore
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.dunnowsoftware.GarageAAtoESP32.ui.screens.*
 import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageColors
 import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageTheme
@@ -482,6 +486,27 @@ private fun MainHost(
     val ctx = androidx.compose.ui.platform.LocalContext.current
     var openState by remember { mutableStateOf(OpenState.Idle) }
     var lastOpened by remember(stateBust) { mutableLongStateOf(prefs.lastOpenedAt) }
+
+    DisposableEffect(ctx) {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                if (openState != OpenState.Idle) return
+                openState = when (intent.action) {
+                    GeofenceForegroundService.ACTION_AUTO_OPENED -> OpenState.Opened
+                    GeofenceForegroundService.ACTION_AUTO_FAILED -> OpenState.Failed
+                    else -> return
+                }
+            }
+        }
+        val filter = IntentFilter().apply {
+            addAction(GeofenceForegroundService.ACTION_AUTO_OPENED)
+            addAction(GeofenceForegroundService.ACTION_AUTO_FAILED)
+        }
+        LocalBroadcastManager.getInstance(ctx).registerReceiver(receiver, filter)
+        onDispose {
+            LocalBroadcastManager.getInstance(ctx).unregisterReceiver(receiver)
+        }
+    }
 
     LaunchedEffect(openState) {
         when (openState) {

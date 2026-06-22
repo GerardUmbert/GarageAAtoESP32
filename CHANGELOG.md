@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.7.5]
+
+### Fixed
+- Expanded rows in multi-expand mode no longer collapse when scrolled off screen and back
+
+### Added
+- Android Auto screen now shows "Opened automatically" or "Couldn't open automatically" for 5 seconds when the geofence fires while AA is active
+- Main screen now plays the opened/failed animation when a geofence auto-open completes while the app is in the foreground
+
+### Changed
+- Gyroscope parallax multiplier increased from 0.4 to 0.7 for a more noticeable tilt effect on the main button
+
 ## [1.7.4]
 
 ### Changed

@@ -84,6 +84,8 @@
     <string name="aa_connecting">Connexion…</string>
     <string name="aa_connecting_attempt">Connexion… (tentative %1$d / %2$d)</string>
     <string name="aa_opened">Ouvert&#160;!</string>
+    <string name="aa_auto_opened">Ouvert automatiquement</string>
+    <string name="aa_auto_failed">Impossible d\'ouvrir automatiquement</string>
     <string name="aa_failed">Échec : %1$s</string>
     <string name="aa_try_again">Réessayer</string>
     <string name="shortcut_open_short">Ouvrir</string>

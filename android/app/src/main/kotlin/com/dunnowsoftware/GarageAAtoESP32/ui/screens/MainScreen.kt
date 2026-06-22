@@ -219,7 +219,7 @@ private fun HeroButton(state: OpenState, onClick: () -> Unit) {
                 else -> Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.graphicsLayer {
-                        rotationY = -smoothYaw * 0.4f
+                        rotationY = -smoothYaw * 0.7f
                         cameraDistance = 6f * density
                     },
                 ) {

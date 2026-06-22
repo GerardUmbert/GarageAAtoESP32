@@ -84,6 +84,8 @@
     <string name="aa_connecting">A ligar…</string>
     <string name="aa_connecting_attempt">A ligar… (tentativa %1$d / %2$d)</string>
     <string name="aa_opened">Aberto!</string>
+    <string name="aa_auto_opened">Aberto automaticamente</string>
+    <string name="aa_auto_failed">Não foi possível abrir automaticamente</string>
     <string name="aa_failed">Erro: %1$s</string>
     <string name="aa_try_again">Tentar novamente</string>
     <string name="shortcut_open_short">Abrir</string>

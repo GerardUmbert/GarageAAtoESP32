@@ -28,10 +28,12 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
     private val bleManager = GarageBleManager(carContext)
     private val presenceScanner = BleScanner(carContext)
 
-    private enum class UiState { IDLE, CONNECTING, SUCCESS, FAILURE }
+    private enum class UiState { IDLE, CONNECTING, SUCCESS, AUTO_SUCCESS, FAILURE, AUTO_FAILURE }
     private var uiState = UiState.IDLE
     private var failureReason = ""
     private var connectAttempt = 0
+    private var lastShownAutoFireAt = 0L
+    private var lastShownAutoFailAt = 0L
 
     // Shared debounce with GeofenceBroadcastReceiver: both read/write
     // lastAutoFiredAt in DevicePreferences so cross-process races are absorbed.
@@ -77,6 +79,30 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
                     invalidate()
                 }
             }
+            // Show "Opened automatically" or "Couldn't open automatically" if the geofence fired recently.
+            if (uiState == UiState.IDLE) {
+                val now = System.currentTimeMillis()
+                val p = prefs()
+                val lastAutoFired = p.lastAutoFiredAt
+                if (lastAutoFired > lastShownAutoFireAt && (now - lastAutoFired) < 15_000L) {
+                    lastShownAutoFireAt = lastAutoFired
+                    uiState = UiState.AUTO_SUCCESS
+                    invalidate()
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        carContext.mainExecutor.execute { resetToIdle() }
+                    }, 5_000L)
+                }
+                val lastAutoFailed = p.lastAutoFailedAt
+                if (lastAutoFailed > lastShownAutoFailAt && (now - lastAutoFailed) < 15_000L) {
+                    lastShownAutoFailAt = lastAutoFailed
+                    uiState = UiState.AUTO_FAILURE
+                    invalidate()
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        carContext.mainExecutor.execute { resetToIdle() }
+                    }, 5_000L)
+                }
+            }
+
             presenceHandler.postDelayed(this, presenceCheckIntervalMs)
         }
     }
@@ -119,10 +145,12 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
 
     override fun onGetTemplate(): Template {
         return when (uiState) {
-            UiState.CONNECTING -> buildLoading()
-            UiState.SUCCESS    -> buildMessage(carContext.getString(R.string.aa_opened), false)
-            UiState.FAILURE    -> buildMessage(carContext.getString(R.string.aa_failed, failureReason), true)
-            UiState.IDLE       -> buildMain()
+            UiState.CONNECTING   -> buildLoading()
+            UiState.SUCCESS      -> buildMessage(carContext.getString(R.string.aa_opened), false)
+            UiState.AUTO_SUCCESS -> buildMessage(carContext.getString(R.string.aa_auto_opened), false)
+            UiState.AUTO_FAILURE -> buildMessage(carContext.getString(R.string.aa_auto_failed), false)
+            UiState.FAILURE      -> buildMessage(carContext.getString(R.string.aa_failed, failureReason), true)
+            UiState.IDLE         -> buildMain()
         }
     }
 

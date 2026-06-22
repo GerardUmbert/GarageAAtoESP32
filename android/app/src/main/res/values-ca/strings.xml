@@ -84,6 +84,8 @@
     <string name="aa_connecting">Connectant…</string>
     <string name="aa_connecting_attempt">Connectant… (intent %1$d / %2$d)</string>
     <string name="aa_opened">Obert!</string>
+    <string name="aa_auto_opened">Obert automàticament</string>
+    <string name="aa_auto_failed">No s\'ha pogut obrir automàticament</string>
     <string name="aa_failed">Error: %1$s</string>
     <string name="aa_try_again">Torna-ho a provar</string>
     <string name="shortcut_open_short">Obre</string>

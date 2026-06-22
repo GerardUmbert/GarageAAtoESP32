@@ -84,6 +84,8 @@
     <string name="aa_connecting">Yhdistetään…</string>
     <string name="aa_connecting_attempt">Yhdistetään… (yritys %1$d / %2$d)</string>
     <string name="aa_opened">Avattu!</string>
+    <string name="aa_auto_opened">Avattu automaattisesti</string>
+    <string name="aa_auto_failed">Automaattinen avaus epäonnistui</string>
     <string name="aa_failed">Epäonnistui: %1$s</string>
     <string name="aa_try_again">Yritä uudelleen</string>
     <string name="shortcut_open_short">Avaa</string>

@@ -14,9 +14,11 @@ osmdroid = "6.1.20"
 workManager = "2.10.0"
 
 appcompat = "1.7.0"
+localbroadcastmanager = "1.1.0"
 
 [libraries]
 appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+localbroadcastmanager = { group = "androidx.localbroadcastmanager", name = "localbroadcastmanager", version.ref = "localbroadcastmanager" }
 car-app = { group = "androidx.car.app", name = "app", version.ref = "carApp" }
 foundation = { module = "androidx.compose.foundation:foundation" }
 security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }

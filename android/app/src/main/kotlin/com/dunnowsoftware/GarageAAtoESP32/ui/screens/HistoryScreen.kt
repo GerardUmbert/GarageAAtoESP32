@@ -21,6 +21,7 @@ import androidx.compose.material.icons.outlined.UnfoldLess
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -178,7 +179,7 @@ private fun DateSeparator(label: String) {
 
 @Composable
 private fun HistoryRow(entry: OpenHistoryEntry, expandedKey: MutableState<Long?>?) {
-    var localExpanded by remember { mutableStateOf(false) }
+    var localExpanded by rememberSaveable(entry.timestampMs) { mutableStateOf(false) }
     val expanded = if (expandedKey != null) expandedKey.value == entry.timestampMs else localExpanded
     val onToggle: () -> Unit = if (expandedKey != null) {
         { expandedKey.value = if (expandedKey.value == entry.timestampMs) null else entry.timestampMs }

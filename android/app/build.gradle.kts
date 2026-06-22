@@ -14,8 +14,8 @@ android {
         applicationId = "com.dunnowsoftware.GarageAAtoESP32"
         minSdk = 29
         targetSdk = 35
-        versionCode = 53
-        versionName = "1.7.4"
+        versionCode = 54
+        versionName = "1.7.5"
     }
 
     buildFeatures {
@@ -79,6 +79,7 @@ android {
 
 dependencies {
     implementation(libs.appcompat)
+    implementation(libs.localbroadcastmanager)
     implementation(libs.car.app)
     implementation(libs.security.crypto)
     implementation(libs.coroutines.android)

@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.dunnowsoftware.GarageAAtoESP32.R
 import com.dunnowsoftware.GarageAAtoESP32.ble.GarageBleManager
 import com.dunnowsoftware.GarageAAtoESP32.ble.OpenResult
@@ -28,6 +29,8 @@ class GeofenceForegroundService : Service() {
 
     companion object {
         const val ACTION_STOP = "com.dunnowsoftware.GarageAAtoESP32.geofence.ACTION_STOP_GEOFENCE_SERVICE"
+        const val ACTION_AUTO_OPENED = "com.dunnowsoftware.GarageAAtoESP32.ACTION_AUTO_OPENED"
+        const val ACTION_AUTO_FAILED = "com.dunnowsoftware.GarageAAtoESP32.ACTION_AUTO_FAILED"
         const val EXTRA_GATE_DETAIL = "gate_detail"
     }
 
@@ -79,6 +82,7 @@ class GeofenceForegroundService : Service() {
     private fun attemptSession(address: String, deviceName: String, password: String, gateDetail: String?, attemptsLeft: Int, startId: Int) {
         if (attemptsLeft <= 0) {
             GeofenceLogger.w(this, TAG, "All $GEOFENCE_MAX_ATTEMPTS attempts exhausted for $address — giving up")
+            DevicePreferences(this).lastAutoFailedAt = System.currentTimeMillis()
             OpenHistoryStore.append(
                 this,
                 OpenHistoryEntry(
@@ -90,6 +94,8 @@ class GeofenceForegroundService : Service() {
                     detail        = gateDetail,
                 ),
             )
+            LocalBroadcastManager.getInstance(this)
+                .sendBroadcast(Intent(ACTION_AUTO_FAILED))
             stopForeground(STOP_FOREGROUND_REMOVE)
             postResultNotification(success = false)
             stopSelf(startId)
@@ -113,6 +119,8 @@ class GeofenceForegroundService : Service() {
                     val ts = System.currentTimeMillis()
                     GeofenceLogger.i(this, TAG, "BLE open SUCCESS for $address — writing lastAutoFiredAt=$ts")
                     DevicePreferences(this).lastAutoFiredAt = ts
+                    LocalBroadcastManager.getInstance(this)
+                        .sendBroadcast(Intent(ACTION_AUTO_OPENED))
                     OpenHistoryStore.append(
                         this,
                         OpenHistoryEntry(
@@ -131,6 +139,7 @@ class GeofenceForegroundService : Service() {
                 is OpenResult.Failure -> {
                     if (result.isAuthFailure) {
                         GeofenceLogger.w(this, TAG, "BLE open AUTH FAILURE for $address — wrong password, not retrying")
+                        DevicePreferences(this).lastAutoFailedAt = System.currentTimeMillis()
                         OpenHistoryStore.append(
                             this,
                             OpenHistoryEntry(
@@ -142,6 +151,8 @@ class GeofenceForegroundService : Service() {
                                 detail        = "AUTH_FAILURE",
                             ),
                         )
+                        LocalBroadcastManager.getInstance(this)
+                            .sendBroadcast(Intent(ACTION_AUTO_FAILED))
                         stopForeground(STOP_FOREGROUND_REMOVE)
                         postResultNotification(success = false)
                         stopSelf(startId)
