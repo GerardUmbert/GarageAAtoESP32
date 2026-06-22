@@ -342,7 +342,7 @@
           <li>Installs PlatformIO automatically if not already present (Windows: via <code>winget</code>; Linux: via <code>pip</code>)</li>
           <li>Presents a board picker — choose your ESP32 variant</li>
           <li>Auto-detects the COM port by USB VID/PID — no guessing</li>
-          <li>Asks for your trigger mechanism (transistor / relay / capacitive pad)</li>
+          <li>Asks for your trigger mechanism (relay active-high / relay active-low / transistor)</li>
           <li>Prompts for optional advanced settings: sleep duration, pulse duration, BLE device name</li>
           <li>Asks for your password and a confirmation to catch typos</li>
           <li>Compiles with your settings baked in as compiler flags — <code>config.h</code> is never modified</li>
@@ -432,22 +432,22 @@ pio run -e esp32c3 --target upload</code></pre>
           </thead>
           <tbody>
             <tr>
-              <td><strong style="color:#2AD4A3">A — Transistor</strong></td>
+              <td><strong style="color:#2AD4A3">A — Relay module</strong> ⭐ Recommended</td>
+              <td>Yes (2 wires to fob pads)</td>
               <td>Yes</td>
-              <td>Yes</td>
-              <td>You own the fob. Cheapest and fastest.</td>
+              <td>Most setups. Beginner-friendly, no biasing knowledge needed.</td>
             </tr>
             <tr>
-              <td><strong>B — Relay</strong></td>
-              <td>Yes</td>
-              <td>Yes</td>
-              <td>Prefer galvanic isolation or have a relay on hand.</td>
+              <td><strong>B — Relay + power switching</strong></td>
+              <td>Minimal (copper tape only)</td>
+              <td><strong style="color:#2AD4A3">No</strong></td>
+              <td>Rented fob that must be returned untouched. Fully reversible.</td>
             </tr>
             <tr>
-              <td><strong>C — Capacitive pulse</strong></td>
-              <td><strong style="color:#2AD4A3">No</strong></td>
-              <td><strong style="color:#2AD4A3">No</strong></td>
-              <td>Rented fob that must be returned untouched.</td>
+              <td><strong>C — Transistor</strong></td>
+              <td>Yes (2 wires to fob pads)</td>
+              <td>Yes</td>
+              <td>Power-critical deployments. Lower draw than relay (~20 mA).</td>
             </tr>
           </tbody>
         </table>
@@ -455,40 +455,36 @@ pio run -e esp32c3 --target upload</code></pre>
         <!-- ── WIRING ── -->
         <h2 id="wiring">Wiring diagrams</h2>
 
-        <h3>Option A — Transistor (recommended)</h3>
-        <p>One NPN transistor (2N2222, BC547, 2N3904) + one 1 kΩ resistor.</p>
-        <div class="diagram-block">ESP32 GPIO 8 ──[1 kΩ]──▶ Base (B)
-                           Collector (C) ──▶ Fob button pad A
-ESP32 GND     ─────────▶ Emitter (E)
-                           Emitter (E)  ──▶ Fob button pad B</div>
-        <p>GPIO HIGH → transistor saturates → fob pads shorted → gate opens.</p>
-        <p>In firmware: <code>TRIGGER_MODE=MODE_TRANSISTOR</code>, <code>TRIGGER_PIN=8</code></p>
-
-        <h3>Option B — Relay module</h3>
-        <p>Recommended relay: <strong>SRD-DC03V-SL-C</strong> (3V coil) — works directly with the ESP32's 3.3V GPIO and power rail. A 5V coil relay will not actuate reliably from 3.3V and requires an additional transistor driver stage.</p>
-        <div class="diagram-block">ESP32 GPIO 8  ──▶  Relay IN
-ESP32 GND     ──▶  Relay GND
-ESP32 3.3V    ──▶  Relay VCC  (use a 3V coil relay — SRD-DC03V-SL-C)
+        <h3>Option A — Relay module (recommended)</h3>
+        <p>Recommended relay: <strong>Songle SRD-03VDC-SL-C</strong> (3V coil) — works directly with the ESP32's 3.3V GPIO and power rail. No transistor driver needed. Most relay modules with an onboard driver are active-high (<code>MODE_RELAY_HIGH</code>); use <code>MODE_RELAY</code> for older opto-isolated modules that trigger on LOW.</p>
+        <div class="diagram-block">ESP32 GPIO 26  ──▶  Relay IN
+ESP32 GND      ──▶  Relay GND
+ESP32 3.3V     ──▶  Relay VCC
 
 Fob pad A  ──▶  Relay COM
 Fob pad B  ──▶  Relay NO (Normally Open)</div>
-        <p>In firmware: <code>TRIGGER_MODE=MODE_RELAY</code></p>
+        <p>In firmware: <code>TRIGGER_MODE=MODE_RELAY_HIGH</code>, <code>TRIGGER_PIN=26</code></p>
 
-        <h3>Option C — Capacitive pulse on a Fingerbot</h3>
-        <div class="diagram-block">ESP32 GPIO 8  ──▶  Copper tape (~1 cm²)
-                        │
-                        │  pressed flat against
-                        ▼
-               Fingerbot capacitive top button
+        <h3>Option B — Relay + power-rail switching (renter-friendly)</h3>
+        <p>Same relay wiring to the ESP32 as Option A. Instead of connecting to the fob's button pads, the relay switches the fob's battery ground rail. A clip or foam wedge holds the button depressed permanently — the fob fires every time it gets power.</p>
+        <div class="diagram-block">ESP32 GPIO 26  ──▶  Relay IN
+ESP32 GND      ──▶  Relay GND
+ESP32 3.3V     ──▶  Relay VCC
 
-Fingerbot arm  ──▶  physically presses fob button</div>
-        <p>The ESP32 briefly drives GPIO 8 HIGH, injecting charge into the fingerbot's capacitive sensor. The fingerbot triggers its mechanical arm. No BLE pairing with the fingerbot needed — the copper tape is the whole interface.</p>
-        <p>In firmware: <code>TRIGGER_MODE=MODE_CAP_PULSE</code></p>
+Relay COM  ──▶  CR2032 − (external, negative terminal)
+Relay NO   ──▶  Fob battery − contact (copper tape disc in slot)
+CR2032 +   ──▶  Fob battery + contact (copper tape disc in slot)</div>
+        <p>No soldering inside the fob. Remove the copper tape discs and the button clip to return the fob exactly as received.</p>
+        <p>In firmware: <code>TRIGGER_MODE=MODE_RELAY_HIGH</code>, <code>TRIGGER_PIN=26</code></p>
 
-        <div class="callout callout-note">
-          <div class="callout-icon">💡</div>
-          <p>Assembly: stick the fingerbot over the fob button with its own double-sided tape. Place the copper tape flat on the fingerbot's top capacitive button with no air gap. Run a thin wire from the pad to GPIO 8. No resistor needed.</p>
-        </div>
+        <h3>Option C — Transistor (advanced)</h3>
+        <p>One NPN transistor (2N2222, BC547, 2N3904) + one 1 kΩ resistor. Lower power draw than a relay (~20 mA vs ~70 mA) but requires transistor biasing knowledge.</p>
+        <div class="diagram-block">ESP32 GPIO 26 ──[1 kΩ]──▶ Base (B)
+                            Collector (C) ──▶ Fob button pad A
+ESP32 GND     ──────────▶ Emitter (E)
+                            Emitter (E)  ──▶ Fob button pad B</div>
+        <p>GPIO HIGH → transistor saturates → fob pads shorted → gate opens.</p>
+        <p>In firmware: <code>TRIGGER_MODE=MODE_TRANSISTOR</code>, <code>TRIGGER_PIN=26</code></p>
 
         <!-- ── POWER ── -->
         <h2 id="power">Power options</h2>
@@ -745,7 +741,7 @@ flowchart TD
         <ol>
           <li>Phone connects over BLE and reads the Nonce characteristic — 16 random bytes generated fresh on the ESP32 for this connection</li>
           <li>Phone computes <code>HMAC-SHA256(password, nonce)</code> and writes the 32-byte result to the Command characteristic</li>
-          <li>ESP32 computes the same HMAC locally and compares. On match it triggers the relay/transistor, writes <code>0x01</code> to Status. On mismatch it writes <code>0x00</code></li>
+          <li>ESP32 computes the same HMAC locally and compares. On match it triggers the relay (or transistor), writes <code>0x01</code> to Status. On mismatch it writes <code>0x00</code></li>
           <li>Nonce is discarded — the next connection generates a new one</li>
         </ol>
 
@@ -789,14 +785,14 @@ flowchart TD
               <td>Set 115200 baud; check COM port in Device Manager</td>
             </tr>
             <tr>
-              <td>Relay / transistor never clicks</td>
-              <td>Wrong <code>TRIGGER_MODE</code></td>
+              <td>Relay never clicks</td>
+              <td>Wrong <code>TRIGGER_MODE</code> — try <code>MODE_RELAY_HIGH</code>, then <code>MODE_RELAY</code></td>
               <td>Flash with correct mode for your hardware</td>
             </tr>
             <tr>
-              <td>Fingerbot never triggers</td>
-              <td>Pad coupling too weak</td>
-              <td>Increase <code>RELAY_PULSE_MS</code>, enlarge copper pad, or add GND wire to fingerbot chassis</td>
+              <td>Relay clicks but gate doesn't open</td>
+              <td>Pulse too short or wrong contacts</td>
+              <td>Increase <code>RELAY_PULSE_MS</code> in the flash tool; confirm wires are on COM and NO (not NC)</td>
             </tr>
             <tr>
               <td>nRF Connect status always <code>00</code></td>
