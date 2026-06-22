@@ -43,7 +43,7 @@
 // button is held "pressed". For MODE_CAP_PULSE this is how long the conductive
 // pad is driven before being released to high-Z.
 #ifndef RELAY_PULSE_MS
-#define RELAY_PULSE_MS     500
+#define RELAY_PULSE_MS     1500
 #endif
 
 // MODE_CAP_PULSE only: capacitive sensors look for a touch *and* release edge,

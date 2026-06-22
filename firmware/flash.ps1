@@ -401,10 +401,10 @@ Write-Host ""
 Write-Host "  How long the ESP32 holds the fob button pressed." -ForegroundColor Gray
 Write-Host "  Too short: fob doesn't register and the door stays closed." -ForegroundColor Gray
 Write-Host "  Too long: fob may double-trigger if it re-arms quickly." -ForegroundColor Gray
-Write-Host "  Default: 500 ms. Try 300 ms for snappy fobs, 800 ms for slow ones. Valid range: 100-20000 ms." -ForegroundColor Gray
-$pulseInput = Read-Host "  Pulse duration in ms (default: 500)"
+Write-Host "  Default: 1500 ms. Try 800 ms for snappy fobs, 2000 ms for slow ones. Valid range: 100-20000 ms." -ForegroundColor Gray
+$pulseInput = Read-Host "  Pulse duration in ms (default: 1500)"
 if ([string]::IsNullOrWhiteSpace($pulseInput)) {
-    $pulseDuration = 500
+    $pulseDuration = 1500
 } else {
     $parsed = 0
     if (-not [int]::TryParse($pulseInput, [ref]$parsed) -or $parsed -lt 100 -or $parsed -gt 20000) {
@@ -431,12 +431,7 @@ if ([string]::IsNullOrWhiteSpace($deviceNameInput)) {
 }
 Write-OK "Device name: $deviceName"
 
-# Debug mode
-Write-Host ""
-Write-Host "  Enable debug output on serial? (y/N)" -ForegroundColor Gray
-$debugInput = Read-Host "  Debug mode"
-$debugLevel = if ($debugInput -eq "y" -or $debugInput -eq "Y") { 1 } else { 0 }
-if ($debugLevel -eq 1) { Write-OK "Debug: ON (connect serial monitor at 115200 baud)" } else { Write-OK "Debug: OFF" }
+$debugLevel = 0
 
 # --- Step 7: Compile and flash -----------------------------------------------
 

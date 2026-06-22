@@ -13,7 +13,8 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - Firmware: pulse duration cap raised from 2000 ms to 20000 ms in flash script
 - Firmware: flash script now auto-cleans build cache before each flash to prevent stale builds
 - Firmware: watchdog fed during long relay pulses to prevent ESP32 reset mid-pulse
-- Firmware: optional debug serial output added to flash script (y/N prompt)
+- Firmware: default relay pulse duration raised from 500 ms to 1500 ms for better out-of-box compatibility
+- Firmware: debug serial output removed from flash script (always production build)
 
 ## [1.7.5]
 
