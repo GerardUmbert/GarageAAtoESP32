@@ -94,22 +94,17 @@ char *buildHtml() {
     uint32_t head  = prefs.getUInt("head",  0);
     uint32_t count = prefs.getUInt("count", 0);
 
-    // Read entries newest-first into parallel arrays
     uint32_t timestamps[MAX_ENTRIES] = {};
     uint8_t  reasons[MAX_ENTRIES]    = {};
     char     models[MAX_ENTRIES][33] = {};
 
     for (uint32_t i = 0; i < count; i++) {
-        // Newest entry is at (head - 1), oldest at (head - count), wrapping
         uint32_t idx = (head + MAX_ENTRIES - 1 - i) % MAX_ENTRIES;
         char key[8];
-
         snprintf(key, sizeof(key), "e%lu_t", (unsigned long)idx);
         timestamps[i] = prefs.getUInt(key, 0);
-
         snprintf(key, sizeof(key), "e%lu_r", (unsigned long)idx);
         reasons[i] = prefs.getUChar(key, 0);
-
         snprintf(key, sizeof(key), "e%lu_m", (unsigned long)idx);
         String m = prefs.getString(key, "");
         strncpy(models[i], m.c_str(), 32);
@@ -117,34 +112,198 @@ char *buildHtml() {
     }
     prefs.end();
 
-    // Build rows
-    // Each row ~150 chars, plus header ~1200 chars
-    size_t bufSize = 1400 + count * 200;
+    size_t bufSize = 6144 + count * 256;
     char *html = (char *)malloc(bufSize);
     if (!html) return nullptr;
 
     int pos = 0;
+
+    // ── Head ──────────────────────────────────────────────────────────────────
     pos += snprintf(html + pos, bufSize - pos,
-        "<!DOCTYPE html><html><head>"
+        "<!DOCTYPE html><html lang='en'><head>"
         "<meta charset='utf-8'>"
         "<meta name='viewport' content='width=device-width,initial-scale=1'>"
         "<meta http-equiv='refresh' content='30'>"
-        "<title>Garage Log</title>"
+        "<title>%s — Log</title>"
         "<style>"
-        "body{font-family:sans-serif;background:#111;color:#eee;margin:0;padding:16px}"
-        "h1{font-size:1.2em;margin:0 0 4px}"
-        "p.sub{color:#888;font-size:.8em;margin:0 0 16px}"
-        "table{width:100%%;border-collapse:collapse;font-size:.85em}"
-        "th{text-align:left;padding:8px 10px;border-bottom:1px solid #333;color:#aaa;font-weight:normal}"
-        "td{padding:8px 10px;border-bottom:1px solid #222}"
-        "tr.fail td{color:#f87}"
-        "tr.ok td{color:#eee}"
-        "</style></head><body>"
-        "<h1>Garage Log</h1>"
-        "<p class='sub'>Device: %s &nbsp;|&nbsp; %lu entries</p>"
+        "*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}"
+        "html,body{height:100%%}"
+        "body{"
+          "background:#0A0C0E;color:#F3F5F7;"
+          "font-family:ui-sans-serif,system-ui,-apple-system,sans-serif;"
+          "font-size:15px;line-height:1.5;"
+          "-webkit-font-smoothing:antialiased"
+        "}"
+        "::-webkit-scrollbar{width:4px}"
+        "::-webkit-scrollbar-track{background:#0A0C0E}"
+        "::-webkit-scrollbar-thumb{background:#2AD4A3;border-radius:2px}"
+
+        /* layout */
+        ".layout{display:flex;min-height:100vh}"
+        ".sidebar{"
+          "width:200px;flex-shrink:0;"
+          "background:#14181C;"
+          "border-right:1px solid rgba(255,255,255,0.06);"
+          "padding:24px 0;"
+          "position:sticky;top:0;height:100vh;overflow-y:auto"
+        "}"
+        ".main{flex:1;padding:32px 24px;min-width:0}"
+
+        /* sidebar */
+        ".sidebar-title{"
+          "font-size:11px;font-weight:600;letter-spacing:.1em;"
+          "color:#5A6169;text-transform:uppercase;"
+          "padding:0 20px 12px"
+        "}"
+        ".sidebar a{"
+          "display:block;padding:9px 20px;"
+          "color:#8A939C;text-decoration:none;font-size:13px;"
+          "border-left:2px solid transparent;transition:all .15s"
+        "}"
+        ".sidebar a:hover{color:#F3F5F7;background:rgba(255,255,255,0.04)}"
+        ".sidebar a.active{color:#2AD4A3;border-left-color:#2AD4A3;background:rgba(42,212,163,0.07)}"
+
+        /* header */
+        ".page-title{font-size:24px;font-weight:700;letter-spacing:-.5px;margin-bottom:4px}"
+        ".page-sub{color:#8A939C;font-size:13px;margin-bottom:28px}"
+
+        /* stats row */
+        ".stats{display:flex;gap:12px;margin-bottom:28px;flex-wrap:wrap}"
+        ".stat{"
+          "background:#14181C;border:1px solid rgba(255,255,255,0.06);"
+          "border-radius:12px;padding:14px 18px;min-width:100px"
+        "}"
+        ".stat-val{font-size:22px;font-weight:700;color:#2AD4A3}"
+        ".stat-lbl{font-size:11px;color:#5A6169;text-transform:uppercase;letter-spacing:.08em;margin-top:2px}"
+
+        /* table */
+        ".card{"
+          "background:#14181C;border:1px solid rgba(255,255,255,0.06);"
+          "border-radius:16px;overflow:hidden"
+        "}"
+        "table{width:100%%;border-collapse:collapse}"
+        "thead th{"
+          "padding:12px 16px;text-align:left;"
+          "font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;"
+          "color:#5A6169;border-bottom:1px solid rgba(255,255,255,0.06)"
+        "}"
+        "tbody tr{border-bottom:1px solid rgba(255,255,255,0.04);transition:background .1s}"
+        "tbody tr:last-child{border-bottom:none}"
+        "tbody tr:hover{background:rgba(255,255,255,0.03)}"
+        "td{padding:13px 16px;font-size:13px;color:#F3F5F7}"
+        "td.dim{color:#8A939C}"
+        "td.mono{font-family:ui-monospace,monospace;font-size:12px;color:#8A939C}"
+        ".badge{"
+          "display:inline-flex;align-items:center;gap:5px;"
+          "padding:3px 9px;border-radius:999px;font-size:12px;font-weight:500"
+        "}"
+        ".badge-ok{background:rgba(42,212,163,0.12);color:#2AD4A3}"
+        ".badge-fail{background:rgba(255,100,80,0.12);color:#ff7060}"
+        ".empty{text-align:center;padding:48px 16px;color:#5A6169;font-size:13px}"
+
+        /* mobile */
+        "@media(max-width:600px){"
+          ".layout{flex-direction:column}"
+          ".sidebar{width:100%%;height:auto;position:static;border-right:none;"
+            "border-bottom:1px solid rgba(255,255,255,0.06);padding:16px 0;"
+            "display:flex;flex-wrap:wrap;gap:0}"
+          ".sidebar-title{width:100%%;padding:0 16px 8px}"
+          ".sidebar a{padding:8px 14px;border-left:none;border-bottom:2px solid transparent}"
+          ".sidebar a.active{border-left-color:transparent;border-bottom-color:#2AD4A3}"
+          ".main{padding:20px 16px}"
+          "thead th:nth-child(4){display:none}"
+          "td:nth-child(4){display:none}"
+        "}"
+        "</style>"
+        "<script>"
+        "function filter(dev,el){"
+          "document.querySelectorAll('.sidebar a').forEach(a=>a.classList.remove('active'));"
+          "el.classList.add('active');"
+          "var rows=document.querySelectorAll('tbody tr[data-dev]');"
+          "var vis=0;"
+          "rows.forEach(function(r){"
+            "var show=dev===''||r.dataset.dev===dev;"
+            "r.style.display=show?'':'none';"
+            "if(show)vis++;"
+          "});"
+          "document.getElementById('vis').textContent=vis;"
+        "}"
+        "</script>"
+        "</head><body>",
+        DEVICE_NAME);
+
+    // ── Count successes, failures, unique models ──────────────────────────────
+    uint32_t nOk = 0, nFail = 0;
+    // Collect unique non-empty models (max 10 unique devices)
+    char uniqueModels[10][33] = {};
+    uint32_t uniqueCounts[10] = {};
+    uint8_t  nUnique = 0;
+
+    for (uint32_t i = 0; i < count; i++) {
+        if (reasons[i] == 0) { nFail++; continue; }
+        nOk++;
+        if (models[i][0] == '\0') continue;
+        bool found = false;
+        for (uint8_t u = 0; u < nUnique; u++) {
+            if (strncmp(uniqueModels[u], models[i], 32) == 0) {
+                uniqueCounts[u]++;
+                found = true;
+                break;
+            }
+        }
+        if (!found && nUnique < 10) {
+            strncpy(uniqueModels[nUnique], models[i], 32);
+            uniqueModels[nUnique][32] = '\0';
+            uniqueCounts[nUnique] = 1;
+            nUnique++;
+        }
+    }
+
+    // ── Sidebar ───────────────────────────────────────────────────────────────
+    pos += snprintf(html + pos, bufSize - pos,
+        "<div class='layout'>"
+        "<nav class='sidebar'>"
+        "<div class='sidebar-title'>Devices</div>"
+        "<a href='#' class='active' onclick='filter(\"\",this);return false;'>"
+          "All &nbsp;<span style='color:#5A6169'>%lu</span>"
+        "</a>",
+        (unsigned long)count);
+
+    for (uint8_t u = 0; u < nUnique; u++) {
+        pos += snprintf(html + pos, bufSize - pos,
+            "<a href='#' onclick='filter(\"%s\",this);return false;'>"
+              "%s &nbsp;<span style='color:#5A6169'>%lu</span>"
+            "</a>",
+            uniqueModels[u], uniqueModels[u], (unsigned long)uniqueCounts[u]);
+    }
+
+    pos += snprintf(html + pos, bufSize - pos, "</nav>");
+
+    // ── Main ──────────────────────────────────────────────────────────────────
+    pos += snprintf(html + pos, bufSize - pos,
+        "<main class='main'>"
+        "<div class='page-title'>%s</div>"
+        "<div class='page-sub'>Event log &nbsp;&#8231;&nbsp; auto-refreshes every 30 s</div>"
+        "<div class='stats'>"
+          "<div class='stat'><div class='stat-val' id='vis'>%lu</div><div class='stat-lbl'>Showing</div></div>"
+          "<div class='stat'><div class='stat-val'>%lu</div><div class='stat-lbl'>Opened</div></div>"
+          "<div class='stat'><div class='stat-val'>%lu</div><div class='stat-lbl'>Auth fails</div></div>"
+        "</div>"
+        "<div class='card'>"
         "<table>"
-        "<tr><th>Date / Time</th><th>Result</th><th>Reason</th><th>Device</th></tr>",
-        DEVICE_NAME, (unsigned long)count);
+        "<thead><tr>"
+          "<th>Date / Time</th><th>Result</th><th>Reason</th><th>Device</th>"
+        "</tr></thead>"
+        "<tbody>",
+        DEVICE_NAME,
+        (unsigned long)count,
+        (unsigned long)nOk,
+        (unsigned long)nFail);
+
+    if (count == 0) {
+        pos += snprintf(html + pos, bufSize - pos,
+            "<tr><td colspan='4' class='empty'>No events yet</td></tr>");
+    }
 
     for (uint32_t i = 0; i < count; i++) {
         bool isFailure = (reasons[i] == 0);
@@ -152,27 +311,24 @@ char *buildHtml() {
         formatTime(timestamps[i], timeBuf, sizeof(timeBuf));
 
         pos += snprintf(html + pos, bufSize - pos,
-            "<tr class='%s'>"
-            "<td>%s</td>"
-            "<td>%s</td>"
-            "<td>%s</td>"
-            "<td>%s</td>"
+            "<tr data-dev='%s'>"
+            "<td class='mono'>%s</td>"
+            "<td><span class='badge %s'>%s</span></td>"
+            "<td class='dim'>%s</td>"
+            "<td class='dim'>%s</td>"
             "</tr>",
-            isFailure ? "fail" : "ok",
+            isFailure ? "" : models[i],
             timeBuf,
+            isFailure ? "badge-fail" : "badge-ok",
             isFailure ? "&#x26A0; Auth fail" : "&#x2713; Opened",
             isFailure ? "—" : reasonLabel(reasons[i]),
             isFailure ? "—" : models[i]);
     }
 
-    if (count == 0) {
-        pos += snprintf(html + pos, bufSize - pos,
-            "<tr><td colspan='4' style='color:#555;text-align:center;padding:24px'>"
-            "No events yet</td></tr>");
-    }
-
     snprintf(html + pos, bufSize - pos,
-        "</table></body></html>");
+        "</tbody></table></div>"
+        "</main></div>"
+        "</body></html>");
 
     return html;
 }

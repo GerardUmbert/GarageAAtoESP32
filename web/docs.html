@@ -273,6 +273,7 @@
       <a href="#android-auto">Android Auto</a>
       <a href="#voice">Voice commands</a>
       <a href="#quick-settings">Quick Settings tile</a>
+      <a href="#web-log">ESP32 web log</a>
 
       <div class="sidebar-group">Auto-open</div>
       <a href="#geofence-auto-open">How it works</a>
@@ -438,7 +439,7 @@ pio run -e esp32c3 --target upload</code></pre>
               <td>Most setups. Beginner-friendly, no biasing knowledge needed.</td>
             </tr>
             <tr>
-              <td><strong>B — Relay + power switching</strong></td>
+              <td><strong>B — Relay + power-rail switching</strong></td>
               <td>Minimal (copper tape only)</td>
               <td><strong style="color:#2AD4A3">No</strong></td>
               <td>Rented fob that must be returned untouched. Fully reversible.</td>
@@ -565,13 +566,19 @@ ESP32 GND     ──────────▶ Emitter (E)
         <h3>Presence indicator</h3>
         <p>A low-power BLE scan filtered to your paired device's MAC runs while the main screen is in the foreground. The dot shows <strong>In range</strong> (green) when the opener has been heard within the last 15 s, <strong>Out of range</strong> (grey) otherwise.</p>
 
+        <h3>Open history</h3>
+        <p>Tap the history row at the bottom of the main screen to open a full timeline of every open event — timestamp, trigger source (manual tap, Android Auto, geofence auto-open, voice), and result. Geofence entries expand to show which gate passed and any suppression reasons. Entries are grouped by day with sticky date headers.</p>
+
         <h3>Settings</h3>
         <p>Open settings via the ⚙ button in the top right. From here you can:</p>
         <ul>
           <li>View or change your paired device (Repair / Pair another / Unpair)</li>
+          <li>Connect to the ESP32's Wi-Fi log server — the 📶 button appears next to the device address when the firmware was flashed with the web log feature enabled</li>
           <li>Change your password</li>
+          <li>Configure geofence auto-open (location, radius, warmup ring)</li>
           <li>Switch the app language (8 supported)</li>
           <li>Enable Demo mode (runs the full UI flow without a real ESP32)</li>
+          <li>Share the geofence diagnostic log (Settings → Diagnostics)</li>
         </ul>
 
         <!-- ── ANDROID AUTO ── -->
@@ -617,7 +624,7 @@ ESP32 GND     ──────────▶ Emitter (E)
         <p>Two geofences are registered around your garage:</p>
         <ul>
           <li><strong>Inner geofence</strong> — at your configured radius. This is the trigger zone.</li>
-          <li><strong>Outer geofence</strong> — at your configured radius + warmup ring offset (default 250 m, adjustable 15–1000 m). This is the GPS warmup zone (shown as a dashed ring in the picker).</li>
+          <li><strong>Outer geofence</strong> — at your configured radius + warmup ring offset (default 400 m, adjustable 15–1000 m). This is the GPS warmup zone (shown as a dashed ring in the picker).</li>
         </ul>
         <p>When you cross the inner boundary inbound, the app runs a gate chain to decide whether to fire. When you cross the outer boundary inbound, the app pre-warms GPS so speed data is ready by the time the inner geofence fires.</p>
 
@@ -732,6 +739,34 @@ flowchart TD
         <div class="callout callout-note">
           <div class="callout-icon">ℹ️</div>
           <p>Look for lines tagged <code>GeofenceReceiver</code>. A suppressed trigger always ends with <em>"all gates failed"</em> and lists the speed, activity type, and confidence that were checked.</p>
+        </div>
+
+        <!-- ── WEB LOG ── -->
+        <h2 id="web-log">ESP32 web log server</h2>
+        <p>When enabled during flashing, the ESP32 hosts its own open Wi-Fi access point and serves a web page with the full event log. No router, no internet, no cloud — the ESP32 is the server.</p>
+
+        <h3>Enabling it</h3>
+        <p>When running the flash tool, answer <strong>y</strong> to the <em>"Enable web log?"</em> prompt. This compiles the Wi-Fi AP, DNS server, and web server into the firmware. Builds without this option are identical to previous versions — no extra power draw, no extra code.</p>
+
+        <h3>Connecting</h3>
+        <p>The ESP32 advertises a Wi-Fi network named <code>{device-name}_{last 3 MAC octets}</code> (e.g. <code>Garage-Opener_A1B2C3</code>). It is open — no password required. The app shows a Wi-Fi icon next to the paired device in Settings when the firmware supports this feature; tap it to trigger the system connection dialog pre-filled with the network name.</p>
+        <p>Once connected, any browser request is redirected to <code>http://192.168.4.1</code> — the captive portal pops the log page automatically on most phones and laptops.</p>
+
+        <h3>What the log shows</h3>
+        <table>
+          <thead><tr><th>Column</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>Date / Time</td><td>UTC timestamp sent by the phone at the moment of the open command</td></tr>
+            <tr><td>Result</td><td>✓ Opened (successful auth) or ⚠ Auth fail (wrong PIN — useful for detecting probing)</td></tr>
+            <tr><td>Reason</td><td>Manual tap, Geofence, or Voice</td></tr>
+            <tr><td>Device</td><td>Phone manufacturer and model that sent the command</td></tr>
+          </tbody>
+        </table>
+        <p>The log holds the last 50 events in NVS flash — it survives reboots and deep sleep cycles. The page auto-refreshes every 30 seconds.</p>
+
+        <div class="callout callout-note">
+          <div class="callout-icon">ℹ️</div>
+          <p>The ESP32 stays awake indefinitely while a device is connected to the AP. It returns to its normal sleep cycle once you disconnect.</p>
         </div>
 
         <!-- ── SECURITY ── -->

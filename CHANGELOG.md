@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.8.1]
+
+### Changed
+- Firmware: ESP32 web log page redesigned to match app visual style — dark background (`#0A0C0E`), teal accent (`#2AD4A3`), system sans-serif font, stats row, badge-style result pills
+- Firmware: web log sidebar now shows one tab per unique phone model with entry count; clicking a tab filters the table client-side without reloading
+- Docs: removed all Fingerbot / capacitive pulse / `MODE_CAP_PULSE` references from README, docs.html, wiring_diagram.md, and advanced.md — trigger options are now A (relay, recommended), B (relay + power-rail switching, renter-friendly), C (transistor)
+- Docs: added dual-geofence description (inner trigger + outer GPS warmup ring) to README
+- Docs: added open history and ESP32 web log server sections to README and docs.html
+- Docs: corrected outer geofence default offset (250 m → 400 m) in docs.html
+- Docs: added web log server entry to docs.html sidebar and flash tool advanced options table
+
 ## [1.8.0]
 
 ### Added

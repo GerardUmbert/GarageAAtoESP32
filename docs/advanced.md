@@ -9,16 +9,13 @@ flowchart TD
     B -->|Yes — you own the garage\nor can wire into it| B1[This project is NOT the best fit.\nA proper smart opener wired\ndirectly to the motor is cleaner\nand more reliable.]
     B -->|No — you only have a fob\nrented space, communal garage,\napartment block| C
 
-    C{Must you return\nthe fob untouched?} -->|Yes — rented / managed fob| D1{Can you solder\nwires to copper tape\noutside the fob?}
+    C{Must you return\nthe fob untouched?} -->|Yes — rented / managed fob| D1[Trigger: Option B\nRelay + power-rail switching.\nCopper tape contacts only,\nno soldering inside the fob,\nfully reversible]
     C -->|No — you own the fob\nor can open it| D2{Can you solder?}
 
-    D1 -->|Yes| D1a[Trigger: Option D\nFake CR2032 battery insert\n+ power-rail switching.\nBest renter option — no fingerbot,\nlower latency, fully reversible]
-    D1 -->|No — zero soldering| D1b[Trigger: Option C\nFingerbot capacitive pulse.\nStick everything with tape,\nno tools needed]
+    D2 -->|Yes| D3[Trigger: Option A\nRelay module — beginner-friendly,\nreliable, galvanically isolated]
+    D2 -->|No — advanced| D4[Trigger: Option C\nNPN transistor — lowest power,\nrequires biasing knowledge]
 
-    D2 -->|Yes| D3[Trigger: Option A\nNPN transistor — cheapest,\nlowest power, most reliable]
-    D2 -->|No| D4[Trigger: Option B\nRelay module — beginner-friendly,\nno fine soldering needed]
-
-    D1a & D1b & D3 & D4 --> E
+    D1 & D3 & D4 --> E
 
     E{Single vehicle\nand single user?} -->|Yes| F[Deploy IN the car\nESP32 + fob ride in the car,\npowered off USB / 12V socket]
     E -->|No — multiple users\nor multiple vehicles| G[Deploy AT the garage\nESP32 fixed near the gate,\nfob stays at the garage]
@@ -102,8 +99,9 @@ After the PIN step the tool offers optional overrides — press Enter at each to
 |---|---|---|
 | Trigger GPIO | Board default (see table above) | Override if your wiring uses a different pin |
 | Sleep duration | 5 s | Lower = more responsive, higher = more battery life |
-| Pulse duration | 500 ms | How long the fob button is held. Increase for slow fobs |
+| Pulse duration | 1500 ms | How long the fob button is held. Increase for slow fobs |
 | BLE device name | `Garage-Opener` | Change if you have multiple units |
+| Web log server | Disabled | Enables Wi-Fi AP + captive portal event log page |
 
 ---
 
