@@ -344,6 +344,10 @@ if ($pin -eq $placeholder) {
     Write-Fail "You must choose a real PIN, not the placeholder."
     exit 1
 }
+if ($pin.Length -lt 8) {
+    Write-Fail "PIN must be at least 8 characters (required for WPA2 Wi-Fi AP password)."
+    exit 1
+}
 
 $pinConfirm = Read-Host "  Confirm PIN"
 

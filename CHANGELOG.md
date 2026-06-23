@@ -14,6 +14,7 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - Docs: added open history and ESP32 web log server sections to README and docs.html
 - Docs: corrected outer geofence default offset (250 m → 400 m) in docs.html
 - Docs: added web log server entry to docs.html sidebar and flash tool advanced options table
+- Flash tool: `flash.sh` (Linux) fully resynced with `flash.ps1` — trigger options updated (Fingerbot/capacitive removed), PIN minimum 8 characters enforced, pulse default corrected to 1500 ms, web log prompt added, LED pin flags per board, clean build step added
 
 ## [1.8.0]
 

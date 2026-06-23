@@ -15,15 +15,38 @@ declare -A BOARD_LABELS=(
 )
 declare -A BOARD_PINS=(
     [esp32c3]=8
-    [lolin32lite]=22
+    [lolin32lite]=26
     [esp32dev]=26
     [lolin32]=26
     [esp32s3]=4
     [nodemcu32s]=26
 )
+declare -A BOARD_LED_PINS=(
+    [esp32c3]=8
+    [lolin32lite]=22
+    [esp32dev]=2
+    [lolin32]=5
+    [esp32s3]=""
+    [nodemcu32s]=2
+)
+declare -A BOARD_LED_ON=(
+    [esp32c3]=1
+    [lolin32lite]=0
+    [esp32dev]=1
+    [lolin32]=0
+    [esp32s3]=""
+    [nodemcu32s]=1
+)
+declare -A BOARD_PIO=(
+    [esp32c3]="esp32-c3-devkitm-1"
+    [lolin32lite]="lolin32_lite"
+    [esp32dev]="esp32dev"
+    [lolin32]="lolin32"
+    [esp32s3]="esp32-s3-devkitc-1"
+    [nodemcu32s]="nodemcu-32s"
+)
 BOARD_ORDER=(esp32c3 lolin32lite esp32dev lolin32 esp32s3 nodemcu32s)
 
-# Known ESP32 USB adapter VID:PID
 declare -A VID_PID_NAMES=(
     ["10c4:ea60"]="CP2102 (Silicon Labs)"
     ["1a86:7523"]="CH340"
@@ -96,15 +119,10 @@ write_qr() {
         local line="  "
         for (( j=0; j<${#rowT}; j++ )); do
             local t="${rowT:$j:1}" b="${rowB:$j:1}"
-            if [[ "$t" == "1" && "$b" == "1" ]]; then
-                line+="$FULL"
-            elif [[ "$t" == "1" ]]; then
-                line+="$TOP"
-            elif [[ "$b" == "1" ]]; then
-                line+="$BOT"
-            else
-                line+=" "
-            fi
+            if [[ "$t" == "1" && "$b" == "1" ]]; then line+="$FULL"
+            elif [[ "$t" == "1" ]]; then line+="$TOP"
+            elif [[ "$b" == "1" ]]; then line+="$BOT"
+            else line+=" "; fi
         done
         echo "$line"
         (( i+=2 ))
@@ -157,16 +175,15 @@ if [[ -n "$PIO_CMD" ]]; then
     write_ok "PlatformIO found ($PIO_CMD)."
 else
     echo -e "  ${YELLOW}  PlatformIO not found. Installing via official installer...${NC}"
-    echo -e "  ${YELLOW}  (One-time download of ~300 MB, please be patient)${NC}"
+    echo -e "  ${YELLOW}  (One-time download, please be patient)${NC}"
     echo ""
     if ! command -v python3 &>/dev/null; then
-        write_fail "Python 3 is required but not found. Install it with your package manager (e.g. sudo apt install python3) and re-run this script."
+        write_fail "Python 3 is required but not found. Install it (e.g. sudo apt install python3) and re-run."
     fi
     if ! command -v curl &>/dev/null; then
-        write_fail "curl is required but not found. Install it with your package manager (e.g. sudo apt install curl) and re-run this script."
+        write_fail "curl is required but not found. Install it (e.g. sudo apt install curl) and re-run."
     fi
     curl -fsSL https://raw.githubusercontent.com/platformio/platformio-core-installer/develop/get-platformio.py | python3
-    # Reload PATH for ~/.local/bin
     export PATH="$HOME/.local/bin:$PATH"
     if command -v pio &>/dev/null; then
         PIO_CMD="pio"
@@ -207,7 +224,7 @@ else
     write_ok "Board: ${BOARD_LABELS[$BOARD]}"
 fi
 
-DEFAULT_PIN="${BOARD_PINS[$BOARD]}"
+DEFAULT_TRIGGER_PIN="${BOARD_PINS[$BOARD]}"
 
 # --- Step 3: Find the ESP32 ---------------------------------------------------
 
@@ -219,7 +236,6 @@ else
     declare -a found_ports=()
     declare -a found_chips=()
 
-    # Enumerate USB devices via /sys
     if [[ -d /sys/bus/usb/devices ]]; then
         for dev_path in /sys/bus/usb/devices/*/; do
             vid_file="$dev_path/idVendor"
@@ -230,7 +246,6 @@ else
             key="${vid}:${pid}"
             chip_name="${VID_PID_NAMES[$key]:-}"
             [[ -z "$chip_name" ]] && continue
-            # Find associated tty via find (globstar not reliable by default)
             while IFS= read -r tty_path; do
                 tty_name=$(basename "$tty_path")
                 [[ -c "/dev/$tty_name" ]] || continue
@@ -240,7 +255,6 @@ else
         done 2>/dev/null
     fi
 
-    # Fallback: just list all likely ESP32 ttys if /sys scan found nothing
     if (( ${#found_ports[@]} == 0 )); then
         for tty in /dev/ttyUSB* /dev/ttyACM*; do
             [[ -c "$tty" ]] && found_ports+=("$tty") && found_chips+=("unknown")
@@ -285,20 +299,19 @@ fi
 
 write_step "Step 4/7 - Choose your trigger mechanism..."
 echo ""
-echo -e "  ${WHITE}[1] Transistor          - NPN transistor wired into the fob (soldering required, recommended)${NC}"
+echo -e "  ${WHITE}[1] Relay active-high   - relay module that triggers on HIGH (recommended, most common)${NC}"
 echo -e "  ${WHITE}[2] Relay active-low    - relay module that triggers on LOW  (older/opto-isolated modules)${NC}"
-echo -e "  ${WHITE}[3] Relay active-high   - relay module that triggers on HIGH (most common, e.g. JQC-3FF)${NC}"
-echo -e "  ${WHITE}[4] Capacitive pad      - copper tape on a Fingerbot's button (no soldering, renter-friendly)${NC}"
+echo -e "  ${WHITE}[3] Transistor          - NPN transistor wired into the fob button pads (advanced)${NC}"
 echo ""
 
 read -rp "  Enter number (default: 1): " trigger_choice
 [[ -z "$trigger_choice" ]] && trigger_choice="1"
 
 case "$trigger_choice" in
-    1) TRIGGER_MODE="MODE_TRANSISTOR" ;;
+    1) TRIGGER_MODE="MODE_RELAY_HIGH" ;;
     2) TRIGGER_MODE="MODE_RELAY"      ;;
-    3) TRIGGER_MODE="MODE_RELAY_HIGH" ;;
-    4) TRIGGER_MODE="MODE_CAP_PULSE"  ;;
+    3) TRIGGER_MODE="MODE_TRANSISTOR" ;;
+    4) TRIGGER_MODE="MODE_CAP_PULSE"  ;; # hidden, kept for backwards compatibility
     *) write_fail "Invalid selection. Please run flash.sh again." ;;
 esac
 
@@ -310,6 +323,7 @@ write_step "Step 5/7 - Set your PIN..."
 echo ""
 echo -e "  ${GRAY}This PIN must match the one you enter in the Android app.${NC}"
 echo -e "  ${GRAY}It will be compiled into the firmware and never saved to disk.${NC}"
+echo -e "  ${GRAY}Minimum 8 characters required.${NC}"
 echo ""
 
 read -rsp "  Enter PIN: " PIN
@@ -320,6 +334,9 @@ if [[ -z "$PIN" ]]; then
 fi
 if [[ "$PIN" == "$PLACEHOLDER" ]]; then
     write_fail "You must choose a real PIN, not the placeholder."
+fi
+if (( ${#PIN} < 8 )); then
+    write_fail "PIN must be at least 8 characters (required for WPA2 Wi-Fi AP password)."
 fi
 
 read -rsp "  Confirm PIN: " PIN_CONFIRM
@@ -340,11 +357,11 @@ echo -e "  ${GRAY}These are optional. Hit Enter at each prompt to use the defaul
 echo ""
 
 # Trigger pin
-echo -e "  ${GRAY}GPIO pin used to fire the trigger (transistor base / relay coil / capacitive pad).${NC}"
-echo -e "  ${GRAY}Default for ${BOARD_LABELS[$BOARD]}: GPIO $DEFAULT_PIN${NC}"
-read -rp "  Trigger GPIO (default: $DEFAULT_PIN): " pin_input
+echo -e "  ${GRAY}GPIO pin used to fire the trigger (transistor base / relay coil).${NC}"
+echo -e "  ${GRAY}Default for ${BOARD_LABELS[$BOARD]}: GPIO $DEFAULT_TRIGGER_PIN${NC}"
+read -rp "  Trigger GPIO (default: $DEFAULT_TRIGGER_PIN): " pin_input
 if [[ -z "$pin_input" ]]; then
-    TRIGGER_PIN="$DEFAULT_PIN"
+    TRIGGER_PIN="$DEFAULT_TRIGGER_PIN"
 else
     if ! [[ "$pin_input" =~ ^[0-9]+$ ]] || (( pin_input < 0 || pin_input > 39 )); then
         write_fail "Trigger GPIO must be a number between 0 and 39."
@@ -374,13 +391,13 @@ echo ""
 echo -e "  ${GRAY}How long the ESP32 holds the fob button pressed.${NC}"
 echo -e "  ${GRAY}Too short: fob doesn't register and the door stays closed.${NC}"
 echo -e "  ${GRAY}Too long: fob may double-trigger if it re-arms quickly.${NC}"
-echo -e "  ${GRAY}Default: 500 ms. Try 300 ms for snappy fobs, 800 ms for slow ones. Valid range: 100-2000 ms.${NC}"
-read -rp "  Pulse duration in ms (default: 500): " pulse_input
+echo -e "  ${GRAY}Default: 1500 ms. Try 800 ms for snappy fobs, 2000 ms for slow ones. Valid range: 100-20000 ms.${NC}"
+read -rp "  Pulse duration in ms (default: 1500): " pulse_input
 if [[ -z "$pulse_input" ]]; then
-    PULSE_DURATION=500
+    PULSE_DURATION=1500
 else
-    if ! [[ "$pulse_input" =~ ^[0-9]+$ ]] || (( pulse_input < 100 || pulse_input > 2000 )); then
-        write_fail "Pulse duration must be a number between 100 and 2000 ms."
+    if ! [[ "$pulse_input" =~ ^[0-9]+$ ]] || (( pulse_input < 100 || pulse_input > 20000 )); then
+        write_fail "Pulse duration must be a number between 100 and 20000 ms."
     fi
     PULSE_DURATION="$pulse_input"
 fi
@@ -401,23 +418,76 @@ else
 fi
 write_ok "Device name: $DEVICE_NAME"
 
+# Web log server
+echo ""
+echo -e "  ${GRAY}Enable Wi-Fi log server? The ESP32 will host an open Wi-Fi AP${NC}"
+echo -e "  ${GRAY}(SSID: ${DEVICE_NAME}_XXXXXX) serving a web page with the full open history.${NC}"
+echo -e "  ${GRAY}Uses more power while the AP is active.${NC}"
+read -rp "  Enable web log? (y/n, default: n): " weblog_input
+if [[ "$weblog_input" =~ ^[Yy]$ ]]; then
+    ENABLE_WEBLOG=1
+    write_ok "Wi-Fi log server: enabled"
+else
+    ENABLE_WEBLOG=0
+    write_ok "Wi-Fi log server: disabled"
+fi
+
 # --- Step 7: Compile and flash ------------------------------------------------
 
 write_step "Step 7/7 - Compiling and flashing..."
 echo ""
 echo -e "  ${GRAY}Running PlatformIO build + flash. This may take a few minutes on first run...${NC}"
-echo -e "  ${GRAY}(First run downloads the ESP32 toolchain - subsequent runs are much faster)${NC}"
+echo -e "  ${GRAY}(First run downloads the ESP32 toolchain — subsequent runs are much faster)${NC}"
 echo ""
 
-EXTRA_FLAGS="-DCORE_DEBUG_LEVEL=0 -DTRIGGER_MODE=${TRIGGER_MODE} -DTRIGGER_PIN=${TRIGGER_PIN} -DUSER_PIN=\\\"${PIN}\\\" -DDEVICE_NAME=\\\"${DEVICE_NAME}\\\" -DSLEEP_DURATION_S=${SLEEP_DURATION} -DRELAY_PULSE_MS=${PULSE_DURATION}"
+LED_PIN="${BOARD_LED_PINS[$BOARD]}"
+LED_ON="${BOARD_LED_ON[$BOARD]}"
+
+LED_FLAGS=""
+if [[ -n "$LED_PIN" ]]; then
+    LED_FLAGS="\n    -DLED_PIN=${LED_PIN}\n    -DLED_ON_LEVEL=${LED_ON}"
+fi
+
+WEBLOG_FLAG=""
+if (( ENABLE_WEBLOG )); then
+    WEBLOG_FLAG="\n    -DENABLE_WEBLOG=1"
+fi
+
+BUILD_INI_FILE="$(dirname "$0")/platformio.build.ini"
+
+cat > "$BUILD_INI_FILE" <<EOF
+[env]
+platform = espressif32
+framework = arduino
+lib_deps =
+    h2zero/NimBLE-Arduino @ ^1.4.2
+monitor_speed = 115200
+
+[env:${BOARD}]
+board = ${BOARD_PIO[$BOARD]}
+build_flags =
+    -DCORE_DEBUG_LEVEL=0
+    -DTRIGGER_MODE=${TRIGGER_MODE}
+    -DTRIGGER_PIN=${TRIGGER_PIN}
+    -DUSER_PIN=\"${PIN}\"
+    -DDEVICE_NAME=\"${DEVICE_NAME}\"
+    -DSLEEP_DURATION_S=${SLEEP_DURATION}
+    -DRELAY_PULSE_MS=${PULSE_DURATION}${LED_FLAGS}${WEBLOG_FLAG}
+
+[env:native]
+platform = native
+test_build_src = false
+EOF
 
 FLASH_OK=0
-PLATFORMIO_BUILD_FLAGS="$EXTRA_FLAGS" invoke_pio run -e "$BOARD" --target upload --upload-port "$PORT" \
+invoke_pio run -c "$BUILD_INI_FILE" -e "$BOARD" --target clean
+invoke_pio run -c "$BUILD_INI_FILE" -e "$BOARD" --target upload --upload-port "$PORT" \
     && FLASH_OK=1 || true
 
+rm -f "$BUILD_INI_FILE"
 unset PIN PIN_CONFIRM
 
-# --- Done --------------------------------------------------------------------
+# --- Done ---------------------------------------------------------------------
 
 echo ""
 if (( FLASH_OK )); then
