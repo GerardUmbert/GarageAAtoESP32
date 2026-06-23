@@ -72,6 +72,8 @@
     <string name="password_screen_show">Show password</string>
     <string name="password_screen_hide">Hide password</string>
     <string name="password_screen_cancel">Cancel</string>
+    <string name="password_screen_too_short">Password must be at least 8 characters</string>
+    <string name="main_ap_hint">View log: connect to Wi-Fi "%1$s" · password is your PIN</string>
 
     <!-- Android Auto car screen -->
     <string name="aa_demo_mode">Demo mode — no ESP32 needed</string>
@@ -176,6 +178,7 @@
     <string name="history_trigger_manual_phone">Manual · Phone</string>
     <string name="history_trigger_manual_aa">Manual · Android Auto</string>
     <string name="history_trigger_auto">Automatic</string>
+    <string name="history_trigger_voice">Voice</string>
     <string name="history_outcome_success">Opened</string>
     <string name="history_outcome_failed">Failed</string>
     <string name="history_outcome_suppressed">Suppressed</string>

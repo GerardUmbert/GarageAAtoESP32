@@ -1,6 +1,9 @@
 #include "ble_garage.h"
 #include "auth.h"
 #include "config.h"
+#ifdef ENABLE_WEBLOG
+#include "web_log.h"
+#endif
 #include <NimBLEDevice.h>
 #include <esp_random.h>
 #include <string.h>
@@ -9,6 +12,7 @@ static NimBLEServer          *pServer        = nullptr;
 static NimBLECharacteristic  *pNonceChar     = nullptr;
 static NimBLECharacteristic  *pCommandChar   = nullptr;
 static NimBLECharacteristic  *pStatusChar    = nullptr;
+static NimBLECharacteristic  *pCapsChar      = nullptr;
 
 static uint8_t s_nonce[16];
 static bool    s_connected = false;
@@ -57,7 +61,44 @@ class CommandCallbacks : public NimBLECharacteristicCallbacks {
         pStatusChar->notify();
 
         if (ok) {
+            // Parse extended payload fields after the 32-byte HMAC:
+            //   [32..35] Unix timestamp (big-endian uint32)
+            //   [36]     open reason byte
+            //   [37..N]  phone model string (null-terminated, max 32 chars)
+            uint32_t timestamp = 0;
+            OpenReason reason = OpenReason::MANUAL;
+            char model[33] = {};
+
+            const uint8_t *p = val.data();
+            size_t len = val.size();
+
+            if (len >= 36) {
+                timestamp = ((uint32_t)p[32] << 24) |
+                            ((uint32_t)p[33] << 16) |
+                            ((uint32_t)p[34] <<  8) |
+                             (uint32_t)p[35];
+            }
+            if (len >= 37) {
+                uint8_t r = p[36];
+                if (r >= 1 && r <= 3) reason = static_cast<OpenReason>(r);
+            }
+            if (len >= 38) {
+                size_t modelLen = len - 37;
+                if (modelLen > 32) modelLen = 32;
+                memcpy(model, p + 37, modelLen);
+                model[modelLen] = '\0';
+            }
+
+#ifdef ENABLE_WEBLOG
+            WebLog::appendSuccess(timestamp, reason, model);
+#endif
             onGarageOpen();
+        } else {
+#ifdef ENABLE_WEBLOG
+            // Wrong PIN — log as auth failure. No trusted timestamp from
+            // an unauthenticated sender, so we use 0 (renders as "—").
+            WebLog::appendFailure(0);
+#endif
         }
 
         // Disconnect after each attempt (success or failure).
@@ -93,6 +134,15 @@ void init() {
         STATUS_CHAR_UUID,
         NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
 
+    pCapsChar = pService->createCharacteristic(
+        CAPS_CHAR_UUID,
+        NIMBLE_PROPERTY::READ);
+    uint8_t caps = 0;
+#ifdef ENABLE_WEBLOG
+    caps |= CAP_WEBLOG;
+#endif
+    pCapsChar->setValue(&caps, 1);
+
     pService->start();
 }
 
@@ -101,6 +151,17 @@ void startAdvertising() {
     pAdv->addServiceUUID(SERVICE_UUID);
     pAdv->setMinInterval(160);  // 100 ms in 0.625 ms units
     pAdv->setMaxInterval(320);  // 200 ms
+
+    // Encode capability flags in manufacturer-specific data:
+    //   [0..1] company ID 0xFFFF (reserved/test)
+    //   [2]    caps byte (CAP_WEBLOG = 0x01)
+    uint8_t caps = 0;
+#ifdef ENABLE_WEBLOG
+    caps |= CAP_WEBLOG;
+#endif
+    uint8_t mfr[3] = { 0xFF, 0xFF, caps };
+    pAdv->setManufacturerData(std::string(reinterpret_cast<char*>(mfr), sizeof(mfr)));
+
     NimBLEDevice::startAdvertising();
 }
 

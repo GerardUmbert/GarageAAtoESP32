@@ -6,6 +6,7 @@ enum class TriggerSource {
     MANUAL_PHONE,
     MANUAL_AA,
     AUTO_GEOFENCE,
+    VOICE,
 }
 
 enum class OpenOutcome {

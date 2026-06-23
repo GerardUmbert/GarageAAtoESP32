@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Wifi
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -46,6 +49,7 @@ internal val supportedLanguages = listOf(
 fun SettingsScreen(
     deviceName: String?,
     deviceAddress: String?,
+    deviceHasWebLog: Boolean = false,
     demoMode: Boolean,
     currentLocaleTag: String?,
     presence: PresenceStatus = PresenceStatus.OutOfRange,
@@ -61,6 +65,7 @@ fun SettingsScreen(
     onGeofencePicker: () -> Unit = {},
     onToggleGeofence: (Boolean) -> Unit = {},
     onShareLog: () -> Unit = {},
+    onConnectToAp: () -> Unit = {},
 ) {
     LazyColumn(
         modifier = Modifier
@@ -112,7 +117,28 @@ fun SettingsScreen(
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium,
                                 letterSpacing = 1.2.sp,
+                                modifier = Modifier.weight(1f),
                             )
+                            val ctxUnpair = LocalContext.current
+                            Box(
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .clip(CircleShape)
+                                    .background(GarageColors.DangerSoft)
+                                    .clickable {
+                                        vibrate(ctxUnpair, HAPTIC_TAP)
+                                        onUnpair()
+                                    },
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = "×",
+                                    color = GarageColors.Danger,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    lineHeight = 18.sp,
+                                )
+                            }
                         }
                         Spacer(Modifier.height(10.dp))
                         Text(
@@ -122,13 +148,39 @@ fun SettingsScreen(
                             fontWeight = FontWeight.Bold,
                             letterSpacing = (-0.4).sp,
                         )
-                        Text(
-                            text = deviceAddress,
-                            color = GarageColors.TextDim,
-                            fontSize = 13.sp,
-                            fontFamily = FontFamily.Monospace,
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.padding(top = 4.dp),
-                        )
+                        ) {
+                            Text(
+                                text = deviceAddress,
+                                color = GarageColors.TextDim,
+                                fontSize = 13.sp,
+                                fontFamily = FontFamily.Monospace,
+                                modifier = Modifier.weight(1f),
+                            )
+                            if (deviceHasWebLog) {
+                                val ctxWifi = LocalContext.current
+                                Box(
+                                    modifier = Modifier
+                                        .size(30.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(GarageColors.Surface2)
+                                        .clickable {
+                                            vibrate(ctxWifi, HAPTIC_TAP)
+                                            onConnectToAp()
+                                        },
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Wifi,
+                                        contentDescription = null,
+                                        tint = GarageColors.Accent,
+                                        modifier = Modifier.size(16.dp),
+                                    )
+                                }
+                            }
+                        }
                         Spacer(Modifier.height(16.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             SecondaryAction(
@@ -142,29 +194,6 @@ fun SettingsScreen(
                                 modifier = Modifier.weight(1f),
                             )
                         }
-                    }
-                    // Unpair icon button — top-right corner of the card
-                    val ctxUnpair = LocalContext.current
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(10.dp)
-                            .size(28.dp)
-                            .clip(CircleShape)
-                            .background(GarageColors.DangerSoft)
-                            .clickable {
-                                vibrate(ctxUnpair, HAPTIC_TAP)
-                                onUnpair()
-                            },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = "×",
-                            color = GarageColors.Danger,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            lineHeight = 18.sp,
-                        )
                     }
                 }
                 Spacer(Modifier.height(12.dp))

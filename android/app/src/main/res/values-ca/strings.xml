@@ -65,6 +65,8 @@
     <string name="password_screen_show">Mostra la contrasenya</string>
     <string name="password_screen_hide">Amaga la contrasenya</string>
     <string name="password_screen_cancel">Cancel·lar</string>
+    <string name="password_screen_too_short">La contrasenya ha de tenir almenys 8 caràcters</string>
+    <string name="main_ap_hint">Veure registre: connecta\'t al Wi-Fi "%1$s" · la contrasenya és el teu PIN</string>
 
     <string name="tile_label">Obrir garatge</string>
     <string name="tile_sending">Enviant…</string>
@@ -160,6 +162,7 @@
     <string name="history_trigger_manual_phone">Manual · Telèfon</string>
     <string name="history_trigger_manual_aa">Manual · Android Auto</string>
     <string name="history_trigger_auto">Automàtic</string>
+    <string name="history_trigger_voice">Veu</string>
     <string name="history_outcome_success">Obert</string>
     <string name="history_outcome_failed">Error</string>
     <string name="history_outcome_suppressed">Suprimit</string>

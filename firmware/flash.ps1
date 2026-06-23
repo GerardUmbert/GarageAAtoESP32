@@ -430,6 +430,19 @@ if ([string]::IsNullOrWhiteSpace($deviceNameInput)) {
 }
 Write-OK "Device name: $deviceName"
 
+# Wi-Fi log server
+Write-Host ""
+Write-Host "  Enable Wi-Fi log server? The ESP32 will host a hidden Wi-Fi AP" -ForegroundColor Gray
+Write-Host "  (SSID: $deviceName\_XXXXXX, password: your PIN) serving a web page" -ForegroundColor Gray
+Write-Host "  with the full open history. Uses more power while the AP is active." -ForegroundColor Gray
+$weblogInput = Read-Host "  Enable web log? (y/n, default: n)"
+$enableWeblog = $weblogInput -match '^[Yy]'
+if ($enableWeblog) {
+    Write-OK "Wi-Fi log server: enabled"
+} else {
+    Write-OK "Wi-Fi log server: disabled"
+}
+
 $debugLevel = 0
 
 # --- Step 7: Compile and flash -----------------------------------------------
@@ -445,6 +458,7 @@ $ledOn  = $supportedBoards[$Board].LedOn
 
 $buildIniFile = Join-Path $PSScriptRoot "platformio.build.ini"
 $ledFlagsIni = if ($null -ne $ledPin) { "`n    -DLED_PIN=$ledPin`n    -DLED_ON_LEVEL=$ledOn" } else { "" }
+$weblogFlagIni = if ($enableWeblog) { "`n    -DENABLE_WEBLOG=1" } else { "" }
 $buildIni = @"
 [env]
 platform = espressif32
@@ -462,7 +476,7 @@ build_flags =
     -DUSER_PIN=\`"$pin\`"
     -DDEVICE_NAME=\`"$deviceName\`"
     -DSLEEP_DURATION_S=$sleepDuration
-    -DRELAY_PULSE_MS=$pulseDuration$ledFlagsIni
+    -DRELAY_PULSE_MS=$pulseDuration$ledFlagsIni$weblogFlagIni
 
 [env:native]
 platform = native

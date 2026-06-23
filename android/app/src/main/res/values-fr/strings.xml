@@ -65,6 +65,8 @@
     <string name="password_screen_show">Afficher le mot de passe</string>
     <string name="password_screen_hide">Masquer le mot de passe</string>
     <string name="password_screen_cancel">Annuler</string>
+    <string name="password_screen_too_short">Le mot de passe doit comporter au moins 8 caractères</string>
+    <string name="main_ap_hint">Voir le journal : connectez-vous au Wi-Fi « %1$s » · le mot de passe est votre code PIN</string>
 
     <string name="tile_label">Ouvrir le garage</string>
     <string name="tile_sending">Envoi…</string>
@@ -160,6 +162,7 @@
     <string name="history_trigger_manual_phone">Manuel · Téléphone</string>
     <string name="history_trigger_manual_aa">Manuel · Android Auto</string>
     <string name="history_trigger_auto">Automatique</string>
+    <string name="history_trigger_voice">Voix</string>
     <string name="history_outcome_success">Ouvert</string>
     <string name="history_outcome_failed">Échec</string>
     <string name="history_outcome_suppressed">Supprimé</string>

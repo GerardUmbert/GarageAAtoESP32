@@ -109,6 +109,7 @@ class GeofenceForegroundService : Service() {
         bleManager.connectAndOpen(
             deviceAddress = address,
             userPin = password,
+            trigger = TriggerSource.AUTO_GEOFENCE,
             onAttempt = { n ->
                 sessionAttemptCount = n
                 GeofenceLogger.d(this, TAG, "BLE attempt $n (session), ${attemptsLeft - n + 1} total remaining after this")

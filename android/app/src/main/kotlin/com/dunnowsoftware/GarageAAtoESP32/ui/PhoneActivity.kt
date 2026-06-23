@@ -41,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import com.dunnowsoftware.GarageAAtoESP32.DemoOpener
 import com.dunnowsoftware.GarageAAtoESP32.R
+import com.dunnowsoftware.GarageAAtoESP32.ble.BleConstants
 import com.dunnowsoftware.GarageAAtoESP32.ble.GarageBleManager
 import com.dunnowsoftware.GarageAAtoESP32.ble.OpenResult
 import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
@@ -243,6 +244,7 @@ private fun AppRoot(
                             address = dev.address,
                             name = dev.name,
                             password = pwd,
+                            hasWebLog = dev.hasWebLog,
                         )
                         pendingPair = null
                         bust()
@@ -292,6 +294,7 @@ private fun AppRoot(
             SettingsScreen(
                 deviceName = remember(stateBust) { prefs.pairedDevice?.name },
                 deviceAddress = remember(stateBust) { prefs.pairedDevice?.address },
+                deviceHasWebLog = remember(stateBust) { prefs.pairedDevice?.hasWebLog == true },
                 demoMode = remember(stateBust) { prefs.demoMode },
                 currentLocaleTag = remember(stateBust) { getSavedLocaleTag(ctx) },
                 presence = rememberPresence(prefs, stateBust),
@@ -326,6 +329,28 @@ private fun AppRoot(
                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                         }
                         ctx.startActivity(Intent.createChooser(shareIntent, ctx.getString(R.string.toast_log_share_title)))
+                    }
+                },
+                onConnectToAp = {
+                    val paired = prefs.pairedDevice
+                    if (paired != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        val macParts = paired.address.split(":")
+                        val ssid = if (macParts.size == 6)
+                            "${paired.name}_${macParts[3]}${macParts[4]}${macParts[5]}"
+                        else paired.name
+
+                        val specifier = android.net.wifi.WifiNetworkSpecifier.Builder()
+                            .setSsid(ssid)
+                            .setWpa2Passphrase(paired.password)
+                            .setIsHiddenSsid(true)
+                            .build()
+                        val request = android.net.NetworkRequest.Builder()
+                            .addTransportType(android.net.NetworkCapabilities.TRANSPORT_WIFI)
+                            .removeCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                            .setNetworkSpecifier(specifier)
+                            .build()
+                        val cm = ctx.getSystemService(android.net.ConnectivityManager::class.java)
+                        cm.requestNetwork(request, object : android.net.ConnectivityManager.NetworkCallback() {})
                     }
                 },
                 onGeofencePicker = {

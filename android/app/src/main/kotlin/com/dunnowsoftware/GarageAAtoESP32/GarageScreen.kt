@@ -244,6 +244,7 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
         invalidate()
 
         bleManager.connectAndOpen(paired.address, paired.password,
+            trigger = com.dunnowsoftware.GarageAAtoESP32.data.TriggerSource.MANUAL_AA,
             onAttempt = { n ->
                 carContext.mainExecutor.execute {
                     connectAttempt = n

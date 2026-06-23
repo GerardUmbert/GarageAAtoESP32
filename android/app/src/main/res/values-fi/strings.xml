@@ -65,6 +65,8 @@
     <string name="password_screen_show">Näytä salasana</string>
     <string name="password_screen_hide">Piilota salasana</string>
     <string name="password_screen_cancel">Peruuta</string>
+    <string name="password_screen_too_short">Salasanan on oltava vähintään 8 merkkiä pitkä</string>
+    <string name="main_ap_hint">Katso loki: yhdistä Wi-Fi-verkkoon "%1$s" · salasana on PIN-koodisi</string>
 
     <string name="tile_label">Avaa autotalli</string>
     <string name="tile_sending">Lähetetään…</string>
@@ -160,6 +162,7 @@
     <string name="history_trigger_manual_phone">Manuaalinen · Puhelin</string>
     <string name="history_trigger_manual_aa">Manuaalinen · Android Auto</string>
     <string name="history_trigger_auto">Automaattinen</string>
+    <string name="history_trigger_voice">Ääni</string>
     <string name="history_outcome_success">Avattu</string>
     <string name="history_outcome_failed">Epäonnistui</string>
     <string name="history_outcome_suppressed">Estetty</string>

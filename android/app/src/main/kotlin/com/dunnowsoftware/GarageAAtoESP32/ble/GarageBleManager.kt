@@ -3,14 +3,16 @@ package com.dunnowsoftware.GarageAAtoESP32.ble
 import android.bluetooth.*
 import android.bluetooth.le.*
 import android.content.Context
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.ParcelUuid
+import com.dunnowsoftware.GarageAAtoESP32.data.TriggerSource
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 sealed class OpenResult {
-    object Success : OpenResult()
+    data class Success(val caps: Int = 0) : OpenResult()
     data class Failure(val reason: String, val isAuthFailure: Boolean = false) : OpenResult()
 }
 
@@ -36,6 +38,8 @@ class GarageBleManager(private val context: Context) {
     private var nonce: ByteArray? = null
     private var pin: String = ""
     private var deviceAddress: String = ""
+    private var triggerSource: TriggerSource = TriggerSource.MANUAL_PHONE
+    private var caps: Int = 0
     private var resultCallback: ((OpenResult) -> Unit)? = null
     private var attemptCallback: ((Int) -> Unit)? = null
     private var attempt = 0
@@ -59,15 +63,21 @@ class GarageBleManager(private val context: Context) {
                 scheduleRetryOrFail("Service discovery failed")
                 return
             }
-            val statusChar = gatt.getService(BleConstants.SERVICE_UUID)
-                ?.getCharacteristic(BleConstants.STATUS_CHAR_UUID)
-            if (statusChar == null) {
+            val service = gatt.getService(BleConstants.SERVICE_UUID)
+            if (service == null) {
                 closeGatt()
                 scheduleRetryOrFail("Garage service not found")
                 return
             }
-            enableNotify(gatt, statusChar)
-            // Nonce read is triggered from onDescriptorWrite after notification is enabled
+            // Read caps if present (older firmware won't have it — default to 0)
+            val capsChar = service.getCharacteristic(BleConstants.CAPS_CHAR_UUID)
+            if (capsChar != null) {
+                gatt.readCharacteristic(capsChar)
+            } else {
+                caps = 0
+                val statusChar = service.getCharacteristic(BleConstants.STATUS_CHAR_UUID)
+                if (statusChar != null) enableNotify(gatt, statusChar)
+            }
         }
 
         override fun onCharacteristicRead(
@@ -75,14 +85,25 @@ class GarageBleManager(private val context: Context) {
             characteristic: BluetoothGattCharacteristic,
             status: Int
         ) {
-            if (characteristic.uuid != BleConstants.NONCE_CHAR_UUID) return
-            if (status != BluetoothGatt.GATT_SUCCESS) {
-                closeGatt()
-                scheduleRetryOrFail("Failed to read nonce")
-                return
+            when (characteristic.uuid) {
+                BleConstants.CAPS_CHAR_UUID -> {
+                    caps = if (status == BluetoothGatt.GATT_SUCCESS)
+                        (characteristic.value?.firstOrNull()?.toInt() ?: 0) and 0xFF
+                    else 0
+                    val statusChar = gatt.getService(BleConstants.SERVICE_UUID)
+                        ?.getCharacteristic(BleConstants.STATUS_CHAR_UUID)
+                    if (statusChar != null) enableNotify(gatt, statusChar)
+                }
+                BleConstants.NONCE_CHAR_UUID -> {
+                    if (status != BluetoothGatt.GATT_SUCCESS) {
+                        closeGatt()
+                        scheduleRetryOrFail("Failed to read nonce")
+                        return
+                    }
+                    nonce = characteristic.value
+                    sendCommand(gatt)
+                }
             }
-            nonce = characteristic.value
-            sendCommand(gatt)
         }
 
         override fun onCharacteristicWrite(
@@ -104,7 +125,7 @@ class GarageBleManager(private val context: Context) {
             if (characteristic.uuid != BleConstants.STATUS_CHAR_UUID) return
             val ok = characteristic.value?.firstOrNull()?.toInt() == 0x01
             if (ok) {
-                deliver(OpenResult.Success)
+                deliver(OpenResult.Success(caps = caps))
             } else {
                 // Auth failure — wrong password. Do NOT retry; retrying won't fix a bad password.
                 deliver(OpenResult.Failure("Auth failed — check password", isAuthFailure = true))
@@ -131,11 +152,13 @@ class GarageBleManager(private val context: Context) {
     fun connectAndOpen(
         deviceAddress: String,
         userPin: String,
+        trigger: TriggerSource = TriggerSource.MANUAL_PHONE,
         onAttempt: (attempt: Int) -> Unit = {},
         onResult: (OpenResult) -> Unit
     ) {
         cleanup()
         this.deviceAddress = deviceAddress
+        this.triggerSource = trigger
         pin = userPin
         resultCallback = onResult
         attemptCallback = onAttempt
@@ -148,6 +171,7 @@ class GarageBleManager(private val context: Context) {
         attemptTimeout = null
         closeGatt()
         nonce = null
+        caps = 0
         attempt = 0
         resultCallback = null
         attemptCallback = null
@@ -200,13 +224,40 @@ class GarageBleManager(private val context: Context) {
             return
         }
         val hmac = HmacHelper.compute(pin, currentNonce)
+
+        // Extended payload:
+        //   [0..31]  HMAC-SHA256
+        //   [32..35] Unix timestamp (big-endian uint32)
+        //   [36]     open reason: 0x01=manual, 0x02=geofence, 0x03=voice
+        //   [37..N]  phone model (UTF-8, max 32 bytes, no null terminator needed)
+        val ts = System.currentTimeMillis() / 1000L
+        val reasonByte: Byte = when (triggerSource) {
+            TriggerSource.MANUAL_PHONE,
+            TriggerSource.MANUAL_AA  -> 0x01
+            TriggerSource.AUTO_GEOFENCE -> 0x02
+            TriggerSource.VOICE         -> 0x03
+        }
+        val modelBytes = "${Build.MANUFACTURER} ${Build.MODEL}"
+            .toByteArray(Charsets.UTF_8)
+            .take(32)
+            .toByteArray()
+
+        val payload = ByteArray(32 + 4 + 1 + modelBytes.size)
+        System.arraycopy(hmac, 0, payload, 0, 32)
+        payload[32] = ((ts shr 24) and 0xFF).toByte()
+        payload[33] = ((ts shr 16) and 0xFF).toByte()
+        payload[34] = ((ts shr  8) and 0xFF).toByte()
+        payload[35] = ( ts         and 0xFF).toByte()
+        payload[36] = reasonByte
+        System.arraycopy(modelBytes, 0, payload, 37, modelBytes.size)
+
         val commandChar = gatt.getService(BleConstants.SERVICE_UUID)
             ?.getCharacteristic(BleConstants.COMMAND_CHAR_UUID) ?: run {
             closeGatt()
             scheduleRetryOrFail("Command characteristic not found")
             return
         }
-        commandChar.value = hmac
+        commandChar.value = payload
         commandChar.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
         gatt.writeCharacteristic(commandChar)
     }

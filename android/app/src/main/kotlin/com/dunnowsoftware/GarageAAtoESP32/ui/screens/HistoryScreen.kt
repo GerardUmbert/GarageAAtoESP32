@@ -201,6 +201,7 @@ private fun HistoryRow(entry: OpenHistoryEntry, expandedKey: MutableState<Long?>
         TriggerSource.MANUAL_PHONE  -> stringResource(R.string.history_trigger_manual_phone)
         TriggerSource.MANUAL_AA     -> stringResource(R.string.history_trigger_manual_aa)
         TriggerSource.AUTO_GEOFENCE -> stringResource(R.string.history_trigger_auto)
+        TriggerSource.VOICE         -> stringResource(R.string.history_trigger_voice)
     }
     val timeStr = remember(entry.timestampMs) {
         SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(entry.timestampMs))

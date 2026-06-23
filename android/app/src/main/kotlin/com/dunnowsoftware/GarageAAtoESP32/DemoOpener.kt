@@ -22,6 +22,6 @@ object DemoOpener {
         if (kotlin.random.Random.nextFloat() < FAILURE_RATE) {
             OpenResult.Failure(reasons.random())
         } else {
-            OpenResult.Success
+            OpenResult.Success()
         }
 }

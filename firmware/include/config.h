@@ -77,6 +77,17 @@
 #define NONCE_CHAR_UUID    "12345678-0001-1000-8000-00805F9B34FB"
 #define COMMAND_CHAR_UUID  "12345678-0002-1000-8000-00805F9B34FB"
 #define STATUS_CHAR_UUID   "12345678-0003-1000-8000-00805F9B34FB"
+#define CAPS_CHAR_UUID     "12345678-0004-1000-8000-00805F9B34FB"
+
+// Capability flags (CAPS_CHAR_UUID, 1 byte, read-only)
+#define CAP_WEBLOG         0x01
+
+// Open reason byte sent by the Android app in the extended BLE payload.
+enum class OpenReason : uint8_t {
+    MANUAL   = 0x01,
+    GEOFENCE = 0x02,
+    VOICE    = 0x03,
+};
 
 // ── Timing ────────────────────────────────────────────────────────────────────
 // ── Easy to tune ──────────────────────────────────────────────────────────────
@@ -84,8 +95,17 @@
 #define SLEEP_DURATION_S    5     // Seconds to deep-sleep between ad windows (lower = more responsive, more power)
 #define AUTH_TIMEOUT_MS    10000  // ms to wait for Command write after connect
 
+// ── Wi-Fi AP (captive portal log server) ──────────────────────────────────────
+// The ESP32 broadcasts a hidden WPA2 AP so the log page is accessible without
+// a router. SSID is derived at runtime: {DEVICE_NAME}_{last3octetsMAC}.
+// Password is USER_PIN — WPA2 requires a minimum of 8 characters.
+#ifndef WIFI_AP_CHANNEL
+#define WIFI_AP_CHANNEL    1
+#endif
+
 // ── Security ──────────────────────────────────────────────────────────────────
 // Set this PIN before flashing. Must match the PIN entered in the Android app.
+// MINIMUM 8 CHARACTERS — required for WPA2 AP password.
 #ifndef USER_PIN
 #define USER_PIN           "change-me-before-flashing"
 #endif

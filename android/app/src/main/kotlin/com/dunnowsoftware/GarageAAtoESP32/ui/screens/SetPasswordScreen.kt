@@ -116,6 +116,16 @@ fun SetPasswordScreen(
             )
         }
 
+        if (password.isNotEmpty() && password.trim().length < 8) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.password_screen_too_short),
+                color = androidx.compose.ui.graphics.Color(0xFFFF6B6B),
+                fontSize = 13.sp,
+                modifier = Modifier.padding(horizontal = 4.dp),
+            )
+        }
+
         Spacer(Modifier.height(12.dp))
         val ctxPwd = LocalContext.current
         Text(
@@ -137,7 +147,7 @@ fun SetPasswordScreen(
         PrimaryButton(
             text = resolvedSaveLabel,
             onClick = { onSave(password.trim()) },
-            enabled = password.trim().isNotEmpty(),
+            enabled = password.trim().length >= 8,
         )
         if (onBack != null) {
             Spacer(Modifier.height(8.dp))

@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.8.0]
+
+### Added
+- Firmware: ESP32 now optionally hosts a Wi-Fi AP (open network, SSID = `{name}_{MAC}`) with a captive portal web server serving a full event log — enabled via flash script prompt
+- Firmware: NVS ring buffer (50 entries) logs every successful open (timestamp, trigger source, phone model) and failed auth attempts (timestamp only)
+- Firmware: new BLE capability characteristic (0x0004) advertises device features; web log flag encoded in advertisement manufacturer data so app knows at scan time without connecting
+- Firmware: ESP32 stays awake indefinitely while a device is connected to the AP
+- Android: Wi-Fi button in settings paired device card — only shown when the firmware has web log enabled; taps trigger system Wi-Fi connection dialog pre-filled with the network
+- Android: BLE command payload extended — timestamp (Unix, 4 bytes), open reason byte (manual/geofence/voice), and phone model string appended after HMAC; firmware logs these on successful open
+- Android: `VOICE` added as a trigger source in open history
+- Android: 8-character minimum enforced on PIN setup screen (required for WPA2; now open AP but kept as good security practice)
+- Android: unpair button moved inside the paired device card header row for consistent alignment
+
+### Changed
+- Firmware: flash script now prompts whether to enable the Wi-Fi log server; compiles `ENABLE_WEBLOG` flag accordingly
+- Firmware: auth now accepts payloads ≥ 32 bytes (extended format) in addition to legacy 32-byte HMAC-only payloads
+
 ## [1.7.6]
 
 ### Changed

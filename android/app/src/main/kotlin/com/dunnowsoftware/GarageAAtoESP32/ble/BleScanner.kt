@@ -12,7 +12,10 @@ data class FoundDevice(
     val name: String,
     val address: String,
     val rssi: Int,
-)
+    val caps: Int = 0,
+) {
+    val hasWebLog: Boolean get() = (caps and BleConstants.CAP_WEBLOG) != 0
+}
 
 class BleScanner(context: Context) {
 
@@ -22,12 +25,18 @@ class BleScanner(context: Context) {
 
     private var callback: ScanCallback? = null
 
+    private fun capsFromResult(result: ScanResult): Int {
+        // Manufacturer-specific data: company ID 0xFFFF, byte[2] = caps
+        val mfr = result.scanRecord?.getManufacturerSpecificData(0xFFFF) ?: return 0
+        return if (mfr.isNotEmpty()) mfr[0].toInt() and 0xFF else 0
+    }
+
     fun start(onResult: (FoundDevice) -> Unit) {
         stop()
         val cb = object : ScanCallback() {
             override fun onScanResult(callbackType: Int, result: ScanResult) {
                 val name = result.device.name ?: "Unknown"
-                onResult(FoundDevice(name, result.device.address, result.rssi))
+                onResult(FoundDevice(name, result.device.address, result.rssi, capsFromResult(result)))
             }
         }
         callback = cb
@@ -58,7 +67,7 @@ class BleScanner(context: Context) {
         val cb = object : ScanCallback() {
             override fun onScanResult(callbackType: Int, result: ScanResult) {
                 val name = result.device.name ?: "Unknown"
-                onSeen(FoundDevice(name, result.device.address, result.rssi))
+                onSeen(FoundDevice(name, result.device.address, result.rssi, capsFromResult(result)))
             }
         }
         callback = cb

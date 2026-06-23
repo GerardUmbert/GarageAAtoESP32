@@ -20,7 +20,8 @@ void hmac_sha256(const uint8_t *key, size_t key_len,
 
 bool verify(const uint8_t *nonce, size_t nonce_len,
             const uint8_t *provided, size_t provided_len) {
-    if (provided_len != 32) return false;
+    // Accept 32-byte legacy payload or extended payload (32 + timestamp + reason + model).
+    if (provided_len < 32) return false;
 
     const uint8_t *pin = reinterpret_cast<const uint8_t *>(USER_PIN);
     size_t pin_len = strlen(USER_PIN);
