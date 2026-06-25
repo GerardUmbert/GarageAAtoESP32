@@ -18,6 +18,9 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - Double-open bug when tapping the tile while the watch app was already running
 - Watch screen now stays on and at full brightness until the result is displayed and feedback returns to idle
 - Watch now shows green/red confirmation when the garage is opened from the phone app, QS tile, or Android Auto — not just from the watch itself
+- Firmware: watch-triggered opens were silently logged as "Manual" due to a range check rejecting byte 0x04 — now correctly logged as "Watch"
+- Firmware: web log stopped accepting new entries after 50 opens due to NVS namespace key limit — max entries reduced to 30 so the ring buffer wraps correctly
+- Firmware: flash scripts now erase the NVS partition after flashing to clear stale log entries
 
 ## [1.9.2]
 
