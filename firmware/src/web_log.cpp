@@ -14,7 +14,7 @@
 //   "eN_r"   uint8   – entry N reason (0=failure, 1=manual, 2=geofence, 3=voice)
 //   "eN_m"   string  – entry N model (success only; empty string for failures)
 
-static const uint32_t MAX_ENTRIES = 50;
+static const uint32_t MAX_ENTRIES = 30;
 static const char *NS = "glog";
 
 static Preferences prefs;

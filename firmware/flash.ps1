@@ -492,7 +492,18 @@ test_build_src = false
 $flashSuccess = $false
 Invoke-Pio @("run", "-c", $buildIniFile, "-e", $Board, "--target", "clean")
 Invoke-Pio @("run", "-c", $buildIniFile, "-e", $Board, "--target", "upload", "--upload-port", $Port)
-if ($LASTEXITCODE -eq 0) { $flashSuccess = $true }
+if ($LASTEXITCODE -eq 0) {
+    $flashSuccess = $true
+    Write-Host ""
+    Write-Host "  Erasing NVS partition (clears web log history)..." -ForegroundColor Gray
+    # NVS partition: offset 0x9000, size 0x5000 (20 KB, matches default ESP32 partition table)
+    Invoke-Pio @("pkg", "exec", "--package", "tool-esptoolpy", "--", "esptool.py", "--port", $Port, "erase_region", "0x9000", "0x5000")
+    if ($LASTEXITCODE -eq 0) {
+        Write-OK "NVS erased."
+    } else {
+        Write-Host "     Warning: NVS erase failed — web log may show stale entries." -ForegroundColor Yellow
+    }
+}
 Remove-Item $buildIniFile -ErrorAction SilentlyContinue
 
 # --- Done --------------------------------------------------------------------

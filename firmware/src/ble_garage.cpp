@@ -80,7 +80,7 @@ class CommandCallbacks : public NimBLECharacteristicCallbacks {
             }
             if (len >= 37) {
                 uint8_t r = p[36];
-                if (r >= 1 && r <= 3) reason = static_cast<OpenReason>(r);
+                if (r >= 1 && r <= 4) reason = static_cast<OpenReason>(r);
             }
             if (len >= 38) {
                 size_t modelLen = len - 37;

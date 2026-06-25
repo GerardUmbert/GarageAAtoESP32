@@ -487,6 +487,17 @@ invoke_pio run -c "$BUILD_INI_FILE" -e "$BOARD" --target upload --upload-port "$
 rm -f "$BUILD_INI_FILE"
 unset PIN PIN_CONFIRM
 
+if (( FLASH_OK )); then
+    echo ""
+    echo -e "  ${GRAY}Erasing NVS partition (clears web log history)...${NC}"
+    # NVS partition: offset 0x9000, size 0x5000 (20 KB, matches default ESP32 partition table)
+    if $PIO_CMD pkg exec --package tool-esptoolpy -- esptool.py --port "$PORT" erase_region 0x9000 0x5000; then
+        write_ok "NVS erased."
+    else
+        echo -e "  ${YELLOW}Warning: NVS erase failed — web log may show stale entries.${NC}"
+    fi
+fi
+
 # --- Done ---------------------------------------------------------------------
 
 echo ""
