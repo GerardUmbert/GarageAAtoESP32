@@ -1,5 +1,6 @@
 package com.dunnowsoftware.GarageAAtoESP32.wear
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -22,6 +23,10 @@ private const val RESULT_DISPLAY_MS = 2_000L
 
 class WearActivity : ComponentActivity(), MessageClient.OnMessageReceivedListener {
 
+    companion object {
+        const val EXTRA_AUTO_OPEN = "auto_open"
+    }
+
     private var openState by mutableStateOf(WatchOpenState.Idle)
     private var timeoutJob: Job? = null
 
@@ -32,6 +37,22 @@ class WearActivity : ComponentActivity(), MessageClient.OnMessageReceivedListene
                 state = openState,
                 onOpen = ::sendOpenCommand,
             )
+        }
+        maybeAutoOpen(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        maybeAutoOpen(intent)
+    }
+
+    /** Launched from the tile with EXTRA_AUTO_OPEN -> fire the open immediately. */
+    private fun maybeAutoOpen(intent: Intent?) {
+        if (intent?.getBooleanExtra(EXTRA_AUTO_OPEN, false) == true) {
+            // Consume the flag so a later onResume/recreate doesn't re-fire.
+            intent.removeExtra(EXTRA_AUTO_OPEN)
+            sendOpenCommand()
         }
     }
 

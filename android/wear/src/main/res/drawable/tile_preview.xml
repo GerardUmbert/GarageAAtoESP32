@@ -1,5 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="oval">
-    <solid android:color="#0A0C0E" />
-</shape>
+<!-- Tile picker preview: mirrors the watch app idle hero button (near-white ring + G-mark). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="130dp"
+    android:height="130dp"
+    android:viewportWidth="130"
+    android:viewportHeight="130">
+
+    <!-- Outer ring (2px stroke, near-white), no fill -->
+    <path
+        android:strokeColor="#FFEAECED"
+        android:strokeWidth="2"
+        android:fillColor="#00000000"
+        android:pathData="M2,65 a63,63 0 1,0 126,0 a63,63 0 1,0 -126,0 z" />
+
+    <!-- G-mark: original 24x24 donut scaled x2 and centered (12,12 -> 65,65) -->
+    <group
+        android:scaleX="2"
+        android:scaleY="2"
+        android:translateX="41"
+        android:translateY="41">
+        <path
+            android:fillColor="#FFEAECED"
+            android:fillType="evenOdd"
+            android:pathData="M12,1 a11,11 0 1,0 0.001,0 z M12,5.6 a6.4,6.4 0 1,1 -0.001,0 z" />
+        <path
+            android:fillColor="#FFEAECED"
+            android:pathData="M12,9.5 H23 V14.5 H12 Z" />
+    </group>
+</vector>

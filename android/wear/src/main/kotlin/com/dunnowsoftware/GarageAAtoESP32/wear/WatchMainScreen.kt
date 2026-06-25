@@ -85,8 +85,8 @@ private fun WatchHeroButton(state: WatchOpenState, onClick: () -> Unit) {
             contentAlignment = Alignment.Center,
         ) {
             when (state) {
-                WatchOpenState.Opened -> WatchCheckGlyph(color = WearColors.AccentDeep, sizeDp = 48.dp)
-                WatchOpenState.Failed -> WatchCrossGlyph(color = WearColors.DangerDeep, sizeDp = 48.dp)
+                WatchOpenState.Opened -> WatchCheckGlyph(color = Color.White, sizeDp = 48.dp)
+                WatchOpenState.Failed -> WatchCrossGlyph(color = Color.White, sizeDp = 48.dp)
                 else -> Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {

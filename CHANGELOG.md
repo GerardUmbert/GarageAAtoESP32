@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.9.2]
+
+### Changed
+- Wear OS tile reworked into a reliable launch button: tapping it opens the watch app and fires the open immediately, showing the full animated OPENING → OPENED/FAILED feedback with haptics. The previous in-tile state animation was dropped because this watch's system UI throttles background tile refreshes, leaving the tile stuck on OPENING
+- Wear OS tile now shows the circular ring around the G-mark to match the watch app's idle button, and its picker preview is a crisp vector instead of a bitmap
+- Watch app success check and failure cross are now white for better contrast on the colored fill
+
+### Fixed
+- Wear OS tile state never advanced past idle due to a SharedPreferences enum name vs. constant string mismatch
+- Wear module now targets SDK 34 so tile update requests no longer throw a SecurityException reading the gated `clockwork_sysui_package` setting
+
 ## [1.9.1]
 
 ### Changed

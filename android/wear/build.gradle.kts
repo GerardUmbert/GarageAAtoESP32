@@ -13,9 +13,14 @@ android {
     defaultConfig {
         applicationId = "com.dunnowsoftware.GarageAAtoESP32"
         minSdk = 26
-        targetSdk = 35
-        versionCode = 10064
-        versionName = "1.9.1"
+        // androidx.wear.tiles 1.4.1 reads the global "clockwork_sysui_package" setting to
+        // locate the tile host for requestUpdate(); that key is only readable to apps
+        // targeting SDK <= 34. Targeting 35 makes every tile refresh throw SecurityException,
+        // leaving the tile stuck on its last state. Keep targetSdk at 34 until the library
+        // stops reading that gated setting.
+        targetSdk = 34
+        versionCode = 10065
+        versionName = "1.9.2"
     }
 
     buildFeatures {
@@ -71,6 +76,9 @@ dependencies {
     implementation(libs.wear.compose.foundation)
     implementation(libs.concurrent.futures)
     implementation(libs.wear.tiles)
+    implementation(libs.wear.protolayout)
+    implementation(libs.wear.protolayout.material)
+    implementation(libs.wear.protolayout.expression)
     implementation(libs.wear.tiles.material)
     implementation(libs.play.services.wearable)
     implementation(libs.wear.input)

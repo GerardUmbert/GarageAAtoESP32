@@ -1,39 +1,27 @@
 package com.dunnowsoftware.GarageAAtoESP32.wear
 
-import com.dunnowsoftware.GarageAAtoESP32.R
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.os.Handler
-import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import androidx.core.app.NotificationCompat
+import com.dunnowsoftware.GarageAAtoESP32.R
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
 
-private const val PATH_RESULT     = "/garage/result"
 private const val PATH_AUTOFIRED  = "/garage/autofired"
 private const val CHANNEL_ID      = "garage_auto"
 private const val NOTIF_ID        = 2001
-private const val TILE_RESET_MS   = 3_000L
 
+/**
+ * Watch-side background listener. Open results (/garage/result) are handled directly by
+ * WearActivity, which is always foreground when an open is triggered (the tile launches it).
+ * This service only needs to surface the passive geofence auto-open notification.
+ */
 class WearMessageListenerService : WearableListenerService() {
-
-    private val handler = Handler(Looper.getMainLooper())
 
     override fun onMessageReceived(event: MessageEvent) {
         when (event.path) {
-            PATH_RESULT -> {
-                val success = String(event.data) == "SUCCESS"
-                TileStateStore.setResult(this, success)
-                GarageOpenerTileService.requestTileUpdate(this)
-                haptic(success)
-                // Reset tile back to Idle after linger period
-                handler.postDelayed({
-                    TileStateStore.set(this, TileState.Idle)
-                    GarageOpenerTileService.requestTileUpdate(this)
-                }, TILE_RESET_MS)
-            }
             PATH_AUTOFIRED -> {
                 // Geofence auto-open on the phone — show a passive notification
                 postAutoOpenNotification()
@@ -56,16 +44,12 @@ class WearMessageListenerService : WearableListenerService() {
             .setTimeoutAfter(5_000)
             .build()
         nm.notify(NOTIF_ID, notif)
-        haptic(success = true)
+        haptic()
     }
 
     @Suppress("DEPRECATION")
-    private fun haptic(success: Boolean) {
+    private fun haptic() {
         val vibrator = getSystemService(Vibrator::class.java) ?: return
-        if (success) {
-            vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK))
-        } else {
-            vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 80, 80, 80, 80, 80), -1))
-        }
+        vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK))
     }
 }

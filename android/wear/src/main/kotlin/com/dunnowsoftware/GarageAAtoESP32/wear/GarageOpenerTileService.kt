@@ -1,149 +1,149 @@
 package com.dunnowsoftware.GarageAAtoESP32.wear
 
-import android.content.Context
 import androidx.concurrent.futures.ResolvableFuture
-import androidx.wear.tiles.TileService
+import androidx.wear.protolayout.ActionBuilders
+import androidx.wear.protolayout.ColorBuilders.argb
+import androidx.wear.protolayout.DimensionBuilders.dp
+import androidx.wear.protolayout.DimensionBuilders.expand
+import androidx.wear.protolayout.LayoutElementBuilders
+import androidx.wear.protolayout.LayoutElementBuilders.Box
+import androidx.wear.protolayout.LayoutElementBuilders.Column
+import androidx.wear.protolayout.LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER
+import androidx.wear.protolayout.LayoutElementBuilders.Image
+import androidx.wear.protolayout.LayoutElementBuilders.VERTICAL_ALIGN_CENTER
+import androidx.wear.protolayout.ModifiersBuilders
+import androidx.wear.protolayout.ResourceBuilders
+import androidx.wear.protolayout.TimelineBuilders
+import androidx.wear.protolayout.material.Text
+import androidx.wear.protolayout.material.Typography
 import androidx.wear.tiles.RequestBuilders
 import androidx.wear.tiles.TileBuilders
-import androidx.wear.tiles.TimelineBuilders
-import androidx.wear.tiles.LayoutElementBuilders
-import androidx.wear.tiles.LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER
-import androidx.wear.tiles.LayoutElementBuilders.VERTICAL_ALIGN_CENTER
-import androidx.wear.tiles.DimensionBuilders.expand
-import androidx.wear.tiles.DimensionBuilders.sp
-import androidx.wear.tiles.ColorBuilders.argb
-import androidx.wear.tiles.ModifiersBuilders
-import androidx.wear.tiles.ActionBuilders
-import androidx.wear.tiles.ResourceBuilders
+import androidx.wear.tiles.TileService
 import com.dunnowsoftware.GarageAAtoESP32.R
-import com.google.android.gms.wearable.Wearable
-import com.google.android.gms.tasks.Tasks
 import com.google.common.util.concurrent.ListenableFuture
-import java.util.concurrent.Executors
 
-private const val PATH_OPEN = "/garage/open"
 private const val CLICKABLE_ID = "open"
-private val executor = Executors.newSingleThreadExecutor()
+private const val RES_ICON     = "ic_tile"
+private const val RING_SIZE_DP = 130f
 
+/**
+ * A garage tile is a plain launch button. This OEM watch (com.oplus.wearable.sysui) ignores
+ * background tile refreshes — both requestUpdate() and short freshness intervals are throttled —
+ * so a tile cannot repaint itself to show an async OPENING/OPENED result. Instead, tapping the
+ * tile launches WearActivity with EXTRA_AUTO_OPEN, which fires the open and shows the full
+ * animated feedback (and haptics) that the app already does reliably.
+ */
 class GarageOpenerTileService : TileService() {
 
     override fun onTileRequest(
         requestParams: RequestBuilders.TileRequest
     ): ListenableFuture<TileBuilders.Tile> {
-        if (requestParams.currentState.lastClickableId == CLICKABLE_ID &&
-            TileStateStore.get(this) == TileState.Idle
-        ) {
-            fireOpen(this)
-        }
-
         val tile = TileBuilders.Tile.Builder()
-            .setResourcesVersion("1")
-            .setTimeline(
-                TimelineBuilders.Timeline.Builder()
-                    .addTimelineEntry(
-                        TimelineBuilders.TimelineEntry.Builder()
-                            .setLayout(
-                                androidx.wear.tiles.LayoutElementBuilders.Layout.Builder()
-                                    .setRoot(buildRoot())
-                                    .build()
-                            )
-                            .build()
-                    )
-                    .build()
+            .setResourcesVersion(RES_ICON)
+            .setTileTimeline(
+                TimelineBuilders.Timeline.fromLayoutElement(buildRoot())
             )
             .build()
         return ResolvableFuture.create<TileBuilders.Tile>().also { it.set(tile) }
     }
 
-    override fun onResourcesRequest(
+    override fun onTileResourcesRequest(
         requestParams: RequestBuilders.ResourcesRequest
-    ): ListenableFuture<ResourceBuilders.Resources> =
-        ResolvableFuture.create<ResourceBuilders.Resources>().also {
-            it.set(ResourceBuilders.Resources.Builder().setVersion("1").build())
-        }
-
-    private fun buildRoot(): LayoutElementBuilders.LayoutElement {
-        val state = TileStateStore.get(this)
-        val label = when (state) {
-            TileState.Idle    -> getString(R.string.tile_open)
-            TileState.Sending -> getString(R.string.tile_opening)
-            TileState.Opened  -> getString(R.string.tile_opened)
-            TileState.Failed  -> getString(R.string.tile_failed)
-        }
-        val color = when (state) {
-            TileState.Idle    -> 0xFFEAECED.toInt()
-            TileState.Sending -> 0xFF2AD4A3.toInt()
-            TileState.Opened  -> 0xFF2AD4A3.toInt()
-            TileState.Failed  -> 0xFFFF6B6B.toInt()
-        }
-
-        val textElement = LayoutElementBuilders.Text.Builder()
-            .setText(label)
-            .setFontStyle(
-                LayoutElementBuilders.FontStyle.Builder()
-                    .setColor(argb(color))
-                    .setSize(sp(16f))
-                    .setWeight(700)
+    ): ListenableFuture<ResourceBuilders.Resources> {
+        val resources = ResourceBuilders.Resources.Builder()
+            .setVersion(RES_ICON)
+            .addIdToImageMapping(
+                RES_ICON,
+                ResourceBuilders.ImageResource.Builder()
+                    .setAndroidResourceByResId(
+                        ResourceBuilders.AndroidImageResourceByResId.Builder()
+                            .setResourceId(R.drawable.ic_tile)
+                            .build()
+                    )
                     .build()
             )
             .build()
+        return ResolvableFuture.create<ResourceBuilders.Resources>().also { it.set(resources) }
+    }
 
-        val boxBuilder = LayoutElementBuilders.Box.Builder()
-            .setWidth(expand())
-            .setHeight(expand())
+    private fun buildRoot(): LayoutElementBuilders.LayoutElement {
+        val icon = Image.Builder()
+            .setResourceId(RES_ICON)
+            .setWidth(dp(40f))
+            .setHeight(dp(40f))
+            .build()
+
+        val label = Text.Builder(this, getString(R.string.tile_open))
+            .setTypography(Typography.TYPOGRAPHY_CAPTION1)
+            .setColor(argb(0xFFEAECED.toInt()))
+            .build()
+
+        val content = Column.Builder()
             .setHorizontalAlignment(HORIZONTAL_ALIGN_CENTER)
-            .setVerticalAlignment(VERTICAL_ALIGN_CENTER)
-            .addContent(textElement)
+            .addContent(icon)
+            .addContent(
+                LayoutElementBuilders.Spacer.Builder()
+                    .setHeight(dp(6f))
+                    .build()
+            )
+            .addContent(label)
+            .build()
 
-        if (state == TileState.Idle) {
-            boxBuilder.setModifiers(
-                ModifiersBuilders.Modifiers.Builder()
-                    .setClickable(
-                        ModifiersBuilders.Clickable.Builder()
-                            .setId(CLICKABLE_ID)
-                            .setOnClick(
-                                ActionBuilders.LoadAction.Builder()
-                                    .setRequestState(
-                                        androidx.wear.tiles.StateBuilders.State.Builder().build()
-                                    )
+        val clickable = ModifiersBuilders.Clickable.Builder()
+            .setId(CLICKABLE_ID)
+            .setOnClick(
+                ActionBuilders.LaunchAction.Builder()
+                    .setAndroidActivity(
+                        ActionBuilders.AndroidActivity.Builder()
+                            .setPackageName(packageName)
+                            .setClassName(WearActivity::class.java.name)
+                            .addKeyToExtraMapping(
+                                WearActivity.EXTRA_AUTO_OPEN,
+                                ActionBuilders.AndroidBooleanExtra.Builder()
+                                    .setValue(true)
                                     .build()
                             )
                             .build()
                     )
                     .build()
             )
-        }
+            .build()
 
-        return boxBuilder.build()
-    }
+        // Circular ring to match the watch app's idle hero button (2dp near-white border).
+        val ring = Box.Builder()
+            .setWidth(dp(RING_SIZE_DP))
+            .setHeight(dp(RING_SIZE_DP))
+            .setHorizontalAlignment(HORIZONTAL_ALIGN_CENTER)
+            .setVerticalAlignment(VERTICAL_ALIGN_CENTER)
+            .addContent(content)
+            .setModifiers(
+                ModifiersBuilders.Modifiers.Builder()
+                    .setBackground(
+                        ModifiersBuilders.Background.Builder()
+                            .setCorner(
+                                ModifiersBuilders.Corner.Builder()
+                                    .setRadius(dp(RING_SIZE_DP / 2f))
+                                    .build()
+                            )
+                            .build()
+                    )
+                    .setBorder(
+                        ModifiersBuilders.Border.Builder()
+                            .setWidth(dp(2f))
+                            .setColor(argb(0xFFEAECED.toInt()))
+                            .build()
+                    )
+                    .setClickable(clickable)
+                    .build()
+            )
+            .build()
 
-    companion object {
-        fun requestTileUpdate(context: Context) {
-            getUpdater(context).requestUpdate(GarageOpenerTileService::class.java)
-        }
-
-        fun fireOpen(context: Context) {
-            TileStateStore.setSending(context)
-            requestTileUpdate(context)
-            executor.execute {
-                try {
-                    val nodes = Tasks.await(Wearable.getNodeClient(context).connectedNodes)
-                    if (nodes.isEmpty()) {
-                        TileStateStore.setResult(context, false)
-                        requestTileUpdate(context)
-                        return@execute
-                    }
-                    nodes.forEach { node ->
-                        Tasks.await(
-                            Wearable.getMessageClient(context)
-                                .sendMessage(node.id, PATH_OPEN, ByteArray(0))
-                        )
-                    }
-                } catch (_: Exception) {
-                    TileStateStore.setResult(context, false)
-                    requestTileUpdate(context)
-                }
-            }
-        }
+        return Box.Builder()
+            .setWidth(expand())
+            .setHeight(expand())
+            .setHorizontalAlignment(HORIZONTAL_ALIGN_CENTER)
+            .setVerticalAlignment(VERTICAL_ALIGN_CENTER)
+            .addContent(ring)
+            .build()
     }
 }
