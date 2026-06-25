@@ -8,9 +8,7 @@ import android.content.Intent
 import android.os.IBinder
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.dunnowsoftware.GarageAAtoESP32.R
-import com.dunnowsoftware.GarageAAtoESP32.wear.PATH_AUTOFIRED
-import com.google.android.gms.wearable.Wearable
-import java.util.concurrent.Executors
+import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchAutoFired
 import com.dunnowsoftware.GarageAAtoESP32.ble.GarageBleManager
 import com.dunnowsoftware.GarageAAtoESP32.ble.OpenResult
 import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
@@ -216,21 +214,7 @@ class GeofenceForegroundService : Service() {
         nm.createNotificationChannel(channel)
     }
 
-    private fun notifyWatchAutoFired() {
-        Executors.newSingleThreadExecutor().execute {
-            try {
-                val nodes = com.google.android.gms.tasks.Tasks.await(
-                    Wearable.getNodeClient(this).connectedNodes
-                )
-                nodes.forEach { node ->
-                    com.google.android.gms.tasks.Tasks.await(
-                        Wearable.getMessageClient(this)
-                            .sendMessage(node.id, PATH_AUTOFIRED, ByteArray(0))
-                    )
-                }
-            } catch (_: Exception) {}
-        }
-    }
+    private fun notifyWatchAutoFired() = notifyWatchAutoFired(this)
 
     override fun onBind(intent: Intent?): IBinder? = null
 

@@ -61,6 +61,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.dunnowsoftware.GarageAAtoESP32.ui.screens.*
 import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageColors
 import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageTheme
+import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchAutoFired
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -556,6 +557,7 @@ private fun MainHost(
                     is OpenResult.Success -> {
                         prefs.lastOpenedAt = System.currentTimeMillis()
                         openState = OpenState.Opened
+                        notifyWatchAutoFired(ctx)
                     }
                     is OpenResult.Failure -> openState = OpenState.Failed
                 }
@@ -590,6 +592,7 @@ private fun MainHost(
                         prefs.lastOpenedAt = System.currentTimeMillis()
                         lastOpened = prefs.lastOpenedAt
                         openState = OpenState.Opened
+                        notifyWatchAutoFired(ctx)
                     }
                     is OpenResult.Failure -> {
                         openState = OpenState.Failed

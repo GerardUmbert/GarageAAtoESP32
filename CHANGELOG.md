@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.9.1]
+
+### Changed
+- Watch now receives a notification on every successful open regardless of trigger — phone tap, AA tap, QS tile, and geofence all notify the watch
+
 ## [1.9.0]
 
 ### Added
