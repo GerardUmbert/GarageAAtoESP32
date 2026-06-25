@@ -163,6 +163,7 @@
     <string name="history_trigger_manual_aa">Manuaalinen · Android Auto</string>
     <string name="history_trigger_auto">Automaattinen</string>
     <string name="history_trigger_voice">Ääni</string>
+    <string name="history_trigger_wear">Kello</string>
     <string name="history_outcome_success">Avattu</string>
     <string name="history_outcome_failed">Epäonnistui</string>
     <string name="history_outcome_suppressed">Estetty</string>

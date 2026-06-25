@@ -163,6 +163,7 @@
     <string name="history_trigger_manual_aa">Manual · Android Auto</string>
     <string name="history_trigger_auto">Automático</string>
     <string name="history_trigger_voice">Voz</string>
+    <string name="history_trigger_wear">Reloj</string>
     <string name="history_outcome_success">Abierto</string>
     <string name="history_outcome_failed">Error</string>
     <string name="history_outcome_suppressed">Suprimido</string>

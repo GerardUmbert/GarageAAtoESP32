@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Garage</string>
+    <string name="tile_label">Garage</string>
+    <string name="tile_open">OPEN</string>
+    <string name="tile_opening">OPENING…</string>
+    <string name="tile_opened">OPENED</string>
+    <string name="tile_failed">FAILED</string>
+    <string name="watch_tap_to_open">OPEN</string>
+    <string name="watch_sending">OPENING…</string>
+    <string name="watch_opened">OPENED</string>
+    <string name="watch_failed">FAILED</string>
+</resources>

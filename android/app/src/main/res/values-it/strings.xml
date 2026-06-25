@@ -163,6 +163,7 @@
     <string name="history_trigger_manual_aa">Manuale · Android Auto</string>
     <string name="history_trigger_auto">Automatico</string>
     <string name="history_trigger_voice">Voce</string>
+    <string name="history_trigger_wear">Orologio</string>
     <string name="history_outcome_success">Aperto</string>
     <string name="history_outcome_failed">Fallito</string>
     <string name="history_outcome_suppressed">Soppresso</string>

@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.9.0]
+
+### Added
+- Wear OS companion app — full animated hero button (matching phone UI) on a round watch screen; tap to open, success/fail haptic feedback, 2s result display
+- Wear OS tile — swipe-left-from-watchface quick access; tap fires open command directly, tile updates to show OPENING → OPENED/FAILED for 3s then resets; no app launch required
+- Watch receives passive wrist notification when geofence auto-open fires on the phone
+- Open history now records watch-triggered opens with "Watch" label in all 7 languages
+
 ## [1.8.1]
 
 ### Changed

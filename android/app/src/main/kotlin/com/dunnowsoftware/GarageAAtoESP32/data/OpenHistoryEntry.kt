@@ -7,6 +7,7 @@ enum class TriggerSource {
     MANUAL_AA,
     AUTO_GEOFENCE,
     VOICE,
+    WEAR,
 }
 
 enum class OpenOutcome {

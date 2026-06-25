@@ -163,6 +163,7 @@
     <string name="history_trigger_manual_aa">Manual · Android Auto</string>
     <string name="history_trigger_auto">Automàtic</string>
     <string name="history_trigger_voice">Veu</string>
+    <string name="history_trigger_wear">Rellotge</string>
     <string name="history_outcome_success">Obert</string>
     <string name="history_outcome_failed">Error</string>
     <string name="history_outcome_suppressed">Suprimit</string>

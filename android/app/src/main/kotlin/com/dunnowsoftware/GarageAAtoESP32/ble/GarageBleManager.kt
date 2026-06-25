@@ -233,7 +233,8 @@ class GarageBleManager(private val context: Context) {
         val ts = System.currentTimeMillis() / 1000L
         val reasonByte: Byte = when (triggerSource) {
             TriggerSource.MANUAL_PHONE,
-            TriggerSource.MANUAL_AA  -> 0x01
+            TriggerSource.MANUAL_AA,
+            TriggerSource.WEAR          -> 0x01
             TriggerSource.AUTO_GEOFENCE -> 0x02
             TriggerSource.VOICE         -> 0x03
         }
