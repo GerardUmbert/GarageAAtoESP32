@@ -7,6 +7,9 @@ import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryEntry
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryStore
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenOutcome
 import com.dunnowsoftware.GarageAAtoESP32.data.TriggerSource
+import android.content.Intent
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.dunnowsoftware.GarageAAtoESP32.geofence.GeofenceForegroundService
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableListenerService
@@ -54,6 +57,8 @@ class WearMessageListenerService : WearableListenerService() {
                             detail        = null,
                         ),
                     )
+                    LocalBroadcastManager.getInstance(this)
+                        .sendBroadcast(Intent(GeofenceForegroundService.ACTION_AUTO_OPENED))
                     sendResult(event.sourceNodeId, RESULT_SUCCESS)
                     bleManager.cleanup()
                 }
