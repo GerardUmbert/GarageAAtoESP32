@@ -78,7 +78,6 @@ android {
 }
 
 dependencies {
-    wearApp(project(":wear"))
     implementation(libs.appcompat)
     implementation(libs.localbroadcastmanager)
     implementation(libs.car.app)

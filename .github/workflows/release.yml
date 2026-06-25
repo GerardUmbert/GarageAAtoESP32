@@ -69,9 +69,11 @@ jobs:
           RELEASE_APK=$(find android/app/build/outputs/apk/release -name "*.apk" | head -1)
           DEBUG_APK=$(find android/app/build/outputs/apk/debug -name "*.apk" | head -1)
           AAB=$(find android/app/build/outputs/bundle/release -name "*.aab" | head -1)
+          WEAR_AAB=$(find android/wear/build/outputs/bundle/release -name "*.aab" | head -1)
           cp "$RELEASE_APK" "GarageAAtoESP32-${VERSION}.apk"
           cp "$DEBUG_APK"   "GarageAAtoESP32-${VERSION}-debug.apk"
           cp "$AAB"         "GarageAAtoESP32-${VERSION}.aab"
+          cp "$WEAR_AAB"    "GarageAAtoESP32-${VERSION}-wear.aab"
 
       - name: Upload Android artifacts
         uses: actions/upload-artifact@v4
@@ -81,6 +83,7 @@ jobs:
             GarageAAtoESP32-${{ steps.version.outputs.version }}.apk
             GarageAAtoESP32-${{ steps.version.outputs.version }}-debug.apk
             GarageAAtoESP32-${{ steps.version.outputs.version }}.aab
+            GarageAAtoESP32-${{ steps.version.outputs.version }}-wear.aab
 
   release:
     runs-on: ubuntu-latest
@@ -127,6 +130,7 @@ jobs:
             artifacts/apk/*.apk
             artifacts/apk/*.aab
             GarageAAtoESP32-flash-tool.zip
+
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
