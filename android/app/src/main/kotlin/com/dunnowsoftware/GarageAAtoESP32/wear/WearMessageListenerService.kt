@@ -17,7 +17,6 @@ import com.google.android.gms.tasks.Tasks
 
 private const val PATH_OPEN   = "/garage/open"
 private const val PATH_RESULT = "/garage/result"
-const val PATH_AUTOFIRED      = "/garage/autofired"
 
 private const val RESULT_SUCCESS = "SUCCESS"
 private const val RESULT_FAIL    = "FAIL"

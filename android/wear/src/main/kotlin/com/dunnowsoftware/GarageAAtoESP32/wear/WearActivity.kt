@@ -24,7 +24,8 @@ private const val RESULT_DISPLAY_MS = 2_000L
 class WearActivity : ComponentActivity(), MessageClient.OnMessageReceivedListener {
 
     companion object {
-        const val EXTRA_AUTO_OPEN = "auto_open"
+        const val EXTRA_AUTO_OPEN    = "auto_open"
+        const val EXTRA_SHOW_RESULT  = "show_result"
     }
 
     private var openState by mutableStateOf(WatchOpenState.Idle)
@@ -32,27 +33,38 @@ class WearActivity : ComponentActivity(), MessageClient.OnMessageReceivedListene
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.attributes = window.attributes.also {
+            it.screenBrightness = android.view.WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL
+        }
         setContent {
             WatchMainScreen(
                 state = openState,
                 onOpen = ::sendOpenCommand,
             )
         }
-        maybeAutoOpen(intent)
+        // Only handle launch intent on a fresh launch, not on recreate.
+        if (savedInstanceState == null) handleIntent(intent)
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        maybeAutoOpen(intent)
+        handleIntent(intent)
     }
 
-    /** Launched from the tile with EXTRA_AUTO_OPEN -> fire the open immediately. */
-    private fun maybeAutoOpen(intent: Intent?) {
-        if (intent?.getBooleanExtra(EXTRA_AUTO_OPEN, false) == true) {
-            // Consume the flag so a later onResume/recreate doesn't re-fire.
-            intent.removeExtra(EXTRA_AUTO_OPEN)
-            sendOpenCommand()
+    private fun handleIntent(intent: Intent?) {
+        when {
+            intent?.getBooleanExtra(EXTRA_AUTO_OPEN, false) == true -> {
+                intent.removeExtra(EXTRA_AUTO_OPEN)
+                sendOpenCommand()
+            }
+            intent?.hasExtra(EXTRA_SHOW_RESULT) == true -> {
+                val success = intent.getBooleanExtra(EXTRA_SHOW_RESULT, false)
+                intent.removeExtra(EXTRA_SHOW_RESULT)
+                window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                        android.view.WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON)
+                showResult(success)
+            }
         }
     }
 
@@ -69,6 +81,7 @@ class WearActivity : ComponentActivity(), MessageClient.OnMessageReceivedListene
     private fun sendOpenCommand() {
         if (openState != WatchOpenState.Idle) return
         openState = WatchOpenState.Sending
+        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         lifecycleScope.launch {
             try {
@@ -105,6 +118,7 @@ class WearActivity : ComponentActivity(), MessageClient.OnMessageReceivedListene
         timeoutJob = lifecycleScope.launch {
             delay(RESULT_DISPLAY_MS)
             openState = WatchOpenState.Idle
+            window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
     }
 

@@ -62,6 +62,7 @@ import com.dunnowsoftware.GarageAAtoESP32.ui.screens.*
 import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageColors
 import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageTheme
 import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchAutoFired
+import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchResult
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -557,9 +558,12 @@ private fun MainHost(
                     is OpenResult.Success -> {
                         prefs.lastOpenedAt = System.currentTimeMillis()
                         openState = OpenState.Opened
-                        notifyWatchAutoFired(ctx)
+                        notifyWatchResult(ctx, true)
                     }
-                    is OpenResult.Failure -> openState = OpenState.Failed
+                    is OpenResult.Failure -> {
+                        openState = OpenState.Failed
+                        notifyWatchResult(ctx, false)
+                    }
                 }
             }
         }
@@ -592,10 +596,11 @@ private fun MainHost(
                         prefs.lastOpenedAt = System.currentTimeMillis()
                         lastOpened = prefs.lastOpenedAt
                         openState = OpenState.Opened
-                        notifyWatchAutoFired(ctx)
+                        notifyWatchResult(ctx, true)
                     }
                     is OpenResult.Failure -> {
                         openState = OpenState.Failed
+                        notifyWatchResult(ctx, false)
                         Toast.makeText(ctx, result.reason, Toast.LENGTH_LONG).show()
                     }
                 }

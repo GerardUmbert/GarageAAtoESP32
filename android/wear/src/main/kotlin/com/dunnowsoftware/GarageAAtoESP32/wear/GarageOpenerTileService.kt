@@ -24,7 +24,7 @@ import com.google.common.util.concurrent.ListenableFuture
 
 private const val CLICKABLE_ID = "open"
 private const val RES_ICON     = "ic_tile"
-private const val RING_SIZE_DP = 130f
+private const val RING_SIZE_DP = 112f
 
 /**
  * A garage tile is a plain launch button. This OEM watch (com.oplus.wearable.sysui) ignores
@@ -144,6 +144,15 @@ class GarageOpenerTileService : TileService() {
             .setHorizontalAlignment(HORIZONTAL_ALIGN_CENTER)
             .setVerticalAlignment(VERTICAL_ALIGN_CENTER)
             .addContent(ring)
+            .setModifiers(
+                ModifiersBuilders.Modifiers.Builder()
+                    .setBackground(
+                        ModifiersBuilders.Background.Builder()
+                            .setColor(argb(0xFF0A0C0E.toInt()))
+                            .build()
+                    )
+                    .build()
+            )
             .build()
     }
 }

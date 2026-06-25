@@ -4,18 +4,11 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Donut (outer ring with inner hole) via even-odd fill.
-         Center (54,54), outer r=26, inner r=15.2. Sized to sit comfortably
-         inside the 66dp adaptive-icon safe zone. -->
     <path
         android:fillColor="#F3F5F7"
         android:fillType="evenOdd"
-        android:pathData="M54,28 a26,26 0 1,0 0.001,0 z M54,38.8 a15.2,15.2 0 1,1 -0.001,0 z"/>
-    <!-- Tongue: 8.7 thick rectangle extending from center (54) to outer edge
-         + 2 (=82). Drawn over the donut + hole; its overlap with the ring is
-         a no-op (already filled), and it carves the visible 'tongue' through
-         the inner hole. -->
+        android:pathData="M54,34 a20,20 0 1,0 0.001,0 z M54,42.3 a11.7,11.7 0 1,1 -0.001,0 z"/>
     <path
         android:fillColor="#F3F5F7"
-        android:pathData="M54,49.65 H82 V58.35 H54 Z"/>
+        android:pathData="M54,50.65 H76 V57.35 H54 Z"/>
 </vector>

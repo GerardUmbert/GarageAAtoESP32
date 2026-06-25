@@ -19,8 +19,8 @@ android {
         // leaving the tile stuck on its last state. Keep targetSdk at 34 until the library
         // stops reading that gated setting.
         targetSdk = 34
-        versionCode = 10065
-        versionName = "1.9.2"
+        versionCode = 10066
+        versionName = "1.9.3"
     }
 
     buildFeatures {

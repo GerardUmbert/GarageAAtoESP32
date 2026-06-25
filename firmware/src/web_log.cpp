@@ -75,6 +75,7 @@ static const char *reasonLabel(uint8_t r) {
         case 1: return "Manual";
         case 2: return "Geofence";
         case 3: return "Voice";
+        case 4: return "Watch";
         default: return "—";
     }
 }

@@ -16,7 +16,7 @@ import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryEntry
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryStore
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenOutcome
 import com.dunnowsoftware.GarageAAtoESP32.data.TriggerSource
-import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchAutoFired
+import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchResult
 
 class GarageScreen(carContext: CarContext) : Screen(carContext) {
 
@@ -271,7 +271,7 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
                                 ),
                             )
                         }
-                        notifyWatchAutoFired(carContext)
+                        notifyWatchResult(carContext, true)
                         uiState = UiState.SUCCESS
                         invalidate()
                         Handler(Looper.getMainLooper()).postDelayed({

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Garage</string>
-    <string name="tile_label">Garage</string>
+    <string name="app_name">Garage Opener</string>
+    <string name="tile_label">Garage Opener</string>
     <string name="tile_open">OPEN</string>
     <string name="tile_opening">OPENING…</string>
     <string name="tile_opened">OPENED</string>

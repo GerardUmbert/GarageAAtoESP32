@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.9.3]
+
+### Changed
+- Watch app now runs at full brightness while active so the animation and result icons are clearly visible
+- Wear OS app and tile renamed to "Garage Opener"
+- Tile background now matches the watch app dark background (#0A0C0E)
+- Tile picker preview updated to show a miniature of the actual tile layout
+- Watch app launcher icon G-mark resized and icon background updated
+- Firmware: watch-triggered opens now logged as "Watch" in the ESP32 web log instead of "Manual" (requires firmware reflash)
+
+### Fixed
+- Double-open bug when tapping the tile while the watch app was already running
+- Watch screen now stays on and at full brightness until the result is displayed and feedback returns to idle
+- Watch now shows green/red confirmation when the garage is opened from the phone app, QS tile, or Android Auto — not just from the watch itself
+
 ## [1.9.2]
 
 ### Changed

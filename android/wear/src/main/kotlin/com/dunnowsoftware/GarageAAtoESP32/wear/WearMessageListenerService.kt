@@ -2,6 +2,7 @@ package com.dunnowsoftware.GarageAAtoESP32.wear
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.Intent
 import android.os.VibrationEffect
 import android.os.Vibrator
 import androidx.core.app.NotificationCompat
@@ -9,21 +10,31 @@ import com.dunnowsoftware.GarageAAtoESP32.R
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
 
+private const val PATH_RESULT     = "/garage/result"
 private const val PATH_AUTOFIRED  = "/garage/autofired"
 private const val CHANNEL_ID      = "garage_auto"
 private const val NOTIF_ID        = 2001
 
-/**
- * Watch-side background listener. Open results (/garage/result) are handled directly by
- * WearActivity, which is always foreground when an open is triggered (the tile launches it).
- * This service only needs to surface the passive geofence auto-open notification.
- */
 class WearMessageListenerService : WearableListenerService() {
 
     override fun onMessageReceived(event: MessageEvent) {
         when (event.path) {
+            PATH_RESULT -> {
+                val success = String(event.data) == "SUCCESS"
+                android.util.Log.d("GarageWear", "PATH_RESULT received success=$success")
+                haptic(success)
+                val intent = Intent(this, WearActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                    putExtra(WearActivity.EXTRA_SHOW_RESULT, success)
+                }
+                try {
+                    startActivity(intent)
+                    android.util.Log.d("GarageWear", "startActivity called")
+                } catch (e: Exception) {
+                    android.util.Log.e("GarageWear", "startActivity failed", e)
+                }
+            }
             PATH_AUTOFIRED -> {
-                // Geofence auto-open on the phone — show a passive notification
                 postAutoOpenNotification()
             }
         }
@@ -44,12 +55,16 @@ class WearMessageListenerService : WearableListenerService() {
             .setTimeoutAfter(5_000)
             .build()
         nm.notify(NOTIF_ID, notif)
-        haptic()
+        haptic(success = true)
     }
 
     @Suppress("DEPRECATION")
-    private fun haptic() {
+    private fun haptic(success: Boolean) {
         val vibrator = getSystemService(Vibrator::class.java) ?: return
-        vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK))
+        if (success) {
+            vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK))
+        } else {
+            vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 80, 80, 80, 80, 80), -1))
+        }
     }
 }

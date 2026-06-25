@@ -7,7 +7,7 @@ import android.service.quicksettings.TileService
 import com.dunnowsoftware.GarageAAtoESP32.ble.GarageBleManager
 import com.dunnowsoftware.GarageAAtoESP32.ble.OpenResult
 import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
-import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchAutoFired
+import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchResult
 
 class GarageTileService : TileService() {
 
@@ -69,7 +69,7 @@ class GarageTileService : TileService() {
     }
 
     private fun onOpenSuccess() {
-        notifyWatchAutoFired(this)
+        notifyWatchResult(this, true)
         qsTile?.apply {
             state = Tile.STATE_ACTIVE
             subtitle = getString(R.string.tile_opened)

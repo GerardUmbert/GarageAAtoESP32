@@ -87,6 +87,7 @@ enum class OpenReason : uint8_t {
     MANUAL   = 0x01,
     GEOFENCE = 0x02,
     VOICE    = 0x03,
+    WATCH    = 0x04,
 };
 
 // ── Timing ────────────────────────────────────────────────────────────────────
