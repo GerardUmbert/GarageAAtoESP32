@@ -519,7 +519,6 @@ private fun MainHost(
     var lastOpened by remember(stateBust) { mutableLongStateOf(prefs.lastOpenedAt) }
     var showWearBanner by remember { mutableStateOf(false) }
     var wearBannerDismissed by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         if (!wearBannerDismissed && hasWatchPairedButNotInstalled(ctx)) {
@@ -609,7 +608,7 @@ private fun MainHost(
         onHistory = onHistory,
         showWearBanner = showWearBanner,
         onWearInstall = {
-            scope.launch { installWearCompanion(ctx) }
+            installWearCompanion(ctx)
             showWearBanner = false
             wearBannerDismissed = true
         },

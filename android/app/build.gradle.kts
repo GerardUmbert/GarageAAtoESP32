@@ -90,6 +90,7 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.play.services.wearable)
     implementation(libs.wear.remote.interactions)
+    implementation("com.google.guava:guava:31.1-android")
     implementation(libs.osmdroid)
     implementation(libs.work.manager)
 

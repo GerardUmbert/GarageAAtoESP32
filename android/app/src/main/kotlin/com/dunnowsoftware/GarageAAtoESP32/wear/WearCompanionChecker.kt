@@ -1,13 +1,13 @@
 package com.dunnowsoftware.GarageAAtoESP32.wear
 
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import androidx.wear.remote.interactions.RemoteActivityHelper
 import com.google.android.gms.tasks.Tasks
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.withContext
 
 private const val WEAR_CAPABILITY = "garage_opener_wear"
@@ -29,16 +29,16 @@ suspend fun hasWatchPairedButNotInstalled(context: Context): Boolean = withConte
     }
 }
 
-suspend fun installWearCompanion(context: Context) {
-    val helper = RemoteActivityHelper(context)
-    val nodes = withContext(Dispatchers.IO) {
-        Tasks.await(Wearable.getNodeClient(context).connectedNodes)
-    }
-    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+fun installWearCompanion(context: Context) {
+    val intent = Intent(Intent.ACTION_VIEW).apply {
         data = Uri.parse("market://details?id=$WEAR_PACKAGE")
-        addCategory(android.content.Intent.CATEGORY_BROWSABLE)
+        addCategory(Intent.CATEGORY_BROWSABLE)
     }
-    nodes.forEach { node ->
-        runCatching { helper.startRemoteActivity(intent, node.id).await() }
-    }
+    val helper = RemoteActivityHelper(context)
+    Wearable.getNodeClient(context).connectedNodes
+        .addOnSuccessListener { nodes ->
+            nodes.forEach { node ->
+                helper.startRemoteActivity(intent, node.id)
+            }
+        }
 }
