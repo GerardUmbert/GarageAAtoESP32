@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.9.4]
+
+### Changed
+- Geofence inner radius range reduced to 15–40m (was 15–75m) and default set to 20m
+- Geofence outer offset minimum raised to 250m (was 200m); default remains 400m
+- Geofence outer offset fallback for existing configs corrected to 400m
+
 ## [1.9.3]
 
 ### Added

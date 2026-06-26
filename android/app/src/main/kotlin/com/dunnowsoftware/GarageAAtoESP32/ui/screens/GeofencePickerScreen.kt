@@ -72,9 +72,9 @@ private const val ACCENT_FILL_ARGB       = 0x302AD4A3
 private const val ACCENT_OUTER_ARGB      = 0x662AD4A3  // ~40% alpha for the warmup ring
 
 private const val RADIUS_MIN        = 15f
-private const val RADIUS_MAX        = 75f
-private const val RADIUS_DEFAULT    = 40f
-private const val OUTER_OFFSET_MIN  = 200f  // slider bottom (actual outer = inner + this)
+private const val RADIUS_MAX        = 40f
+private const val RADIUS_DEFAULT    = 20f
+private const val OUTER_OFFSET_MIN  = 250f
 private const val OUTER_OFFSET_MAX  = 1000f
 private const val OUTER_OFFSET_DEFAULT = 400f
 private const val DEFAULT_ZOOM   = 17.0  // used only when centering on user location with no pin
