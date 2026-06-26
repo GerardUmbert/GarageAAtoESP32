@@ -14,12 +14,6 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - QS tile now logs opens to the history screen on both success and failure (was silently missing)
 - QS tile failure now correctly sends the error result to the watch (was silently dropped)
 
-### Fixed
-- Watch showed a spurious error during geofence/watch-triggered opens because the 10s timeout was shorter than the BLE retry budget — timeout raised to 30s for watch-initiated opens; phone-triggered opens use a 90s safety timeout that silently dismisses instead of showing a fake error
-- Watch could show two error results from a single tap due to the Wearable layer delivering the message to multiple service instances — inFlight guard now prevents duplicate BLE sessions
-- Phone UI did not react when an open was triggered from the watch — LocalBroadcastManager calls now correctly posted on main thread so the state machine updates
-- QS tile G-mark tongue now extends past the outer ring edge to match the phone app and watch icons
-
 ### Changed
 - Watch app now runs at full brightness while active so the animation and result icons are clearly visible
 - Wear OS app and tile renamed to "Garage Opener"
@@ -29,6 +23,10 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - Firmware: watch-triggered opens now logged as "Watch" in the ESP32 web log instead of "Manual" (requires firmware reflash)
 
 ### Fixed
+- Watch showed a spurious error during geofence/watch-triggered opens because the 10s timeout was shorter than the BLE retry budget — timeout raised to 30s for watch-initiated opens; phone-triggered opens use a 90s safety timeout that silently dismisses instead of showing a fake error
+- Watch could show two error results from a single tap due to the Wearable layer delivering the message to multiple service instances — inFlight guard now prevents duplicate BLE sessions
+- Phone UI did not react when an open was triggered from the watch — LocalBroadcastManager calls now correctly posted on main thread so the state machine updates
+- QS tile G-mark tongue now extends past the outer ring edge to match the phone app and watch icons
 - Double-open bug when tapping the tile while the watch app was already running
 - Watch screen now stays on and at full brightness until the result is displayed and feedback returns to idle
 - Watch now shows green/red confirmation when the garage is opened from the phone app, QS tile, or Android Auto — not just from the watch itself
