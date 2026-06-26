@@ -8,6 +8,7 @@ import com.dunnowsoftware.GarageAAtoESP32.ble.GarageBleManager
 import com.dunnowsoftware.GarageAAtoESP32.ble.OpenResult
 import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
 import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchResult
+import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchSending
 
 class GarageTileService : TileService() {
 
@@ -37,6 +38,7 @@ class GarageTileService : TileService() {
 
         val paired = prefs.pairedDevice ?: return
         setTileBusy()
+        notifyWatchSending(this)
         bleManager.connectAndOpen(paired.address, paired.password) { result ->
             mainLooper.let { android.os.Handler(it).post {
                 when (result) {

@@ -18,7 +18,7 @@ import kotlinx.coroutines.tasks.await
 
 private const val PATH_OPEN   = "/garage/open"
 private const val PATH_RESULT = "/garage/result"
-private const val TIMEOUT_MS  = 10_000L
+private const val TIMEOUT_MS  = 30_000L
 private const val RESULT_DISPLAY_MS = 2_000L
 
 class WearActivity : ComponentActivity(), MessageClient.OnMessageReceivedListener {
@@ -26,6 +26,7 @@ class WearActivity : ComponentActivity(), MessageClient.OnMessageReceivedListene
     companion object {
         const val EXTRA_AUTO_OPEN    = "auto_open"
         const val EXTRA_SHOW_RESULT  = "show_result"
+        const val EXTRA_SHOW_SENDING = "show_sending"
     }
 
     private var openState by mutableStateOf(WatchOpenState.Idle)
@@ -57,6 +58,24 @@ class WearActivity : ComponentActivity(), MessageClient.OnMessageReceivedListene
             intent?.getBooleanExtra(EXTRA_AUTO_OPEN, false) == true -> {
                 intent.removeExtra(EXTRA_AUTO_OPEN)
                 sendOpenCommand()
+            }
+            intent?.getBooleanExtra(EXTRA_SHOW_SENDING, false) == true -> {
+                intent.removeExtra(EXTRA_SHOW_SENDING)
+                window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                        android.view.WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON)
+                if (openState == WatchOpenState.Idle) {
+                    openState = WatchOpenState.Sending
+                    window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    timeoutJob?.cancel()
+                    timeoutJob = lifecycleScope.launch {
+                        delay(90_000L)
+                        if (openState == WatchOpenState.Sending) {
+                            openState = WatchOpenState.Idle
+                            window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                            finish()
+                        }
+                    }
+                }
             }
             intent?.hasExtra(EXTRA_SHOW_RESULT) == true -> {
                 val success = intent.getBooleanExtra(EXTRA_SHOW_RESULT, false)

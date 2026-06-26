@@ -8,30 +8,40 @@ import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryStore
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenOutcome
 import com.dunnowsoftware.GarageAAtoESP32.data.TriggerSource
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.dunnowsoftware.GarageAAtoESP32.geofence.GeofenceForegroundService
 import com.google.android.gms.wearable.MessageEvent
-import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableListenerService
-import com.google.android.gms.tasks.Tasks
 
-private const val PATH_OPEN   = "/garage/open"
-private const val PATH_RESULT = "/garage/result"
+private val mainHandler = Handler(Looper.getMainLooper())
 
-private const val RESULT_SUCCESS = "SUCCESS"
-private const val RESULT_FAIL    = "FAIL"
-private const val RESULT_NO_DEVICE = "NO_DEVICE"
+private const val PATH_OPEN = "/garage/open"
 
 class WearMessageListenerService : WearableListenerService() {
 
+    companion object {
+        const val ACTION_WEAR_SENDING = "com.dunnowsoftware.GarageAAtoESP32.ACTION_WEAR_SENDING"
+        @Volatile private var inFlight = false
+    }
+
     override fun onMessageReceived(event: MessageEvent) {
         if (event.path != PATH_OPEN) return
+        if (inFlight) return
+        inFlight = true
 
         val prefs = DevicePreferences(this)
         val device = prefs.pairedDevice
         if (device == null) {
-            sendResult(event.sourceNodeId, RESULT_NO_DEVICE)
+            inFlight = false
+            notifyWatchResult(this, false)
             return
+        }
+
+        notifyWatchSending(this)
+        mainHandler.post {
+            LocalBroadcastManager.getInstance(this).sendBroadcast(Intent(ACTION_WEAR_SENDING))
         }
 
         val bleManager = GarageBleManager(this)
@@ -56,10 +66,13 @@ class WearMessageListenerService : WearableListenerService() {
                             detail        = null,
                         ),
                     )
-                    LocalBroadcastManager.getInstance(this)
-                        .sendBroadcast(Intent(GeofenceForegroundService.ACTION_AUTO_OPENED))
-                    sendResult(event.sourceNodeId, RESULT_SUCCESS)
+                    mainHandler.post {
+                        LocalBroadcastManager.getInstance(this)
+                            .sendBroadcast(Intent(GeofenceForegroundService.ACTION_AUTO_OPENED))
+                    }
+                    notifyWatchResult(this, true)
                     bleManager.cleanup()
+                    inFlight = false
                 }
                 is OpenResult.Failure -> {
                     OpenHistoryStore.append(
@@ -73,19 +86,15 @@ class WearMessageListenerService : WearableListenerService() {
                             detail        = result.reason,
                         ),
                     )
-                    sendResult(event.sourceNodeId, RESULT_FAIL)
+                    mainHandler.post {
+                        LocalBroadcastManager.getInstance(this)
+                            .sendBroadcast(Intent(GeofenceForegroundService.ACTION_AUTO_FAILED))
+                    }
+                    notifyWatchResult(this, false)
                     bleManager.cleanup()
+                    inFlight = false
                 }
             }
         }
-    }
-
-    private fun sendResult(nodeId: String, result: String) {
-        try {
-            Tasks.await(
-                Wearable.getMessageClient(this)
-                    .sendMessage(nodeId, PATH_RESULT, result.toByteArray()),
-            )
-        } catch (_: Exception) {}
     }
 }

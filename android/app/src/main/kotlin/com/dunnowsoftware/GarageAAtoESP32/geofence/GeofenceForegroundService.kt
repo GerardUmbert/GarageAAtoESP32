@@ -9,6 +9,8 @@ import android.os.IBinder
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.dunnowsoftware.GarageAAtoESP32.R
 import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchAutoFired
+import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchResult
+import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchSending
 import com.dunnowsoftware.GarageAAtoESP32.ble.GarageBleManager
 import com.dunnowsoftware.GarageAAtoESP32.ble.OpenResult
 import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
@@ -64,6 +66,7 @@ class GeofenceForegroundService : Service() {
         val gateDetail = intent.getStringExtra(EXTRA_GATE_DETAIL)
         GeofenceLogger.i(this, TAG, "Service started for $deviceAddress — budget $GEOFENCE_MAX_ATTEMPTS attempts")
         startForeground(NOTIF_ID, buildOngoingNotification())
+        notifyWatchSending(this)
         fireOpen(deviceAddress, gateDetail, startId)
         return START_NOT_STICKY
     }
@@ -97,6 +100,7 @@ class GeofenceForegroundService : Service() {
             )
             LocalBroadcastManager.getInstance(this)
                 .sendBroadcast(Intent(ACTION_AUTO_FAILED))
+            notifyWatchResult(this, false)
             stopForeground(STOP_FOREGROUND_REMOVE)
             postResultNotification(success = false)
             stopSelf(startId)
@@ -124,6 +128,7 @@ class GeofenceForegroundService : Service() {
                     LocalBroadcastManager.getInstance(this)
                         .sendBroadcast(Intent(ACTION_AUTO_OPENED))
                     notifyWatchAutoFired()
+                    notifyWatchResult(this, true)
                     OpenHistoryStore.append(
                         this,
                         OpenHistoryEntry(
@@ -156,6 +161,7 @@ class GeofenceForegroundService : Service() {
                         )
                         LocalBroadcastManager.getInstance(this)
                             .sendBroadcast(Intent(ACTION_AUTO_FAILED))
+                        notifyWatchResult(this, false)
                         stopForeground(STOP_FOREGROUND_REMOVE)
                         postResultNotification(success = false)
                         stopSelf(startId)

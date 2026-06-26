@@ -17,6 +17,7 @@ import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryStore
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenOutcome
 import com.dunnowsoftware.GarageAAtoESP32.data.TriggerSource
 import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchResult
+import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchSending
 
 class GarageScreen(carContext: CarContext) : Screen(carContext) {
 
@@ -243,6 +244,7 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
 
         uiState = UiState.CONNECTING
         invalidate()
+        notifyWatchSending(carContext)
 
         bleManager.connectAndOpen(paired.address, paired.password,
             trigger = com.dunnowsoftware.GarageAAtoESP32.data.TriggerSource.MANUAL_AA,

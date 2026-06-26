@@ -63,6 +63,8 @@ import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageColors
 import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageTheme
 import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchAutoFired
 import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchResult
+import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchSending
+import com.dunnowsoftware.GarageAAtoESP32.wear.WearMessageListenerService
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -517,15 +519,21 @@ private fun MainHost(
     DisposableEffect(ctx) {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
-                if (openState != OpenState.Idle) return
-                openState = when (intent.action) {
-                    GeofenceForegroundService.ACTION_AUTO_OPENED -> OpenState.Opened
-                    GeofenceForegroundService.ACTION_AUTO_FAILED -> OpenState.Failed
-                    else -> return
+                when (intent.action) {
+                    WearMessageListenerService.ACTION_WEAR_SENDING -> {
+                        if (openState == OpenState.Idle) openState = OpenState.Sending
+                    }
+                    GeofenceForegroundService.ACTION_AUTO_OPENED -> {
+                        if (openState != OpenState.Failed) openState = OpenState.Opened
+                    }
+                    GeofenceForegroundService.ACTION_AUTO_FAILED -> {
+                        openState = OpenState.Failed
+                    }
                 }
             }
         }
         val filter = IntentFilter().apply {
+            addAction(WearMessageListenerService.ACTION_WEAR_SENDING)
             addAction(GeofenceForegroundService.ACTION_AUTO_OPENED)
             addAction(GeofenceForegroundService.ACTION_AUTO_FAILED)
         }
@@ -553,6 +561,7 @@ private fun MainHost(
         if (triggerFromShortcut && openState == OpenState.Idle && prefs.isConfigured) {
             shortcutOpenPending.value = false
             openState = OpenState.Sending
+            notifyWatchSending(ctx)
             onTriggerOpen { result ->
                 when (result) {
                     is OpenResult.Success -> {
@@ -590,6 +599,7 @@ private fun MainHost(
         onOpen = {
             if (openState != OpenState.Idle) return@MainScreen
             openState = OpenState.Sending
+            notifyWatchSending(ctx)
             onTriggerOpen { result ->
                 when (result) {
                     is OpenResult.Success -> {

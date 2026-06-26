@@ -214,8 +214,8 @@ private fun HeroButton(state: OpenState, onClick: () -> Unit) {
             contentAlignment = Alignment.Center,
         ) {
             when (state) {
-                OpenState.Opened -> CheckGlyph(color = GarageColors.AccentDeep, sizeDp = 84.dp)
-                OpenState.Failed -> CrossGlyph(color = GarageColors.DangerDeep, sizeDp = 84.dp)
+                OpenState.Opened -> CheckGlyph(color = Color.White, sizeDp = 84.dp)
+                OpenState.Failed -> CrossGlyph(color = Color.White, sizeDp = 84.dp)
                 else -> Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.graphicsLayer {

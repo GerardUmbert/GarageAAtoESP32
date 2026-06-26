@@ -12,6 +12,7 @@ import com.google.android.gms.wearable.WearableListenerService
 
 private const val PATH_RESULT     = "/garage/result"
 private const val PATH_AUTOFIRED  = "/garage/autofired"
+private const val PATH_SENDING    = "/garage/sending"
 private const val CHANNEL_ID      = "garage_auto"
 private const val NOTIF_ID        = 2001
 
@@ -19,6 +20,13 @@ class WearMessageListenerService : WearableListenerService() {
 
     override fun onMessageReceived(event: MessageEvent) {
         when (event.path) {
+            PATH_SENDING -> {
+                val intent = Intent(this, WearActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                    putExtra(WearActivity.EXTRA_SHOW_SENDING, true)
+                }
+                try { startActivity(intent) } catch (_: Exception) {}
+            }
             PATH_RESULT -> {
                 val success = String(event.data) == "SUCCESS"
                 android.util.Log.d("GarageWear", "PATH_RESULT received success=$success")
