@@ -12,5 +12,5 @@
     <!-- Tongue: extends from center to outer edge -->
     <path
         android:fillColor="#FF000000"
-        android:pathData="M12,9.5 H23 V14.5 H12 Z"/>
+        android:pathData="M12,9.5 H24 V14.5 H12 Z"/>
 </vector>

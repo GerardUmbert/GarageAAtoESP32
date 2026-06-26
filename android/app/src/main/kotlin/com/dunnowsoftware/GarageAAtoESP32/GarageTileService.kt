@@ -7,6 +7,10 @@ import android.service.quicksettings.TileService
 import com.dunnowsoftware.GarageAAtoESP32.ble.GarageBleManager
 import com.dunnowsoftware.GarageAAtoESP32.ble.OpenResult
 import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
+import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryEntry
+import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryStore
+import com.dunnowsoftware.GarageAAtoESP32.data.OpenOutcome
+import com.dunnowsoftware.GarageAAtoESP32.data.TriggerSource
 import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchResult
 import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchSending
 
@@ -39,11 +43,39 @@ class GarageTileService : TileService() {
         val paired = prefs.pairedDevice ?: return
         setTileBusy()
         notifyWatchSending(this)
-        bleManager.connectAndOpen(paired.address, paired.password) { result ->
+        bleManager.connectAndOpen(paired.address, paired.password,
+            trigger = TriggerSource.MANUAL_PHONE,
+        ) { result ->
             mainLooper.let { android.os.Handler(it).post {
                 when (result) {
-                    is OpenResult.Success -> onOpenSuccess()
-                    is OpenResult.Failure -> onOpenFailure()
+                    is OpenResult.Success -> {
+                        val ts = System.currentTimeMillis()
+                        OpenHistoryStore.append(
+                            this,
+                            OpenHistoryEntry(
+                                timestampMs   = ts,
+                                deviceAddress = paired.address,
+                                deviceName    = paired.name,
+                                trigger       = TriggerSource.MANUAL_PHONE,
+                                outcome       = OpenOutcome.SUCCESS,
+                            ),
+                        )
+                        onOpenSuccess()
+                    }
+                    is OpenResult.Failure -> {
+                        OpenHistoryStore.append(
+                            this,
+                            OpenHistoryEntry(
+                                timestampMs   = System.currentTimeMillis(),
+                                deviceAddress = paired.address,
+                                deviceName    = paired.name,
+                                trigger       = TriggerSource.MANUAL_PHONE,
+                                outcome       = OpenOutcome.FAILED_BLE,
+                                detail        = result.reason,
+                            ),
+                        )
+                        onOpenFailure()
+                    }
                 }
             }}
         }
@@ -81,6 +113,7 @@ class GarageTileService : TileService() {
     }
 
     private fun onOpenFailure() {
+        notifyWatchResult(this, false)
         qsTile?.apply {
             state = Tile.STATE_INACTIVE
             subtitle = getString(R.string.tile_failed)
