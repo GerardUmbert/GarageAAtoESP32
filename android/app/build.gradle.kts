@@ -14,8 +14,8 @@ android {
         applicationId = "com.dunnowsoftware.GarageAAtoESP32"
         minSdk = 29
         targetSdk = 35
-        versionCode = 67
-        versionName = "1.9.4"
+        versionCode = 68
+        versionName = "1.9.5"
     }
 
     buildFeatures {
@@ -89,6 +89,7 @@ dependencies {
 
     implementation(libs.play.services.location)
     implementation(libs.play.services.wearable)
+    implementation(libs.wear.remote.interactions)
     implementation(libs.osmdroid)
     implementation(libs.work.manager)
 

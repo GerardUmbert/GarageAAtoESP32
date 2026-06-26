@@ -188,4 +188,8 @@
     <string name="history_suppressed_activity_still">🧍 Paikallaan</string>
     <string name="history_suppressed_activity_unknown">❓ Tuntematon</string>
     <string name="history_suppressed_detail">%1$s (%2$d%%) · %3$s — liian hidas</string>
+
+    <string name="wear_banner_title">Wear OS -sovellus saatavilla</string>
+    <string name="wear_banner_body">Avaa tallisi kellostasi</string>
+    <string name="wear_banner_install">Asenna</string>
 </resources>

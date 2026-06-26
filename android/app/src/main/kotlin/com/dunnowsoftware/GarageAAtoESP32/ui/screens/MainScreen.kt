@@ -39,6 +39,7 @@ import com.dunnowsoftware.GarageAAtoESP32.ui.HAPTIC_TAP
 import com.dunnowsoftware.GarageAAtoESP32.ui.vibrate
 import com.dunnowsoftware.GarageAAtoESP32.ui.components.GMark
 import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageColors
+import kotlinx.coroutines.launch
 
 enum class OpenState { Idle, Sending, Opened, Failed }
 
@@ -54,6 +55,9 @@ fun MainScreen(
     onOpen: () -> Unit,
     onSettings: () -> Unit,
     onHistory: () -> Unit,
+    showWearBanner: Boolean = false,
+    onWearInstall: () -> Unit = {},
+    onWearBannerDismiss: () -> Unit = {},
 ) {
     Column(
         modifier = Modifier
@@ -101,6 +105,13 @@ fun MainScreen(
             ) {
                 Text("⚙", color = GarageColors.Text, fontSize = 16.sp)
             }
+        }
+
+        if (showWearBanner) {
+            WearInstallBanner(
+                onInstall = onWearInstall,
+                onDismiss = onWearBannerDismiss,
+            )
         }
 
         Column(
@@ -315,6 +326,60 @@ private fun CrossGlyph(color: Color, sizeDp: Dp) {
             },
             color = color,
             style = style,
+        )
+    }
+}
+
+@Composable
+private fun WearInstallBanner(onInstall: () -> Unit, onDismiss: () -> Unit) {
+    val ctx = LocalContext.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(GarageColors.Surface)
+            .border(1.dp, GarageColors.Hairline, RoundedCornerShape(12.dp))
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.wear_banner_title),
+                color = GarageColors.Text,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = stringResource(R.string.wear_banner_body),
+                color = GarageColors.TextDim,
+                fontSize = 12.sp,
+            )
+        }
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = stringResource(R.string.wear_banner_install),
+            color = GarageColors.Accent,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .clickable {
+                    vibrate(ctx, HAPTIC_TAP)
+                    onInstall()
+                }
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+        )
+        Spacer(Modifier.width(4.dp))
+        Text(
+            text = "✕",
+            color = GarageColors.TextFaint,
+            fontSize = 12.sp,
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .clickable { onDismiss() }
+                .padding(4.dp),
         )
     }
 }

@@ -61,6 +61,8 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.dunnowsoftware.GarageAAtoESP32.ui.screens.*
 import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageColors
 import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageTheme
+import com.dunnowsoftware.GarageAAtoESP32.wear.hasWatchPairedButNotInstalled
+import com.dunnowsoftware.GarageAAtoESP32.wear.installWearCompanion
 import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchAutoFired
 import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchResult
 import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchSending
@@ -515,6 +517,15 @@ private fun MainHost(
     val ctx = androidx.compose.ui.platform.LocalContext.current
     var openState by remember { mutableStateOf(OpenState.Idle) }
     var lastOpened by remember(stateBust) { mutableLongStateOf(prefs.lastOpenedAt) }
+    var showWearBanner by remember { mutableStateOf(false) }
+    var wearBannerDismissed by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        if (!wearBannerDismissed && hasWatchPairedButNotInstalled(ctx)) {
+            showWearBanner = true
+        }
+    }
 
     DisposableEffect(ctx) {
         val receiver = object : BroadcastReceiver() {
@@ -596,6 +607,16 @@ private fun MainHost(
         lastOpenedLabel = lastOpened.takeIf { it > 0 }?.let { formatTime(ctx, it) },
         onSettings = onSettings,
         onHistory = onHistory,
+        showWearBanner = showWearBanner,
+        onWearInstall = {
+            scope.launch { installWearCompanion(ctx) }
+            showWearBanner = false
+            wearBannerDismissed = true
+        },
+        onWearBannerDismiss = {
+            showWearBanner = false
+            wearBannerDismissed = true
+        },
         onOpen = {
             if (openState != OpenState.Idle) return@MainScreen
             openState = OpenState.Sending

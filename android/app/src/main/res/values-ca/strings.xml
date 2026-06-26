@@ -188,4 +188,8 @@
     <string name="history_suppressed_activity_still">🧍 Quiet</string>
     <string name="history_suppressed_activity_unknown">❓ Desconegut</string>
     <string name="history_suppressed_detail">%1$s (%2$d%%) · %3$s — massa lent</string>
+
+    <string name="wear_banner_title">Aplicació Wear OS disponible</string>
+    <string name="wear_banner_body">Obre el garatge des del rellotge</string>
+    <string name="wear_banner_install">Instal·la</string>
 </resources>

@@ -188,4 +188,8 @@
     <string name="history_suppressed_activity_still">🧍 Stillstehend</string>
     <string name="history_suppressed_activity_unknown">❓ Unbekannt</string>
     <string name="history_suppressed_detail">%1$s (%2$d%%) · %3$s — zu langsam</string>
+
+    <string name="wear_banner_title">Wear-OS-Begleit-App verfügbar</string>
+    <string name="wear_banner_body">Öffne deine Garage von der Uhr aus</string>
+    <string name="wear_banner_install">Installieren</string>
 </resources>

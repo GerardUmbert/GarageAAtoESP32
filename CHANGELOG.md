@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.9.5]
+
+### Phone — Added
+- Banner on the main screen prompts watch owners to install the Wear OS companion app if a paired watch is detected but the companion is not installed
+- Tapping Install on the banner sends the Play Store listing directly to the watch via RemoteActivityHelper
+- Banner re-appears on each app launch until the companion is installed or the banner is dismissed
+
 ## [1.9.4]
 
 ### Changed
