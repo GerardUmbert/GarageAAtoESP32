@@ -36,6 +36,7 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
     private var connectAttempt = 0
     private var lastShownAutoFireAt = 0L
     private var lastShownAutoFailAt = 0L
+    private var lastShownSendingAt = 0L
 
     // Shared debounce with GeofenceBroadcastReceiver: both read/write
     // lastAutoFiredAt in DevicePreferences so cross-process races are absorbed.
@@ -81,8 +82,18 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
                     invalidate()
                 }
             }
-            // Show "Opened automatically" or "Couldn't open automatically" if the geofence fired recently.
             if (uiState == UiState.IDLE) {
+                val now = System.currentTimeMillis()
+                val p = prefs()
+                val lastSending = p.lastSendingAt
+                if (lastSending > lastShownSendingAt && (now - lastSending) < 60_000L) {
+                    lastShownSendingAt = lastSending
+                    uiState = UiState.CONNECTING
+                    invalidate()
+                }
+            }
+            // Show result if a result arrived — works from both IDLE and CONNECTING.
+            if (uiState == UiState.IDLE || uiState == UiState.CONNECTING) {
                 val now = System.currentTimeMillis()
                 val p = prefs()
                 val lastAutoFired = p.lastAutoFiredAt

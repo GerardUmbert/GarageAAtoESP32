@@ -103,6 +103,10 @@ class DevicePreferences(context: Context) {
         get() = prefs.getLong(KEY_LAST_AUTO_FAILED, 0L)
         set(value) = prefs.edit().putLong(KEY_LAST_AUTO_FAILED, value).apply()
 
+    var lastSendingAt: Long
+        get() = prefs.getLong(KEY_LAST_SENDING, 0L)
+        set(value) = prefs.edit().putLong(KEY_LAST_SENDING, value).apply()
+
     // Set to true when outer geofence EXIT fires. Used as an optimistic hint
     // on the next outer ENTER — if false and activity is UNKNOWN, warmup is
     // skipped (likely still at home). If EXIT was dropped by the OS this stays
@@ -165,6 +169,7 @@ class DevicePreferences(context: Context) {
         private const val KEY_LAST_OPENED            = "last_opened_at"
         private const val KEY_LAST_AUTO_FIRED        = "last_auto_fired_at"
         private const val KEY_LAST_AUTO_FAILED       = "last_auto_failed_at"
+        private const val KEY_LAST_SENDING           = "last_sending_at"
         private const val KEY_OUTSIDE_OUTER_GEOFENCE = "outside_outer_geofence"
     }
 }
