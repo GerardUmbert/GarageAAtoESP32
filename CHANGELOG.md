@@ -6,6 +6,20 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ## [1.9.3]
 
+### Added
+- Watch wakes up and shows the pulsing "SENDING" animation immediately when any trigger fires (phone tap, QS tile, Android Auto, geofence, or watch tap) — not just after the result arrives
+- Android Auto screen now shows CONNECTING when an open is triggered from any source (watch, phone, tile, geofence), not only when tapped from AA itself
+- All screens (phone, watch, AA) stay in sync for the full duration of the open attempt regardless of which screen initiated it
+- Watch-triggered opens now show Sending/result on the phone UI screen too
+- QS tile now logs opens to the history screen on both success and failure (was silently missing)
+- QS tile failure now correctly sends the error result to the watch (was silently dropped)
+
+### Fixed
+- Watch showed a spurious error during geofence/watch-triggered opens because the 10s timeout was shorter than the BLE retry budget — timeout raised to 30s for watch-initiated opens; phone-triggered opens use a 90s safety timeout that silently dismisses instead of showing a fake error
+- Watch could show two error results from a single tap due to the Wearable layer delivering the message to multiple service instances — inFlight guard now prevents duplicate BLE sessions
+- Phone UI did not react when an open was triggered from the watch — LocalBroadcastManager calls now correctly posted on main thread so the state machine updates
+- QS tile G-mark tongue now extends past the outer ring edge to match the phone app and watch icons
+
 ### Changed
 - Watch app now runs at full brightness while active so the animation and result icons are clearly visible
 - Wear OS app and tile renamed to "Garage Opener"
