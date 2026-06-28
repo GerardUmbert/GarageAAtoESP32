@@ -271,6 +271,7 @@
       <div class="sidebar-group">Using the app</div>
       <a href="#phone-ui">Phone UI</a>
       <a href="#android-auto">Android Auto</a>
+      <a href="#wear-os">Wear OS</a>
       <a href="#voice">Voice commands</a>
       <a href="#quick-settings">Quick Settings tile</a>
       <a href="#web-log">ESP32 web log</a>
@@ -601,6 +602,36 @@ ESP32 GND     ──────────▶ Emitter (E)
 
         <h3>Testing without a car</h3>
         <p>Use the Android Auto Desktop Head Unit emulator. Install it via Android Studio: <em>Tools → SDK Manager → SDK Tools → Android Auto Desktop Head Unit Emulator</em>. Start the DHU server on your phone (Android Auto → Developer settings → Start head unit server), then launch the emulator on your PC.</p>
+
+        <!-- ── WEAR OS ── -->
+        <h2 id="wear-os">Wear OS</h2>
+        <p>If you have a paired Wear OS watch, the companion app lets you open the garage directly from your wrist. Install the phone app from the Play Store — the watch app is delivered automatically to any connected Wear OS device.</p>
+
+        <h3>Watch app</h3>
+        <p>The watch app shows a single circular button (the same idle / sending / opened / failed states as the phone). Tap it to send the open command. The phone handles the BLE round-trip; the result comes back to the watch over the Wear OS data layer.</p>
+
+        <table>
+          <thead><tr><th>State</th><th>Ring</th><th>What it means</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Idle</strong></td><td>White hairline</td><td>Ready. Tap to open.</td></tr>
+            <tr><td><strong>Sending</strong></td><td>Teal + expanding pulse rings</td><td>Command sent — waiting for result.</td></tr>
+            <tr><td><strong>Opened</strong></td><td>Fills teal + ✓</td><td>ESP32 confirmed open. Heavy-click haptic.</td></tr>
+            <tr><td><strong>Failed</strong></td><td>Fills red + ✗</td><td>Connection or auth failed. Triple-buzz haptic.</td></tr>
+          </tbody>
+        </table>
+
+        <p>The screen turns on and shows the result even when the watch is locked — no need to wake it manually first.</p>
+
+        <h3>Watch tile</h3>
+        <p>Add the <strong>Garage Opener</strong> tile to your watch face: swipe left to the tile carousel → Edit tiles → add Garage Opener. Tapping the tile launches the watch app and fires the open command immediately, without having to navigate to the app first.</p>
+
+        <h3>Phone-initiated open</h3>
+        <p>When you open the garage from the phone (manual tap, geofence, Android Auto, or voice), the watch receives the result too — Opened / Failed appears on the watch display with haptic feedback if the watch app is running or starts up via a push notification.</p>
+
+        <div class="callout callout-note">
+          <div class="callout-icon">ℹ️</div>
+          <p>The watch never communicates directly with the ESP32 — it always routes through the paired phone over the Wear OS data layer. The phone must be within Bluetooth or Wi-Fi range of the watch for the command to reach the ESP32.</p>
+        </div>
 
         <!-- ── VOICE ── -->
         <h2 id="voice">Voice commands</h2>

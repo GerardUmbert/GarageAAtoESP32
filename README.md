@@ -22,6 +22,10 @@ Tap once to send. The screen shows a spinner while the BLE round-trip runs (typi
 
 The phone app mirrors the in-car flow but is the primary surface for setup. The hero open button doubles as a status indicator — concentric pulses while sending, fills green on success, fills pastel red on failure. The pairing screen runs a real BLE scan with a sweeping radar visual; tap the device that appears in the bottom sheet to pair it. Settings is grouped by Security / Testing / (Danger zone, when paired).
 
+### What it looks like on Wear OS
+
+The watch companion app brings the same open button directly to your wrist. Tap once from the watch — it sends the open command to the phone over the Wear OS data layer, the phone handles the BLE round-trip, and the result comes back to the watch with a confirmation animation and haptic feedback. The watch screen turns on and shows the result even from lock screen. A watch tile is also available for one-tap access from the watch face without opening the app.
+
 ---
 
 ## Who is this for?
@@ -64,6 +68,8 @@ See [docs/provisioning.md](docs/provisioning.md) for full flashing instructions 
 - **Play Store** *(easiest, includes Android Auto)*: [Get it on Google Play](https://play.google.com/store/apps/details?id=com.dunnowsoftware.GarageAAtoESP32)
 - **APK** *(no Play Store)*: download the latest `.apk` from the [Releases](../../releases) page and sideload it. **Note: sideloaded APKs do not work with Android Auto** — AA only loads apps installed through the Play Store.
 - **Build from source**: open `android/` in [Android Studio](https://developer.android.com/studio), connect your phone via USB with debugging enabled, and click **Run**. Same limitation as the APK — Android Auto requires a Play Store install.
+
+**Wear OS companion** *(optional)*: if you have a paired Wear OS watch, install the companion from the Play Store — it is delivered automatically when you install the phone app. The watch app lets you open the garage directly from your wrist, with result feedback and haptics. A watch tile is also available for one-tap access from the watch face.
 
 ### 3. Configure the app (one-time setup on phone)
 
@@ -126,9 +132,10 @@ See [docs/wiring_diagram.md](docs/wiring_diagram.md) for full diagrams, material
 ## Project structure
 
 ```
-firmware/   ESP32 firmware (PlatformIO + Arduino framework)
-android/    Android app (Kotlin + Car App Library)
-docs/       Wiring diagram, power budget, provisioning guide
+firmware/        ESP32 firmware (PlatformIO + Arduino framework)
+android/app/     Phone app (Kotlin + Car App Library + Android Auto)
+android/wear/    Wear OS companion app (Compose for Wear OS)
+docs/            Wiring diagram, power budget, provisioning guide
 ```
 
 ## Security
