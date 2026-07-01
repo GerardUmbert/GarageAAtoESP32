@@ -96,6 +96,22 @@ enum class OpenReason : uint8_t {
 #define SLEEP_DURATION_S    5     // Seconds to deep-sleep between ad windows (lower = more responsive, more power)
 #define AUTH_TIMEOUT_MS    10000  // ms to wait for Command write after connect
 
+// ── Wi-Fi STA (Home Assistant webhook server) ─────────────────────────────────
+// Enabled via -DENABLE_HA_WEBHOOK=1 at build time (set by flash.ps1 / flash.sh).
+// The ESP32 joins your home WiFi and exposes POST /open authenticated with the
+// same USER_PIN as the BLE stack. BLE continues to run in parallel. No sleep.
+#ifdef ENABLE_HA_WEBHOOK
+#ifndef HA_WIFI_SSID
+#define HA_WIFI_SSID        "your-wifi-ssid"
+#endif
+#ifndef HA_WIFI_PASS
+#define HA_WIFI_PASS        "your-wifi-password"
+#endif
+#define HA_SERVER_PORT      80
+#define HA_RATE_LIMIT_MAX   3
+#define HA_RATE_LIMIT_WIN_S 60
+#endif
+
 // ── Wi-Fi AP (captive portal log server) ──────────────────────────────────────
 // The ESP32 broadcasts a hidden WPA2 AP so the log page is accessible without
 // a router. SSID is derived at runtime: {DEVICE_NAME}_{last3octetsMAC}.

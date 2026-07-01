@@ -10,6 +10,10 @@
 #include "web_log.h"
 #endif
 
+#ifdef ENABLE_HA_WEBHOOK
+#include "ha_webhook.h"
+#endif
+
 static volatile bool g_openRequested = false;
 
 void onGarageOpen() {
@@ -69,7 +73,12 @@ static void startAP() {
 // ── Deep sleep helpers ────────────────────────────────────────────────────────
 
 static void goToSleep() {
-#ifdef ENABLE_WEBLOG
+#ifdef ENABLE_HA_WEBHOOK
+    // Wall-powered HA deployment — never sleep. BLE and HTTP server must stay
+    // alive. Just return so the loop continues normally after the relay fires.
+    return;
+#endif
+#if defined(ENABLE_WEBLOG) && !defined(ENABLE_HA_WEBHOOK)
     webServer.stop();
     dnsServer.stop();
     WiFi.softAPdisconnect(true);
@@ -88,29 +97,39 @@ void setup() {
 #endif
 
     RelayControl::init();
-#ifdef ENABLE_WEBLOG
+#if defined(ENABLE_WEBLOG) && !defined(ENABLE_HA_WEBHOOK)
     startAP();
+#endif
+#ifdef ENABLE_HA_WEBHOOK
+    HaWebhook::init();
 #endif
     BleGarage::init();
     BleGarage::startAdvertising();
 }
 
 void loop() {
-#ifdef ENABLE_WEBLOG
+#if defined(ENABLE_WEBLOG) && !defined(ENABLE_HA_WEBHOOK)
     dnsServer.processNextRequest();
     webServer.handleClient();
+#endif
+#ifdef ENABLE_HA_WEBHOOK
+    HaWebhook::handle();
 #endif
 
     if (g_openRequested) {
         g_openRequested = false;
         RelayControl::pulse(RELAY_PULSE_MS);
         delay(200);
+#ifndef ENABLE_HA_WEBHOOK
         goToSleep();
+#endif
     }
 
+#ifndef ENABLE_HA_WEBHOOK
+    // In HA webhook mode the device stays awake permanently — no BLE timeout.
     static uint32_t advStart = millis();
     if (!BleGarage::isConnected()) {
-#ifdef ENABLE_WEBLOG
+#if defined(ENABLE_WEBLOG) && !defined(ENABLE_HA_WEBHOOK)
         if (WiFi.softAPgetStationNum() == 0 &&
             millis() - advStart > (uint32_t)ADV_TIMEOUT_S * 1000UL) {
 #else
@@ -121,6 +140,7 @@ void loop() {
     } else {
         advStart = millis();
     }
+#endif // ENABLE_HA_WEBHOOK
 
     delay(10);
 }

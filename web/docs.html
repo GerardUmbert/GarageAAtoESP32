@@ -275,6 +275,7 @@
       <a href="#voice">Voice commands</a>
       <a href="#quick-settings">Quick Settings tile</a>
       <a href="#web-log">ESP32 web log</a>
+      <a href="#home-assistant">Home Assistant</a>
 
       <div class="sidebar-group">Auto-open</div>
       <a href="#geofence-auto-open">How it works</a>
@@ -798,6 +799,45 @@ flowchart TD
         <div class="callout callout-note">
           <div class="callout-icon">ℹ️</div>
           <p>The ESP32 stays awake indefinitely while a device is connected to the AP. It returns to its normal sleep cycle once you disconnect.</p>
+        </div>
+
+        <!-- ── HOME ASSISTANT ── -->
+        <h2 id="home-assistant">Home Assistant integration</h2>
+        <p>For wall-powered at-home deployments, the ESP32 can join your home WiFi and expose an HTTP webhook that any Home Assistant automation can call. BLE and the Android app continue to work in parallel — this is an additive feature, not a replacement.</p>
+
+        <h3>Enabling it</h3>
+        <p>When running the flash tool, answer <strong>y</strong> to the <em>"Enable Home Assistant webhook?"</em> prompt, then enter your WiFi SSID and password. These are compiled into the firmware and never saved to disk. The flash tool prints a ready-to-use <code>rest_command</code> snippet and curl command immediately after flashing.</p>
+
+        <h3>Endpoints</h3>
+        <table>
+          <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>POST</code></td><td><code>/open</code></td><td>Triggers the relay. Requires <code>Authorization: Bearer &lt;pin&gt;</code> header.</td></tr>
+            <tr><td><code>GET</code></td><td><code>/health</code></td><td>Returns <code>{"status":"ok"}</code>. No auth required. Use for HA availability checks.</td></tr>
+            <tr><td><code>GET</code></td><td><code>/log</code></td><td>Full event log page — same UI as the captive portal log, served over your LAN.</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Home Assistant configuration</h3>
+        <p>Add the following to <code>configuration.yaml</code> and reload HA:</p>
+        <pre><code>rest_command:
+  open_garage:
+    url: "http://garage-opener.local/open"
+    method: POST
+    headers:
+      Authorization: "Bearer your-pin"</code></pre>
+        <p>Then call <code>rest_command.open_garage</code> from any automation action. The device is reachable via mDNS at <code>http://&lt;device-name&gt;.local</code> — no static IP or DHCP reservation needed.</p>
+
+        <h3>curl test</h3>
+        <pre><code>curl -X POST http://garage-opener.local/open \
+  -H "Authorization: Bearer your-pin"</code></pre>
+
+        <h3>Security</h3>
+        <p>The PIN is sent as a plain-text Bearer token over HTTP. This is acceptable for a LAN-only endpoint — the ESP32 is not reachable from outside your router. Hashing the PIN would not improve security since a captured hash is equally replayable without TLS. The endpoint applies rate limiting: 3 failed auth attempts within 60 seconds returns <code>429 Too Many Requests</code> for the remainder of that window.</p>
+
+        <div class="callout callout-note">
+          <div class="callout-icon">ℹ️</div>
+          <p>Deep sleep is disabled in this mode. The device must be wall-powered. BLE advertising runs continuously so the Android app connects instantly whenever you are home.</p>
         </div>
 
         <!-- ── SECURITY ── -->

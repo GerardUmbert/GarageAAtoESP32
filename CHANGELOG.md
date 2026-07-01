@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.10.0]
+
+### Firmware — Added
+- Optional Home Assistant webhook integration (`ENABLE_HA_WEBHOOK` build flag)
+- When enabled, ESP32 joins home WiFi as a station and exposes `POST /open` on port 80, authenticated with the same PIN used for BLE
+- `GET /health` endpoint returns `{"status":"ok"}` for HA availability checks
+- mDNS advertisement as `<device-name>.local` — no static IP required
+- Rate limiter: 3 failed auth attempts per 60s window triggers a 429 response
+- Constant-time token comparison to prevent timing attacks
+- BLE stack runs in parallel — Android app unaffected
+- Deep sleep disabled when HA webhook is enabled (wall-powered deployment)
+- Event log (`/log`) served over LAN at `http://<device-name>.local/log` when HA webhook is enabled — same UI as the captive portal log, no separate AP needed
+- Flash tool (`flash.ps1` / `flash.sh`) gains a new optional step to configure WiFi SSID and WiFi password; prints the ready-to-use HA `rest_command` snippet and log URL after flashing
+
 ## [1.9.5]
 
 ### Phone — Added

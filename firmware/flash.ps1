@@ -117,20 +117,21 @@ Write-Host "  ============================================" -ForegroundColor Whi
 Write-Host "     GarageAAtoESP32 - Flash Tool"            -ForegroundColor White
 Write-Host "  ============================================" -ForegroundColor White
 Write-Host ""
-Write-Host "  This script will:"                                      -ForegroundColor Gray
-Write-Host "    1. Make sure PlatformIO is installed"                 -ForegroundColor Gray
-Write-Host "    2. Ask which board you have"                          -ForegroundColor Gray
-Write-Host "    3. Find your ESP32 on a USB port"                     -ForegroundColor Gray
-Write-Host "    4. Ask which trigger mechanism you wired up"          -ForegroundColor Gray
-Write-Host "    5. Ask for your PIN"                                  -ForegroundColor Gray
-Write-Host "    6. Optionally tune sleep interval, pulse, device name"-ForegroundColor Gray
-Write-Host "    7. Compile and flash the firmware"                    -ForegroundColor Gray
-Write-Host "    8. Leave no trace of your PIN on disk"                -ForegroundColor Gray
+Write-Host "  This script will:"                                           -ForegroundColor Gray
+Write-Host "    1. Make sure PlatformIO is installed"                    -ForegroundColor Gray
+Write-Host "    2. Ask which board you have"                             -ForegroundColor Gray
+Write-Host "    3. Find your ESP32 on a USB port"                        -ForegroundColor Gray
+Write-Host "    4. Ask which trigger mechanism you wired up"             -ForegroundColor Gray
+Write-Host "    5. Ask for your PIN"                                     -ForegroundColor Gray
+Write-Host "    6. Optionally tune sleep interval, pulse, device name"   -ForegroundColor Gray
+Write-Host "    7. Optionally enable Home Assistant webhook integration"  -ForegroundColor Gray
+Write-Host "    8. Compile and flash the firmware"                       -ForegroundColor Gray
+Write-Host "    9. Leave no trace of your PIN on disk"                   -ForegroundColor Gray
 Write-Host ""
 
 # --- Step 1: PlatformIO ------------------------------------------------------
 
-Write-Step "Step 1/7 - Checking for PlatformIO..."
+Write-Step "Step 1/9 - Checking for PlatformIO..."
 
 $pioCmd = Get-Command pio -ErrorAction SilentlyContinue
 if (-not $pioCmd) {
@@ -206,7 +207,7 @@ function Invoke-Pio {
 
 # --- Step 2: Board selection --------------------------------------------------
 
-Write-Step "Step 2/7 - Select your board..."
+Write-Step "Step 2/9 - Select your board..."
 
 if ($Board -ne "" -and $supportedBoards.Contains($Board)) {
     Write-OK "Board supplied by caller: $Board ($($supportedBoards[$Board].Label))"
@@ -236,7 +237,7 @@ $defaultPin = $supportedBoards[$Board].Pin
 
 # --- Step 3: Find the ESP32 --------------------------------------------------
 
-Write-Step "Step 3/7 - Looking for ESP32 on USB ports..."
+Write-Step "Step 3/9 - Looking for ESP32 on USB ports..."
 
 if ($Port -ne "") {
     Write-OK "Using port supplied by caller: $Port"
@@ -303,7 +304,7 @@ if ($Port -ne "") {
 
 # --- Step 4: Trigger mode ----------------------------------------------------
 
-Write-Step "Step 4/7 - Choose your trigger mechanism..."
+Write-Step "Step 4/9 - Choose your trigger mechanism..."
 Write-Host ""
 Write-Host "  [1] Relay active-high   - relay module that triggers on HIGH (recommended, most common)" -ForegroundColor White
 Write-Host "  [2] Relay active-low    - relay module that triggers on LOW  (older/opto-isolated modules)" -ForegroundColor White
@@ -328,7 +329,7 @@ Write-OK "Trigger mode: $triggerMode"
 
 # --- Step 5: PIN -------------------------------------------------------------
 
-Write-Step "Step 5/7 - Set your PIN..."
+Write-Step "Step 5/9 - Set your PIN..."
 Write-Host ""
 Write-Host "  This PIN must match the one you enter in the Android app." -ForegroundColor Gray
 Write-Host "  It will be compiled into the firmware and never saved to disk." -ForegroundColor Gray
@@ -360,7 +361,7 @@ Write-OK "PIN confirmed."
 
 # --- Step 6: Advanced options ------------------------------------------------
 
-Write-Step "Step 6/7 - Advanced options (press Enter to keep defaults)..."
+Write-Step "Step 6/9 - Advanced options (press Enter to keep defaults)..."
 Write-Host ""
 Write-Host "  These are optional. Hit Enter at each prompt to use the default." -ForegroundColor Gray
 Write-Host ""
@@ -439,6 +440,8 @@ Write-Host ""
 Write-Host "  Enable Wi-Fi log server? The ESP32 will host a hidden Wi-Fi AP" -ForegroundColor Gray
 Write-Host "  (SSID: $deviceName\_XXXXXX, password: your PIN) serving a web page" -ForegroundColor Gray
 Write-Host "  with the full open history. Uses more power while the AP is active." -ForegroundColor Gray
+Write-Host "  (If you enable Home Assistant webhook in the next step, the log is" -ForegroundColor Gray
+Write-Host "   served automatically at http://$deviceName.local/log instead.)" -ForegroundColor Gray
 $weblogInput = Read-Host "  Enable web log? (y/n, default: n)"
 $enableWeblog = $weblogInput -match '^[Yy]'
 if ($enableWeblog) {
@@ -449,9 +452,40 @@ if ($enableWeblog) {
 
 $debugLevel = 0
 
-# --- Step 7: Compile and flash -----------------------------------------------
+# --- Step 7: Home Assistant webhook ------------------------------------------
 
-Write-Step "Step 7/7 - Compiling and flashing..."
+Write-Step "Step 7/9 - Home Assistant webhook integration (optional)..."
+Write-Host ""
+Write-Host "  Enable this if the ESP32 will be wall-powered at home and you want" -ForegroundColor Gray
+Write-Host "  to trigger it from Home Assistant automations over your home WiFi." -ForegroundColor Gray
+Write-Host "  BLE and the Android app continue to work in parallel." -ForegroundColor Gray
+Write-Host "  Deep sleep is disabled in this mode (device stays on permanently)." -ForegroundColor Gray
+Write-Host ""
+$haInput = Read-Host "  Enable Home Assistant webhook? (y/n, default: n)"
+$enableHa = $haInput -match '^[Yy]'
+
+$haWifiSsid = ""
+$haWifiPass = ""
+
+if ($enableHa) {
+    Write-Host ""
+    Write-Host "  WiFi credentials are compiled into the firmware and never saved to disk." -ForegroundColor Gray
+    Write-Host ""
+    $haWifiSsid = Read-Host "  WiFi SSID"
+    if ([string]::IsNullOrWhiteSpace($haWifiSsid)) {
+        Write-Fail "WiFi SSID cannot be empty."
+        exit 1
+    }
+    $haWifiPass = Read-Host "  WiFi password"
+    Write-OK "Home Assistant webhook: enabled"
+    Write-OK "WiFi SSID: $haWifiSsid"
+} else {
+    Write-OK "Home Assistant webhook: disabled"
+}
+
+# --- Step 8: Compile and flash -----------------------------------------------
+
+Write-Step "Step 8/9 - Compiling and flashing..."
 Write-Host ""
 Write-Host "  Running PlatformIO build + flash. This may take a few minutes on first run..." -ForegroundColor Gray
 Write-Host "  (First run downloads the ESP32 toolchain - subsequent runs are much faster)"   -ForegroundColor Gray
@@ -463,6 +497,7 @@ $ledOn  = $supportedBoards[$Board].LedOn
 $buildIniFile = Join-Path $PSScriptRoot "platformio.build.ini"
 $ledFlagsIni = if ($null -ne $ledPin) { "`n    -DLED_PIN=$ledPin`n    -DLED_ON_LEVEL=$ledOn" } else { "" }
 $weblogFlagIni = if ($enableWeblog) { "`n    -DENABLE_WEBLOG=1" } else { "" }
+$haFlagsIni = if ($enableHa) { "`n    -DENABLE_HA_WEBHOOK=1`n    -DHA_WIFI_SSID=\`"$haWifiSsid\`"`n    -DHA_WIFI_PASS=\`"$haWifiPass\`"" } else { "" }
 $buildIni = @"
 [env]
 platform = espressif32
@@ -480,7 +515,7 @@ build_flags =
     -DUSER_PIN=\`"$pin\`"
     -DDEVICE_NAME=\`"$deviceName\`"
     -DSLEEP_DURATION_S=$sleepDuration
-    -DRELAY_PULSE_MS=$pulseDuration$ledFlagsIni$weblogFlagIni
+    -DRELAY_PULSE_MS=$pulseDuration$ledFlagsIni$weblogFlagIni$haFlagsIni
 
 [env:native]
 platform = native
@@ -516,6 +551,24 @@ if ($flashSuccess) {
     Write-Host ""
     Write-Host "  Your PIN was never saved to disk." -ForegroundColor Gray
     Write-Host ""
+    if ($enableHa) {
+        Write-Host "  ── Home Assistant configuration ──────────────────────────" -ForegroundColor Cyan
+        Write-Host "  Add this to your configuration.yaml and reload HA:"        -ForegroundColor Gray
+        Write-Host ""
+        Write-Host "  rest_command:"                                              -ForegroundColor White
+        Write-Host "    open_garage:"                                             -ForegroundColor White
+        Write-Host "      url: `"http://$deviceName.local/open`""                -ForegroundColor White
+        Write-Host "      method: POST"                                           -ForegroundColor White
+        Write-Host "      headers:"                                               -ForegroundColor White
+        Write-Host "        Authorization: `"Bearer $pin`""                       -ForegroundColor White
+        Write-Host ""
+        Write-Host "  Then call rest_command.open_garage from any automation."   -ForegroundColor Gray
+        Write-Host "  Event log:    http://$deviceName.local/log"                -ForegroundColor Gray
+        Write-Host "  Health check: http://$deviceName.local/health"             -ForegroundColor Gray
+        Write-Host "  curl test:    curl -X POST http://$deviceName.local/open -H `"Authorization: Bearer $pin`"" -ForegroundColor Gray
+        Write-Host "  ──────────────────────────────────────────────────────────" -ForegroundColor Cyan
+        Write-Host ""
+    }
     Write-Host "  Scan to install the Android app:" -ForegroundColor White
     Write-QR
     Write-Host "  https://play.google.com/store/apps/details?id=com.dunnowsoftware.GarageAAtoESP32" -ForegroundColor Gray

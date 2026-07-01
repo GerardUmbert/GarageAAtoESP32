@@ -154,13 +154,14 @@ echo -e "  ${GRAY}  3. Find your ESP32 on a USB port${NC}"
 echo -e "  ${GRAY}  4. Ask which trigger mechanism you wired up${NC}"
 echo -e "  ${GRAY}  5. Ask for your PIN${NC}"
 echo -e "  ${GRAY}  6. Optionally tune sleep interval, pulse, device name${NC}"
-echo -e "  ${GRAY}  7. Compile and flash the firmware${NC}"
-echo -e "  ${GRAY}  8. Leave no trace of your PIN on disk${NC}"
+echo -e "  ${GRAY}  7. Optionally enable Home Assistant webhook integration${NC}"
+echo -e "  ${GRAY}  8. Compile and flash the firmware${NC}"
+echo -e "  ${GRAY}  9. Leave no trace of your PIN on disk${NC}"
 echo ""
 
 # --- Step 1: PlatformIO -------------------------------------------------------
 
-write_step "Step 1/7 - Checking for PlatformIO..."
+write_step "Step 1/9 - Checking for PlatformIO..."
 
 PIO_CMD=""
 if command -v pio &>/dev/null; then
@@ -200,7 +201,7 @@ invoke_pio() { $PIO_CMD "$@"; }
 
 # --- Step 2: Board selection --------------------------------------------------
 
-write_step "Step 2/7 - Select your board..."
+write_step "Step 2/9 - Select your board..."
 
 if [[ -n "$BOARD" ]] && [[ -n "${BOARD_LABELS[$BOARD]+_}" ]]; then
     write_ok "Board supplied via --board: $BOARD (${BOARD_LABELS[$BOARD]})"
@@ -228,7 +229,7 @@ DEFAULT_TRIGGER_PIN="${BOARD_PINS[$BOARD]}"
 
 # --- Step 3: Find the ESP32 ---------------------------------------------------
 
-write_step "Step 3/7 - Looking for ESP32 on USB ports..."
+write_step "Step 3/9 - Looking for ESP32 on USB ports..."
 
 if [[ -n "$PORT" ]]; then
     write_ok "Using port supplied via --port: $PORT"
@@ -297,7 +298,7 @@ fi
 
 # --- Step 4: Trigger mode -----------------------------------------------------
 
-write_step "Step 4/7 - Choose your trigger mechanism..."
+write_step "Step 4/9 - Choose your trigger mechanism..."
 echo ""
 echo -e "  ${WHITE}[1] Relay active-high   - relay module that triggers on HIGH (recommended, most common)${NC}"
 echo -e "  ${WHITE}[2] Relay active-low    - relay module that triggers on LOW  (older/opto-isolated modules)${NC}"
@@ -319,7 +320,7 @@ write_ok "Trigger mode: $TRIGGER_MODE"
 
 # --- Step 5: PIN --------------------------------------------------------------
 
-write_step "Step 5/7 - Set your PIN..."
+write_step "Step 5/9 - Set your PIN..."
 echo ""
 echo -e "  ${GRAY}This PIN must match the one you enter in the Android app.${NC}"
 echo -e "  ${GRAY}It will be compiled into the firmware and never saved to disk.${NC}"
@@ -351,7 +352,7 @@ write_ok "PIN confirmed."
 
 # --- Step 6: Advanced options -------------------------------------------------
 
-write_step "Step 6/7 - Advanced options (press Enter to keep defaults)..."
+write_step "Step 6/9 - Advanced options (press Enter to keep defaults)..."
 echo ""
 echo -e "  ${GRAY}These are optional. Hit Enter at each prompt to use the default.${NC}"
 echo ""
@@ -423,6 +424,8 @@ echo ""
 echo -e "  ${GRAY}Enable Wi-Fi log server? The ESP32 will host an open Wi-Fi AP${NC}"
 echo -e "  ${GRAY}(SSID: ${DEVICE_NAME}_XXXXXX) serving a web page with the full open history.${NC}"
 echo -e "  ${GRAY}Uses more power while the AP is active.${NC}"
+echo -e "  ${GRAY}(If you enable Home Assistant webhook in the next step, the log is${NC}"
+echo -e "  ${GRAY} served automatically at http://${DEVICE_NAME}.local/log instead.)${NC}"
 read -rp "  Enable web log? (y/n, default: n): " weblog_input
 if [[ "$weblog_input" =~ ^[Yy]$ ]]; then
     ENABLE_WEBLOG=1
@@ -432,9 +435,39 @@ else
     write_ok "Wi-Fi log server: disabled"
 fi
 
-# --- Step 7: Compile and flash ------------------------------------------------
+# --- Step 7: Home Assistant webhook -------------------------------------------
 
-write_step "Step 7/7 - Compiling and flashing..."
+write_step "Step 7/9 - Home Assistant webhook integration (optional)..."
+echo ""
+echo -e "  ${GRAY}Enable this if the ESP32 will be wall-powered at home and you want${NC}"
+echo -e "  ${GRAY}to trigger it from Home Assistant automations over your home WiFi.${NC}"
+echo -e "  ${GRAY}BLE and the Android app continue to work in parallel.${NC}"
+echo -e "  ${GRAY}Deep sleep is disabled in this mode (device stays on permanently).${NC}"
+echo ""
+read -rp "  Enable Home Assistant webhook? (y/n, default: n): " ha_input
+ENABLE_HA=0
+HA_WIFI_SSID=""
+HA_WIFI_PASS=""
+if [[ "$ha_input" =~ ^[Yy]$ ]]; then
+    ENABLE_HA=1
+    echo ""
+    echo -e "  ${GRAY}WiFi credentials are compiled into the firmware and never saved to disk.${NC}"
+    echo ""
+    read -rp "  WiFi SSID: " HA_WIFI_SSID
+    if [[ -z "$HA_WIFI_SSID" ]]; then
+        write_fail "WiFi SSID cannot be empty."
+    fi
+    read -rsp "  WiFi password: " HA_WIFI_PASS
+    echo ""
+    write_ok "Home Assistant webhook: enabled"
+    write_ok "WiFi SSID: $HA_WIFI_SSID"
+else
+    write_ok "Home Assistant webhook: disabled"
+fi
+
+# --- Step 8: Compile and flash ------------------------------------------------
+
+write_step "Step 8/9 - Compiling and flashing..."
 echo ""
 echo -e "  ${GRAY}Running PlatformIO build + flash. This may take a few minutes on first run...${NC}"
 echo -e "  ${GRAY}(First run downloads the ESP32 toolchain — subsequent runs are much faster)${NC}"
@@ -451,6 +484,11 @@ fi
 WEBLOG_FLAG=""
 if (( ENABLE_WEBLOG )); then
     WEBLOG_FLAG="\n    -DENABLE_WEBLOG=1"
+fi
+
+HA_FLAG=""
+if (( ENABLE_HA )); then
+    HA_FLAG="\n    -DENABLE_HA_WEBHOOK=1\n    -DHA_WIFI_SSID=\"${HA_WIFI_SSID}\"\n    -DHA_WIFI_PASS=\"${HA_WIFI_PASS}\""
 fi
 
 BUILD_INI_FILE="$(dirname "$0")/platformio.build.ini"
@@ -472,7 +510,7 @@ build_flags =
     -DUSER_PIN=\"${PIN}\"
     -DDEVICE_NAME=\"${DEVICE_NAME}\"
     -DSLEEP_DURATION_S=${SLEEP_DURATION}
-    -DRELAY_PULSE_MS=${PULSE_DURATION}${LED_FLAGS}${WEBLOG_FLAG}
+    -DRELAY_PULSE_MS=${PULSE_DURATION}${LED_FLAGS}${WEBLOG_FLAG}${HA_FLAG}
 
 [env:native]
 platform = native
@@ -508,6 +546,24 @@ if (( FLASH_OK )); then
     echo ""
     echo -e "  ${GRAY}Your PIN was never saved to disk.${NC}"
     echo ""
+    if (( ENABLE_HA )); then
+        echo -e "  ${CYAN}── Home Assistant configuration ──────────────────────────${NC}"
+        echo -e "  ${GRAY}Add this to your configuration.yaml and reload HA:${NC}"
+        echo ""
+        echo -e "  ${WHITE}rest_command:${NC}"
+        echo -e "  ${WHITE}  open_garage:${NC}"
+        echo -e "  ${WHITE}    url: \"http://${DEVICE_NAME}.local/open\"${NC}"
+        echo -e "  ${WHITE}    method: POST${NC}"
+        echo -e "  ${WHITE}    headers:${NC}"
+        echo -e "  ${WHITE}      Authorization: \"Bearer ${PIN}\"${NC}"
+        echo ""
+        echo -e "  ${GRAY}Then call rest_command.open_garage from any automation.${NC}"
+        echo -e "  ${GRAY}Event log:    http://${DEVICE_NAME}.local/log${NC}"
+        echo -e "  ${GRAY}Health check: http://${DEVICE_NAME}.local/health${NC}"
+        echo -e "  ${GRAY}curl test:    curl -X POST http://${DEVICE_NAME}.local/open -H \"Authorization: Bearer ${PIN}\"${NC}"
+        echo -e "  ${CYAN}──────────────────────────────────────────────────────────${NC}"
+        echo ""
+    fi
     echo -e "  ${WHITE}Scan to install the Android app:${NC}"
     write_qr
     echo -e "  ${GRAY}https://play.google.com/store/apps/details?id=com.dunnowsoftware.GarageAAtoESP32${NC}"
