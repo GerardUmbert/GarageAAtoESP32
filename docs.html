@@ -825,15 +825,17 @@ flowchart TD
     url: "http://garage-opener.local/open"
     method: POST
     headers:
-      Authorization: "Bearer your-pin"</code></pre>
+      Authorization: "Bearer &lt;sha256-of-your-pin&gt;"</code></pre>
         <p>Then call <code>rest_command.open_garage</code> from any automation action. The device is reachable via mDNS at <code>http://&lt;device-name&gt;.local</code> — no static IP or DHCP reservation needed.</p>
 
         <h3>curl test</h3>
         <pre><code>curl -X POST http://garage-opener.local/open \
-  -H "Authorization: Bearer your-pin"</code></pre>
+  -H "Authorization: Bearer &lt;sha256-of-your-pin&gt;"</code></pre>
+        <p>The flash tool prints the exact hash to copy — you do not need to compute it manually.</p>
 
         <h3>Security</h3>
-        <p>The PIN is sent as a plain-text Bearer token over HTTP. This is acceptable for a LAN-only endpoint — the ESP32 is not reachable from outside your router. Hashing the PIN would not improve security since a captured hash is equally replayable without TLS. The endpoint applies rate limiting: 3 failed auth attempts within 60 seconds returns <code>429 Too Many Requests</code> for the remainder of that window.</p>
+        <p>The Bearer token is <code>SHA-256(PIN)</code> as a lowercase hex string — not the raw PIN. This means a captured token cannot be used to authenticate over BLE, where the raw PIN is required. The token is still replayable on the HTTP endpoint itself (without TLS there is no way to prevent that), but the blast radius of a leak is contained to the LAN webhook only. The endpoint applies rate limiting: 3 failed auth attempts within 60 seconds returns <code>429 Too Many Requests</code> for the remainder of that window.</p>
+        <p>The flash tool computes and prints the correct hash immediately after flashing — copy it directly into your <code>configuration.yaml</code> and curl commands.</p>
 
         <div class="callout callout-note">
           <div class="callout-icon">ℹ️</div>
