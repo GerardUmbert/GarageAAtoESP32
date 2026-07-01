@@ -833,6 +833,45 @@ flowchart TD
   -H "Authorization: Bearer &lt;sha256-of-your-pin&gt;"</code></pre>
         <p>The flash tool prints the exact hash to copy — you do not need to compute it manually.</p>
 
+        <h3>Derive your token</h3>
+        <p>If you need the hash again without reflashing, enter your PIN here — it never leaves your browser.</p>
+        <div style="display:flex;gap:8px;align-items:center;margin:12px 0">
+          <input id="pin-input" type="password" placeholder="Enter your PIN"
+            style="flex:1;background:#0A0C0E;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:9px 12px;color:#F3F5F7;font-size:14px;font-family:ui-monospace,monospace;outline:none"
+            oninput="hashPin(this.value)">
+          <button onclick="togglePinVisibility()"
+            style="background:#14181C;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:9px 12px;color:#8A939C;font-size:13px;cursor:pointer;white-space:nowrap"
+            id="pin-toggle">Show</button>
+        </div>
+        <div id="pin-hash-out" style="display:none;background:#14181C;border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:12px 14px;margin-bottom:12px">
+          <div style="font-size:11px;color:#5A6169;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Bearer token (SHA-256)</div>
+          <code id="pin-hash-val" style="font-size:13px;color:#2AD4A3;word-break:break-all"></code>
+          <button onclick="copyHash()"
+            style="display:block;margin-top:10px;background:rgba(42,212,163,0.1);border:1px solid rgba(42,212,163,0.2);border-radius:6px;padding:6px 14px;color:#2AD4A3;font-size:12px;cursor:pointer">
+            Copy
+          </button>
+        </div>
+        <script>
+          async function hashPin(pin) {
+            var out = document.getElementById('pin-hash-out');
+            var val = document.getElementById('pin-hash-val');
+            if (!pin) { out.style.display = 'none'; return; }
+            var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin));
+            var hex = Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+            val.textContent = hex;
+            out.style.display = 'block';
+          }
+          function togglePinVisibility() {
+            var inp = document.getElementById('pin-input');
+            var btn = document.getElementById('pin-toggle');
+            if (inp.type === 'password') { inp.type = 'text'; btn.textContent = 'Hide'; }
+            else { inp.type = 'password'; btn.textContent = 'Show'; }
+          }
+          function copyHash() {
+            navigator.clipboard.writeText(document.getElementById('pin-hash-val').textContent);
+          }
+        </script>
+
         <h3>Security</h3>
         <p>The Bearer token is <code>SHA-256(PIN)</code> as a lowercase hex string — not the raw PIN. This means a captured token cannot be used to authenticate over BLE, where the raw PIN is required. The token is still replayable on the HTTP endpoint itself (without TLS there is no way to prevent that), but the blast radius of a leak is contained to the LAN webhook only. The endpoint applies rate limiting: 3 failed auth attempts within 60 seconds returns <code>429 Too Many Requests</code> for the remainder of that window.</p>
         <p>The flash tool computes and prints the correct hash immediately after flashing — copy it directly into your <code>configuration.yaml</code> and curl commands.</p>
