@@ -875,6 +875,10 @@ flowchart TD
         <h3>Security</h3>
         <p>The Bearer token is <code>SHA-256(PIN)</code> as a lowercase hex string — not the raw PIN. This means a captured token cannot be used to authenticate over BLE, where the raw PIN is required. The token is still replayable on the HTTP endpoint itself (without TLS there is no way to prevent that), but the blast radius of a leak is contained to the LAN webhook only. The endpoint applies rate limiting: 3 failed auth attempts within 60 seconds returns <code>429 Too Many Requests</code> for the remainder of that window.</p>
         <p>The flash tool computes and prints the correct hash immediately after flashing — copy it directly into your <code>configuration.yaml</code> and curl commands.</p>
+        <div class="callout callout-note">
+          <div class="callout-icon">ℹ️</div>
+          <p>This is the same security posture as ESPHome's HTTP/REST endpoints and most local HA integrations — unencrypted on the LAN, trusted-network model. The difference is that this integration keeps full BLE + Android Auto support, which ESPHome cannot provide.</p>
+        </div>
 
         <div class="callout callout-note">
           <div class="callout-icon">ℹ️</div>
