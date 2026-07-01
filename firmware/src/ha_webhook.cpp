@@ -8,10 +8,14 @@
 #include <WebServer.h>
 #include <ESPmDNS.h>
 #include <string.h>
+#include "mbedtls/md.h"
 
 extern void onGarageOpen();
 
 static WebServer server(HA_SERVER_PORT);
+
+// SHA-256(USER_PIN) as lowercase hex, computed once at init.
+static char s_tokenHex[65] = {};
 
 // ── Rate limiter ──────────────────────────────────────────────────────────────
 // Tracks failed auth attempts. Resets after HA_RATE_LIMIT_WIN_S seconds.
@@ -38,21 +42,40 @@ static void recordFailure() {
 }
 
 // ── Token check ───────────────────────────────────────────────────────────────
-// Constant-time comparison to prevent timing attacks.
+// Expected token is SHA-256(USER_PIN) as lowercase hex (64 chars).
+// Constant-time comparison prevents timing attacks.
+// Using the hash means a captured Bearer token cannot be used to authenticate
+// over BLE, where the raw PIN is required.
+
+static void computeTokenHex() {
+    uint8_t hash[32];
+    const uint8_t *pin = reinterpret_cast<const uint8_t *>(USER_PIN);
+    size_t pin_len = strlen(USER_PIN);
+
+    mbedtls_md_context_t ctx;
+    const mbedtls_md_info_t *info = mbedtls_md_info_from_type(MBEDTLS_MD_SHA256);
+    mbedtls_md_init(&ctx);
+    mbedtls_md_setup(&ctx, info, 0);
+    mbedtls_md_starts(&ctx);
+    mbedtls_md_update(&ctx, pin, pin_len);
+    mbedtls_md_finish(&ctx, hash);
+    mbedtls_md_free(&ctx);
+
+    for (int i = 0; i < 32; i++) {
+        snprintf(s_tokenHex + i * 2, 3, "%02x", hash[i]);
+    }
+}
 
 static bool tokenValid(const String &header) {
-    // Expect: "Bearer <pin>"
+    // Expect: "Bearer <sha256hex>"
     if (!header.startsWith("Bearer ")) return false;
     const char *provided = header.c_str() + 7; // skip "Bearer "
-    const char *expected = USER_PIN;
+    const char *expected = s_tokenHex;          // 64-char hex, always same length
 
     size_t pLen = strlen(provided);
-    size_t eLen = strlen(expected);
-
-    // Always run the full loop against expected length to avoid timing leak.
-    uint8_t diff = (uint8_t)(pLen != eLen);
-    size_t  cmp  = eLen < pLen ? eLen : pLen;
-    for (size_t i = 0; i < cmp; i++) {
+    // Always compare 64 chars to avoid length timing leak.
+    uint8_t diff = (uint8_t)(pLen != 64);
+    for (size_t i = 0; i < 64; i++) {
         diff |= (uint8_t)(provided[i] ^ expected[i]);
     }
     return diff == 0;
@@ -96,6 +119,8 @@ static void handleLog() {
 namespace HaWebhook {
 
 void init() {
+    computeTokenHex();
+
     WiFi.mode(WIFI_STA);
     WiFi.begin(HA_WIFI_SSID, HA_WIFI_PASS);
 

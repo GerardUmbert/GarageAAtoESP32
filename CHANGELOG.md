@@ -11,8 +11,10 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - When enabled, ESP32 joins home WiFi as a station and exposes `POST /open` on port 80, authenticated with the same PIN used for BLE
 - `GET /health` endpoint returns `{"status":"ok"}` for HA availability checks
 - mDNS advertisement as `<device-name>.local` — no static IP required
+- Bearer token is SHA-256(PIN) rather than the raw PIN — a captured token cannot authenticate over BLE where the raw PIN is required
 - Rate limiter: 3 failed auth attempts per 60s window triggers a 429 response
 - Constant-time token comparison to prevent timing attacks
+- Flash tool computes and prints the correct hash after flashing — no manual computation needed
 - BLE stack runs in parallel — Android app unaffected
 - Deep sleep disabled when HA webhook is enabled (wall-powered deployment)
 - Event log (`/log`) served over LAN at `http://<device-name>.local/log` when HA webhook is enabled — same UI as the captive portal log, no separate AP needed

@@ -552,6 +552,11 @@ if ($flashSuccess) {
     Write-Host "  Your PIN was never saved to disk." -ForegroundColor Gray
     Write-Host ""
     if ($enableHa) {
+        $pinBytes  = [System.Text.Encoding]::UTF8.GetBytes($pin)
+        $sha256    = [System.Security.Cryptography.SHA256]::Create()
+        $hashBytes = $sha256.ComputeHash($pinBytes)
+        $pinHash   = ($hashBytes | ForEach-Object { $_.ToString("x2") }) -join ""
+
         Write-Host "  ── Home Assistant configuration ──────────────────────────" -ForegroundColor Cyan
         Write-Host "  Add this to your configuration.yaml and reload HA:"        -ForegroundColor Gray
         Write-Host ""
@@ -560,12 +565,12 @@ if ($flashSuccess) {
         Write-Host "      url: `"http://$deviceName.local/open`""                -ForegroundColor White
         Write-Host "      method: POST"                                           -ForegroundColor White
         Write-Host "      headers:"                                               -ForegroundColor White
-        Write-Host "        Authorization: `"Bearer $pin`""                       -ForegroundColor White
+        Write-Host "        Authorization: `"Bearer $pinHash`""                  -ForegroundColor White
         Write-Host ""
         Write-Host "  Then call rest_command.open_garage from any automation."   -ForegroundColor Gray
         Write-Host "  Event log:    http://$deviceName.local/log"                -ForegroundColor Gray
         Write-Host "  Health check: http://$deviceName.local/health"             -ForegroundColor Gray
-        Write-Host "  curl test:    curl -X POST http://$deviceName.local/open -H `"Authorization: Bearer $pin`"" -ForegroundColor Gray
+        Write-Host "  curl test:    curl -X POST http://$deviceName.local/open -H `"Authorization: Bearer $pinHash`"" -ForegroundColor Gray
         Write-Host "  ──────────────────────────────────────────────────────────" -ForegroundColor Cyan
         Write-Host ""
     }

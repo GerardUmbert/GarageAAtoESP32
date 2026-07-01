@@ -547,6 +547,7 @@ if (( FLASH_OK )); then
     echo -e "  ${GRAY}Your PIN was never saved to disk.${NC}"
     echo ""
     if (( ENABLE_HA )); then
+        PIN_HASH=$(printf '%s' "${PIN}" | sha256sum | awk '{print $1}')
         echo -e "  ${CYAN}── Home Assistant configuration ──────────────────────────${NC}"
         echo -e "  ${GRAY}Add this to your configuration.yaml and reload HA:${NC}"
         echo ""
@@ -555,12 +556,12 @@ if (( FLASH_OK )); then
         echo -e "  ${WHITE}    url: \"http://${DEVICE_NAME}.local/open\"${NC}"
         echo -e "  ${WHITE}    method: POST${NC}"
         echo -e "  ${WHITE}    headers:${NC}"
-        echo -e "  ${WHITE}      Authorization: \"Bearer ${PIN}\"${NC}"
+        echo -e "  ${WHITE}      Authorization: \"Bearer ${PIN_HASH}\"${NC}"
         echo ""
         echo -e "  ${GRAY}Then call rest_command.open_garage from any automation.${NC}"
         echo -e "  ${GRAY}Event log:    http://${DEVICE_NAME}.local/log${NC}"
         echo -e "  ${GRAY}Health check: http://${DEVICE_NAME}.local/health${NC}"
-        echo -e "  ${GRAY}curl test:    curl -X POST http://${DEVICE_NAME}.local/open -H \"Authorization: Bearer ${PIN}\"${NC}"
+        echo -e "  ${GRAY}curl test:    curl -X POST http://${DEVICE_NAME}.local/open -H \"Authorization: Bearer ${PIN_HASH}\"${NC}"
         echo -e "  ${CYAN}──────────────────────────────────────────────────────────${NC}"
         echo ""
     fi
