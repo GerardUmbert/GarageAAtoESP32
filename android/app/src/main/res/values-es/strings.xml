@@ -29,6 +29,8 @@
     <string name="scan_scanning">Escaneando abridores…</string>
     <string name="scan_tap_to_pair">Toca para vincular</string>
     <string name="scan_skip">Omitir por ahora</string>
+    <string name="scan_use_webhook_title">Usar un webhook en su lugar</string>
+    <string name="scan_use_webhook_subtitle">Home Assistant o cualquier endpoint HTTP</string>
 
     <string name="pair_title">¿Vincular este abridor?</string>
     <string name="pair_subtitle">Lo recordaremos en este dispositivo. Introduce la contraseña que coincide con la configurada en el firmware del ESP32.</string>

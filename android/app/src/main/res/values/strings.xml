@@ -33,6 +33,8 @@
     <string name="scan_scanning">Scanning for openers…</string>
     <string name="scan_tap_to_pair">Tap to pair</string>
     <string name="scan_skip">Skip for now</string>
+    <string name="scan_use_webhook_title">Use a webhook instead</string>
+    <string name="scan_use_webhook_subtitle">Home Assistant or any HTTP endpoint</string>
 
     <!-- Pair screen -->
     <string name="pair_title">Pair this opener?</string>

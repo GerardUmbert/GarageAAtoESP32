@@ -29,6 +29,8 @@
     <string name="scan_scanning">Suche nach Öffnern…</string>
     <string name="scan_tap_to_pair">Tippen zum Koppeln</string>
     <string name="scan_skip">Vorerst überspringen</string>
+    <string name="scan_use_webhook_title">Stattdessen einen Webhook nutzen</string>
+    <string name="scan_use_webhook_subtitle">Home Assistant oder ein beliebiger HTTP-Endpunkt</string>
 
     <string name="pair_title">Diesen Öffner koppeln?</string>
     <string name="pair_subtitle">Er wird auf diesem Gerät gespeichert. Gib das Passwort ein, das mit dem in der ESP32-Firmware übereinstimmt.</string>

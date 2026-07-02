@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Webhook URLs are arbitrary user-entered endpoints (ESP32 .local mDNS names,
+  raw LAN IPs, Home Assistant instances) with no TLS in the common case. The
+  webhook setup screen already warns the user they're pointing at an endpoint
+  they control and we can't secure — this just lets that traffic through.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

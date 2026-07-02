@@ -257,6 +257,7 @@ private fun AppRoot(
             },
             onBack = if (routeStack.size > 1) ({ pop() }) else null,
             onSkip = { replaceAll(Route.Main) },
+            onSelectWebhook = { push(Route.WebhookSetup) },
         )
 
         Route.ScanAnother -> ScanScreen(
@@ -266,6 +267,7 @@ private fun AppRoot(
                 push(Route.Pair)
             },
             onBack = { pop() },
+            onSelectWebhook = { push(Route.WebhookSetup) },
         )
 
         Route.Pair -> {

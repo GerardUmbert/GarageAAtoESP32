@@ -2,7 +2,9 @@
 
 #include "ha_webhook.h"
 #include "config.h"
+#ifdef ENABLE_WEBLOG
 #include "web_log.h"
+#endif
 #include <Arduino.h>
 #include <WiFi.h>
 #include <WebServer.h>
@@ -83,6 +85,16 @@ static bool tokenValid(const String &header) {
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 
+#ifdef ENABLE_WEBLOG
+// NTP sync completes a few seconds after boot; before that, time(nullptr)
+// returns a small/garbage epoch. Clamp to 0 so it renders as "—" (same as
+// BLE auth failures with no trusted timestamp) instead of a bogus 1970 date.
+static uint32_t currentTimeOrUnknown() {
+    time_t now = time(nullptr);
+    return (now < 1700000000) ? 0 : (uint32_t)now;
+}
+#endif
+
 static void handleOpen() {
     if (checkRateLimit()) {
         server.send(429, "text/plain", "Too Many Requests");
@@ -92,11 +104,17 @@ static void handleOpen() {
     String auth = server.header("Authorization");
     if (!tokenValid(auth)) {
         recordFailure();
+#ifdef ENABLE_WEBLOG
+        WebLog::appendFailure(currentTimeOrUnknown());
+#endif
         server.send(401, "text/plain", "Unauthorized");
         return;
     }
 
     server.send(200, "text/plain", "OK");
+#ifdef ENABLE_WEBLOG
+    WebLog::appendSuccess(currentTimeOrUnknown(), OpenReason::MANUAL, "Webhook");
+#endif
     onGarageOpen();
 }
 
@@ -155,8 +173,19 @@ void init() {
 #endif
         }
 
+#ifdef ENABLE_WEBLOG
+        // Needed so webhook-triggered opens (no client-supplied timestamp,
+        // unlike BLE) get a real time in the log instead of epoch 0. Three
+        // servers on different operators/anycast networks so an IoT-only
+        // VLAN or a single blocked/down provider still has a chance to sync.
+        // Fully non-blocking either way — if all three are unreachable (e.g.
+        // no internet egress), sync just never completes and
+        // currentTimeOrUnknown() keeps returning 0 ("—" in the log) forever.
+        configTime(0, 0, "pool.ntp.org", "time.google.com", "time.cloudflare.com");
         WebLog::init();
-        server.collectHeaders("Authorization");
+#endif
+        static const char *headerKeys[] = { "Authorization" };
+        server.collectHeaders(headerKeys, 1);
         server.on("/open",   HTTP_POST, handleOpen);
         server.on("/health", HTTP_GET,  handleHealth);
         server.on("/log",    HTTP_GET,  handleLog);

@@ -42,6 +42,7 @@ fun ScanScreen(
     onPicked: (FoundDevice) -> Unit,
     onBack: (() -> Unit)? = null,
     onSkip: (() -> Unit)? = null,
+    onSelectWebhook: (() -> Unit)? = null,
     excludeAddress: String? = null,
 ) {
     val ctx = LocalContext.current
@@ -119,6 +120,7 @@ fun ScanScreen(
         FoundDeviceCard(
             devices = devices,
             onPicked = onPicked,
+            onSelectWebhook = onSelectWebhook,
         )
 
         if (onSkip != null) {
@@ -250,8 +252,9 @@ private fun DeviceBlip(rssi: Int, addressSeed: String) {
 private fun FoundDeviceCard(
     devices: List<FoundDevice>,
     onPicked: (FoundDevice) -> Unit,
+    onSelectWebhook: (() -> Unit)? = null,
 ) {
-    if (devices.isEmpty()) {
+    if (devices.isEmpty() && onSelectWebhook == null) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -276,6 +279,69 @@ private fun FoundDeviceCard(
             .verticalScroll(rememberScrollState()),
     ) {
         val ctx = LocalContext.current
+
+        if (devices.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(GarageColors.Surface)
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.scan_scanning),
+                    color = GarageColors.TextDim,
+                    fontSize = 14.sp,
+                )
+            }
+            if (onSelectWebhook != null) Spacer(Modifier.height(8.dp))
+        }
+
+        if (onSelectWebhook != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(GarageColors.Surface)
+                    .clickable {
+                        vibrate(ctx, HAPTIC_TAP)
+                        onSelectWebhook()
+                    }
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(GarageColors.Surface2),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(6.dp)
+                            .clip(CircleShape)
+                            .background(GarageColors.Accent),
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.scan_use_webhook_title),
+                        color = GarageColors.Text,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        text = stringResource(R.string.scan_use_webhook_subtitle),
+                        color = GarageColors.TextDim,
+                        fontSize = 13.sp,
+                    )
+                }
+            }
+            if (devices.isNotEmpty()) Spacer(Modifier.height(8.dp))
+        }
+
         devices.forEachIndexed { idx, dev ->
             Row(
                 modifier = Modifier

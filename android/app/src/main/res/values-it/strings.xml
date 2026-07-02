@@ -29,6 +29,8 @@
     <string name="scan_scanning">Ricerca apriporte…</string>
     <string name="scan_tap_to_pair">Tocca per abbinare</string>
     <string name="scan_skip">Salta per ora</string>
+    <string name="scan_use_webhook_title">Usa un webhook invece</string>
+    <string name="scan_use_webhook_subtitle">Home Assistant o qualsiasi endpoint HTTP</string>
 
     <string name="pair_title">Abbinare questo apriporta?</string>
     <string name="pair_subtitle">Lo ricorderemo su questo dispositivo. Inserisci la password corrispondente a quella configurata nel firmware di questo ESP32.</string>

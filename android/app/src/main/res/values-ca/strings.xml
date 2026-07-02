@@ -29,6 +29,8 @@
     <string name="scan_scanning">Cercant dispositius…</string>
     <string name="scan_tap_to_pair">Toca per vincular</string>
     <string name="scan_skip">Ometre de moment</string>
+    <string name="scan_use_webhook_title">Utilitza un webhook en el seu lloc</string>
+    <string name="scan_use_webhook_subtitle">Home Assistant o qualsevol endpoint HTTP</string>
 
     <string name="pair_title">Vincular aquest dispositiu?</string>
     <string name="pair_subtitle">El recordarem en aquest dispositiu. Introdueix la contrasenya que coincideixi amb la configurada al firmware de l\'ESP32.</string>

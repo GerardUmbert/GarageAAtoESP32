@@ -29,6 +29,8 @@
     <string name="scan_scanning">Etsitään avaajia…</string>
     <string name="scan_tap_to_pair">Yhdistä napauttamalla</string>
     <string name="scan_skip">Ohita toistaiseksi</string>
+    <string name="scan_use_webhook_title">Käytä sen sijaan webhookia</string>
+    <string name="scan_use_webhook_subtitle">Home Assistant tai mikä tahansa HTTP-osoite</string>
 
     <string name="pair_title">Yhdistetäänkö tämä avaaja?</string>
     <string name="pair_subtitle">Muistamme sen tällä laitteella. Syötä salasana, joka vastaa ESP32-laiteohjelmiston salasanaa.</string>

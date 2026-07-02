@@ -95,6 +95,7 @@ Already automated your garage through Home Assistant, ESPHome, or anything else 
 - Works out of the box with Home Assistant's native webhook trigger (`Settings → Automations → Webhook`) — paste the URL, no token needed, since the `webhook_id` in the URL is itself the secret.
 - If your endpoint expects an `Authorization: Bearer <token>` header (for example, this project's own [Home Assistant firmware integration](docs/provisioning.md)), an optional token field is available under **Advanced**.
 - To set it up: on first launch, choose **"I already have a webhook / Home Assistant automation"** instead of scanning for a device. You can switch to this mode later from Settings as well.
+- If you're pointing the app at this project's own ESP32 webhook, **stick with the `.local` (mDNS) hostname unless you've reserved the ESP32's IP on your router** (DHCP reservation/static lease) — a plain IP can get reassigned to a different device after a lease renewal or reboot, silently breaking or misdirecting the webhook. Only switch to the IP (e.g. `http://192.168.1.50/open` instead of `http://device-name.local/open`) once that reservation is in place; it shaves roughly 1–3 seconds of mDNS resolution off every open, same token, same endpoint.
 
 This is entirely an app-side feature — no firmware or flash tool changes required, and it works with any HTTP endpoint, not just Home Assistant.
 

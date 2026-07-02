@@ -246,18 +246,22 @@ if ($Port -ne "") {
 
     foreach ($device in Get-PnpDevice -Class Ports -Status OK -ErrorAction SilentlyContinue) {
         $hwIds = $device.HardwareID
+        $matchedChip = $null
         foreach ($id in $hwIds) {
             foreach ($entry in $esp32VidPids) {
                 if ($id -match "VID_$($entry.VID)&PID_$($entry.PID)") {
-                    if ($device.FriendlyName -match "\(COM(\d+)\)") {
-                        $comPort = "COM$($Matches[1])"
-                        $foundPorts += [PSCustomObject]@{
-                            Port = $comPort
-                            Chip = $entry.Name
-                            Name = $device.FriendlyName
-                        }
-                    }
+                    $matchedChip = $entry.Name
+                    break
                 }
+            }
+            if ($matchedChip) { break }
+        }
+        if ($matchedChip -and $device.FriendlyName -match "\(COM(\d+)\)") {
+            $comPort = "COM$($Matches[1])"
+            $foundPorts += [PSCustomObject]@{
+                Port = $comPort
+                Chip = $matchedChip
+                Name = $device.FriendlyName
             }
         }
     }
@@ -291,7 +295,8 @@ if ($Port -ne "") {
             Write-Host "    [$($i+1)] $($foundPorts[$i].Port)  -  $($foundPorts[$i].Name)" -ForegroundColor White
         }
         Write-Host ""
-        $choice = Read-Host "  Enter number"
+        $choice = Read-Host "  Enter number (default: 1)"
+        if ([string]::IsNullOrWhiteSpace($choice)) { $choice = "1" }
         $idx = [int]$choice - 1
         if ($idx -lt 0 -or $idx -ge $foundPorts.Count) {
             Write-Fail "Invalid selection."
@@ -479,6 +484,10 @@ if ($enableHa) {
     $haWifiPass = Read-Host "  WiFi password"
     Write-OK "Home Assistant webhook: enabled"
     Write-OK "WiFi SSID: $haWifiSsid"
+    if (-not $enableWeblog) {
+        $enableWeblog = $true
+        Write-OK "Wi-Fi log server: enabled automatically (required for the HA webhook /log page)"
+    }
 } else {
     Write-OK "Home Assistant webhook: disabled"
 }

@@ -1,4 +1,5 @@
 #pragma once
+#include <stdint.h>
 
 // ── Trigger mode ──────────────────────────────────────────────────────────────
 // Choose how the ESP32 fires the garage. Pick exactly one:

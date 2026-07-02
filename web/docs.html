@@ -829,6 +829,11 @@ flowchart TD
       Authorization: "Bearer &lt;sha256-of-your-pin&gt;"</code></pre>
         <p>Then call <code>rest_command.open_garage</code> from any automation action. The device is reachable via mDNS at <code>http://&lt;device-name&gt;.local</code> — no static IP or DHCP reservation needed.</p>
 
+        <div class="callout callout-note">
+          <div class="callout-icon">ℹ️</div>
+          <p><strong>Prefer mDNS (<code>.local</code>) unless you've reserved the ESP32's IP on your router.</strong> Without a DHCP reservation/static lease, a plain IP address can silently get reassigned to a different device after a lease renewal or router reboot, breaking or misdirecting the webhook — mDNS always follows the device, so it's the safer default. Once you've set a reservation, calling the ESP32 by IP instead (e.g. <code>http://192.168.1.50/open</code>) skips roughly 1–3 seconds of mDNS resolution on every call — same endpoints, same token, just faster.</p>
+        </div>
+
         <h3>curl test</h3>
         <pre><code>curl -X POST http://garage-opener.local/open \
   -H "Authorization: Bearer &lt;sha256-of-your-pin&gt;"</code></pre>

@@ -286,7 +286,8 @@ else
             echo -e "  ${WHITE}  [$((i+1))] ${found_ports[$i]}  —  ${found_chips[$i]}${NC}"
         done
         echo ""
-        read -rp "  Enter number: " port_choice
+        read -rp "  Enter number (default: 1): " port_choice
+        [[ -z "$port_choice" ]] && port_choice="1"
         port_idx=$(( port_choice - 1 ))
         if (( port_idx < 0 || port_idx >= ${#found_ports[@]} )); then
             write_fail "Invalid selection."
@@ -461,6 +462,10 @@ if [[ "$ha_input" =~ ^[Yy]$ ]]; then
     echo ""
     write_ok "Home Assistant webhook: enabled"
     write_ok "WiFi SSID: $HA_WIFI_SSID"
+    if (( ! ENABLE_WEBLOG )); then
+        ENABLE_WEBLOG=1
+        write_ok "Wi-Fi log server: enabled automatically (required for the HA webhook /log page)"
+    fi
 else
     write_ok "Home Assistant webhook: disabled"
 fi
