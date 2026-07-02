@@ -13,6 +13,7 @@ enum class TriggerSource {
 enum class OpenOutcome {
     SUCCESS,
     FAILED_BLE,
+    FAILED_WEBHOOK,
     SUPPRESSED,
 }
 

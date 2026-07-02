@@ -6,6 +6,28 @@ import androidx.security.crypto.MasterKey
 import org.json.JSONObject
 
 /**
+ * Common geofence fields shared by both pairing types (BLE device, webhook
+ * config) so geofence consumers (GeofenceBroadcastReceiver,
+ * GeofenceForegroundService, the geofence picker UI) can operate on whichever
+ * transport is active without branching on transport type.
+ */
+interface GeofenceCapable {
+    val geofenceLat: Double?
+    val geofenceLng: Double?
+    val geofenceRadiusM: Float?
+    val geofenceOuterOffsetM: Float
+    val geofenceEnabled: Boolean
+
+    val hasGeofence: Boolean
+        get() = geofenceLat != null && geofenceLng != null && geofenceRadiusM != null
+
+    val isGeofenceActive: Boolean
+        get() = hasGeofence && geofenceEnabled
+}
+
+enum class TransportType { BLE, WEBHOOK }
+
+/**
  * Per-device pairing record. One ESP32 ↔ one password, bundled together so
  * the password can never get out of sync with the device it belongs to. Stored
  * inside EncryptedSharedPreferences so the password is at-rest encrypted and
@@ -18,19 +40,34 @@ data class PairedDevice(
     val address: String,
     val name: String,
     val password: String,
-    val geofenceLat: Double? = null,
-    val geofenceLng: Double? = null,
-    val geofenceRadiusM: Float? = null,
-    val geofenceOuterOffsetM: Float = 400f,
-    val geofenceEnabled: Boolean = false,
+    override val geofenceLat: Double? = null,
+    override val geofenceLng: Double? = null,
+    override val geofenceRadiusM: Float? = null,
+    override val geofenceOuterOffsetM: Float = 400f,
+    override val geofenceEnabled: Boolean = false,
     val hasWebLog: Boolean = false,
-) {
-    val hasGeofence: Boolean
-        get() = geofenceLat != null && geofenceLng != null && geofenceRadiusM != null
+) : GeofenceCapable
 
-    val isGeofenceActive: Boolean
-        get() = hasGeofence && geofenceEnabled
-}
+/**
+ * Webhook transport config — an alternative to a BLE pairing. "Open" means an
+ * HTTP POST to `url` (e.g. a Home Assistant native webhook trigger or
+ * rest_command endpoint) instead of a BLE connection to an ESP32.
+ *
+ * authToken is optional: Home Assistant's native webhook trigger
+ * (`/api/webhook/<webhook_id>`) needs only the URL — the webhook_id itself is
+ * the secret, no Authorization header involved. Bearer-token endpoints (this
+ * project's own firmware HA mode, or a custom script) fill this in.
+ */
+data class WebhookConfig(
+    val url: String,
+    val authToken: String? = null,
+    val name: String,
+    override val geofenceLat: Double? = null,
+    override val geofenceLng: Double? = null,
+    override val geofenceRadiusM: Float? = null,
+    override val geofenceOuterOffsetM: Float = 400f,
+    override val geofenceEnabled: Boolean = false,
+) : GeofenceCapable
 
 class DevicePreferences(context: Context) {
 
@@ -77,7 +114,52 @@ class DevicePreferences(context: Context) {
                     put("geofence_enabled", value.geofenceEnabled)
                     put("has_web_log", value.hasWebLog)
                 }.toString()
-                prefs.edit().putString(KEY_PAIRED_DEVICE, json).apply()
+                // Mutual exclusion: pairing a BLE device supersedes any webhook config.
+                prefs.edit()
+                    .putString(KEY_PAIRED_DEVICE, json)
+                    .remove(KEY_WEBHOOK_CONFIG)
+                    .apply()
+            }
+        }
+
+    var webhookConfig: WebhookConfig?
+        get() {
+            val raw = prefs.getString(KEY_WEBHOOK_CONFIG, null) ?: return null
+            return try {
+                val o = JSONObject(raw)
+                WebhookConfig(
+                    url = o.getString("url"),
+                    authToken = o.optString("auth_token").takeIf { it.isNotEmpty() },
+                    name = o.getString("name"),
+                    geofenceLat = if (o.has("geofence_lat")) o.getDouble("geofence_lat") else null,
+                    geofenceLng = if (o.has("geofence_lng")) o.getDouble("geofence_lng") else null,
+                    geofenceRadiusM = if (o.has("geofence_radius_m")) o.getDouble("geofence_radius_m").toFloat() else null,
+                    geofenceOuterOffsetM = if (o.has("geofence_outer_offset_m")) o.getDouble("geofence_outer_offset_m").toFloat() else 400f,
+                    geofenceEnabled = o.optBoolean("geofence_enabled", false),
+                )
+            } catch (_: Throwable) {
+                null
+            }
+        }
+        set(value) {
+            if (value == null) {
+                prefs.edit().remove(KEY_WEBHOOK_CONFIG).apply()
+            } else {
+                val json = JSONObject().apply {
+                    put("url", value.url)
+                    if (!value.authToken.isNullOrBlank()) put("auth_token", value.authToken)
+                    put("name", value.name)
+                    if (value.geofenceLat != null) put("geofence_lat", value.geofenceLat)
+                    if (value.geofenceLng != null) put("geofence_lng", value.geofenceLng)
+                    if (value.geofenceRadiusM != null) put("geofence_radius_m", value.geofenceRadiusM.toDouble())
+                    put("geofence_outer_offset_m", value.geofenceOuterOffsetM.toDouble())
+                    put("geofence_enabled", value.geofenceEnabled)
+                }.toString()
+                // Mutual exclusion: configuring a webhook supersedes any BLE pairing.
+                prefs.edit()
+                    .putString(KEY_WEBHOOK_CONFIG, json)
+                    .remove(KEY_PAIRED_DEVICE)
+                    .apply()
             }
         }
 
@@ -118,12 +200,34 @@ class DevicePreferences(context: Context) {
     val hasPairedDevice: Boolean
         get() = pairedDevice != null
 
+    val hasWebhookConfig: Boolean
+        get() = webhookConfig != null
+
+    val activeTransportType: TransportType?
+        get() = when {
+            hasPairedDevice   -> TransportType.BLE
+            hasWebhookConfig  -> TransportType.WEBHOOK
+            else              -> null
+        }
+
+    /** Geofence-capable record for whichever transport is currently active, or null if neither is configured. */
+    val activeGeofenceCapable: GeofenceCapable?
+        get() = pairedDevice ?: webhookConfig
+
     val isConfigured: Boolean
-        get() = demoMode || hasPairedDevice
+        get() = demoMode || hasPairedDevice || hasWebhookConfig
 
     fun unpairDevice() {
         prefs.edit()
             .remove(KEY_PAIRED_DEVICE)
+            .remove(KEY_LAST_OPENED)
+            .remove(KEY_LAST_AUTO_FIRED)
+            .apply()
+    }
+
+    fun clearWebhookConfig() {
+        prefs.edit()
+            .remove(KEY_WEBHOOK_CONFIG)
             .remove(KEY_LAST_OPENED)
             .remove(KEY_LAST_AUTO_FIRED)
             .apply()
@@ -159,12 +263,66 @@ class DevicePreferences(context: Context) {
         pairedDevice = current.copy(geofenceEnabled = enabled)
     }
 
+    fun updateWebhookGeofence(lat: Double, lng: Double, radiusM: Float, outerOffsetM: Float) {
+        val current = webhookConfig ?: return
+        webhookConfig = current.copy(
+            geofenceLat = lat,
+            geofenceLng = lng,
+            geofenceRadiusM = radiusM,
+            geofenceOuterOffsetM = outerOffsetM,
+        )
+    }
+
+    fun clearWebhookGeofence() {
+        val current = webhookConfig ?: return
+        webhookConfig = current.copy(
+            geofenceLat = null,
+            geofenceLng = null,
+            geofenceRadiusM = null,
+            geofenceEnabled = false,
+        )
+    }
+
+    fun setWebhookGeofenceEnabled(enabled: Boolean) {
+        val current = webhookConfig ?: return
+        webhookConfig = current.copy(geofenceEnabled = enabled)
+    }
+
+    /**
+     * Update geofence fields on whichever transport is currently active.
+     * No-op if neither a BLE device nor a webhook is configured.
+     */
+    fun updateActiveGeofence(lat: Double, lng: Double, radiusM: Float, outerOffsetM: Float) {
+        when (activeTransportType) {
+            TransportType.BLE     -> updateGeofence(lat, lng, radiusM, outerOffsetM)
+            TransportType.WEBHOOK -> updateWebhookGeofence(lat, lng, radiusM, outerOffsetM)
+            null                  -> Unit
+        }
+    }
+
+    fun clearActiveGeofence() {
+        when (activeTransportType) {
+            TransportType.BLE     -> clearGeofence()
+            TransportType.WEBHOOK -> clearWebhookGeofence()
+            null                  -> Unit
+        }
+    }
+
+    fun setActiveGeofenceEnabled(enabled: Boolean) {
+        when (activeTransportType) {
+            TransportType.BLE     -> setGeofenceEnabled(enabled)
+            TransportType.WEBHOOK -> setWebhookGeofenceEnabled(enabled)
+            null                  -> Unit
+        }
+    }
+
     fun clear() {
         prefs.edit().clear().apply()
     }
 
     companion object {
         private const val KEY_PAIRED_DEVICE          = "paired_device"
+        private const val KEY_WEBHOOK_CONFIG          = "webhook_config"
         private const val KEY_DEMO                   = "demo_mode"
         private const val KEY_LAST_OPENED            = "last_opened_at"
         private const val KEY_LAST_AUTO_FIRED        = "last_auto_fired_at"

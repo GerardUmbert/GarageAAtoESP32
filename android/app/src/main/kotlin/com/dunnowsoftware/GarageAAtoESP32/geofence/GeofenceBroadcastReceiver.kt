@@ -7,6 +7,7 @@ import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryEntry
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryStore
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenOutcome
+import com.dunnowsoftware.GarageAAtoESP32.data.TransportType
 import com.dunnowsoftware.GarageAAtoESP32.data.TriggerSource
 import com.google.android.gms.location.DetectedActivity
 import com.google.android.gms.location.GeofencingEvent
@@ -140,30 +141,41 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
 
     private fun handleEnter(context: Context, deviceAddress: String, event: GeofencingEvent) {
         val prefs = DevicePreferences(context)
+        val transportType = prefs.activeTransportType
         val device = prefs.pairedDevice
+        val webhook = prefs.webhookConfig
 
-        if (device == null || device.address != deviceAddress) {
-            GeofenceLogger.w(context, TAG, "ENTER for $deviceAddress — not the paired device (paired=${device?.address}), dropping")
+        val capable = when {
+            device != null && device.address == deviceAddress   -> device
+            webhook != null && deviceAddress == WEBHOOK_PSEUDO_ADDRESS -> webhook
+            else -> null
+        }
+        if (capable == null) {
+            GeofenceLogger.w(context, TAG, "ENTER for $deviceAddress — not the active transport (BLE=${device?.address} webhook=${webhook != null}), dropping")
             return
         }
-        if (!device.isGeofenceActive) {
-            GeofenceLogger.d(context, TAG, "ENTER for $deviceAddress — geofence inactive (hasGeofence=${device.hasGeofence} enabled=${device.geofenceEnabled}), dropping")
+        if (!capable.isGeofenceActive) {
+            GeofenceLogger.d(context, TAG, "ENTER for $deviceAddress — geofence inactive (hasGeofence=${capable.hasGeofence} enabled=${capable.geofenceEnabled}), dropping")
             return
         }
 
-        val aaConnected = com.dunnowsoftware.GarageAAtoESP32.AndroidAutoState.isConnected
-
-        // Gate 1 — AA connected.
-        if (aaConnected) {
-            GeofenceLogger.i(context, TAG, "ENTER — device=$deviceAddress AA connected=true — Gate 1 PASS")
-            fireIfNotDebounced(context, deviceAddress, gateDetail = "AA_CONNECTED")
-            return
+        // Gate 1 — AA connected. Only meaningful in BLE mode: AA/gearhead
+        // connection state has no bearing on a webhook target (no ESP32,
+        // no BLE at all), so webhook mode skips straight to the fallback
+        // speed/activity gates.
+        if (transportType == TransportType.BLE) {
+            val aaConnected = com.dunnowsoftware.GarageAAtoESP32.AndroidAutoState.isConnected
+            if (aaConnected) {
+                GeofenceLogger.i(context, TAG, "ENTER — device=$deviceAddress AA connected=true — Gate 1 PASS")
+                fireIfNotDebounced(context, deviceAddress, gateDetail = "AA_CONNECTED")
+                return
+            }
         }
 
         // Gates 2-4 run off the main thread (network/IO calls).
         val enterSpeed = event.triggeringLocation?.speed ?: -1f
         val triggerSpeedKmh = if (enterSpeed >= 0f) enterSpeed * 3.6f else -1f
-        GeofenceLogger.i(context, TAG, "ENTER — device=$deviceAddress AA connected=false triggerSpeed=${if (triggerSpeedKmh >= 0) "%.1f km/h".format(triggerSpeedKmh) else "unknown"}")
+        GeofenceLogger.i(context, TAG, "ENTER — device=$deviceAddress transport=$transportType triggerSpeed=${if (triggerSpeedKmh >= 0) "%.1f km/h".format(triggerSpeedKmh) else "unknown"}")
         val pending = goAsync()
         Executors.newSingleThreadExecutor().execute {
             try {
@@ -175,7 +187,8 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
     }
 
     private fun checkFallbackGatesAndFire(context: Context, deviceAddress: String, triggerSpeedKmh: Float) {
-        val device = DevicePreferences(context).pairedDevice
+        val prefs = DevicePreferences(context)
+        val deviceName = prefs.pairedDevice?.name ?: prefs.webhookConfig?.name
 
         // Gate 2: triggerSpeed — free, already in the geofence event.
         if (triggerSpeedKmh >= MIN_TRIGGER_SPEED_KMH) {
@@ -227,13 +240,13 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
                 val speedToken = if (triggerSpeedKmh >= 0) "%.1f".format(triggerSpeedKmh) else "-1"
                 val suppressToken = "SUPPRESSED_V2:$activityName:$confidence:$speedToken"
                 GeofenceLogger.i(context, TAG, "ENTER suppressed: AA not connected, triggerSpeed ${if (triggerSpeedKmh >= 0) "%.1f km/h".format(triggerSpeedKmh) else "unknown"}, activity=$activityName($confidence%), lastLocation=$speedStr — all gates failed")
-                if (device != null) {
+                if (deviceName != null) {
                     OpenHistoryStore.append(
                         context,
                         OpenHistoryEntry(
                             timestampMs   = System.currentTimeMillis(),
                             deviceAddress = deviceAddress,
-                            deviceName    = device.name,
+                            deviceName    = deviceName,
                             trigger       = TriggerSource.AUTO_GEOFENCE,
                             outcome       = OpenOutcome.SUPPRESSED,
                             detail        = suppressToken,
@@ -245,13 +258,13 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
             val speedToken = if (triggerSpeedKmh >= 0) "%.1f".format(triggerSpeedKmh) else "-1"
             val suppressToken = "SUPPRESSED_V2:$activityName:$confidence:$speedToken"
             GeofenceLogger.w(context, TAG, "ENTER suppressed: lastLocation query failed (${e.message}), triggerSpeed ${if (triggerSpeedKmh >= 0) "%.1f km/h".format(triggerSpeedKmh) else "unknown"}, activity=$activityName($confidence%) — all gates failed")
-            if (device != null) {
+            if (deviceName != null) {
                 OpenHistoryStore.append(
                     context,
                     OpenHistoryEntry(
                         timestampMs   = System.currentTimeMillis(),
                         deviceAddress = deviceAddress,
-                        deviceName    = device.name,
+                        deviceName    = deviceName,
                         trigger       = TriggerSource.AUTO_GEOFENCE,
                         outcome       = OpenOutcome.SUPPRESSED,
                         detail        = suppressToken,

@@ -1,6 +1,6 @@
 package com.dunnowsoftware.GarageAAtoESP32
 
-import com.dunnowsoftware.GarageAAtoESP32.ble.OpenResult
+import com.dunnowsoftware.GarageAAtoESP32.transport.OpenResult
 
 /**
  * Single source of truth for the demo-mode "open the garage" simulation.

@@ -188,14 +188,16 @@ private fun HistoryRow(entry: OpenHistoryEntry, expandedKey: MutableState<Long?>
     }
 
     val dotColor = when (entry.outcome) {
-        OpenOutcome.SUCCESS    -> GarageColors.Accent
-        OpenOutcome.FAILED_BLE -> GarageColors.Danger
-        OpenOutcome.SUPPRESSED -> GarageColors.TextFaint
+        OpenOutcome.SUCCESS        -> GarageColors.Accent
+        OpenOutcome.FAILED_BLE     -> GarageColors.Danger
+        OpenOutcome.FAILED_WEBHOOK -> GarageColors.Danger
+        OpenOutcome.SUPPRESSED     -> GarageColors.TextFaint
     }
     val outcomeText = when (entry.outcome) {
-        OpenOutcome.SUCCESS    -> stringResource(R.string.history_outcome_success)
-        OpenOutcome.FAILED_BLE -> stringResource(R.string.history_outcome_failed)
-        OpenOutcome.SUPPRESSED -> stringResource(R.string.history_outcome_suppressed)
+        OpenOutcome.SUCCESS        -> stringResource(R.string.history_outcome_success)
+        OpenOutcome.FAILED_BLE     -> stringResource(R.string.history_outcome_failed)
+        OpenOutcome.FAILED_WEBHOOK -> stringResource(R.string.history_outcome_failed)
+        OpenOutcome.SUPPRESSED     -> stringResource(R.string.history_outcome_suppressed)
     }
     val triggerText = when (entry.trigger) {
         TriggerSource.MANUAL_PHONE  -> stringResource(R.string.history_trigger_manual_phone)
@@ -301,6 +303,20 @@ private fun HistoryRow(entry: OpenHistoryEntry, expandedKey: MutableState<Long?>
                                     stringResource(R.string.history_fail_auth)
                                 else
                                     stringResource(R.string.history_fail_ble)
+                                Text(text = reason, color = GarageColors.DangerPastel, fontSize = 12.sp)
+                                if (entry.detail != null && entry.detail != "AUTH_FAILURE") {
+                                    Text(
+                                        text = formatGateDetail(entry.detail),
+                                        color = GarageColors.TextDim,
+                                        fontSize = 12.sp,
+                                    )
+                                }
+                            }
+                            OpenOutcome.FAILED_WEBHOOK -> {
+                                val reason = if (entry.detail == "AUTH_FAILURE")
+                                    stringResource(R.string.history_fail_auth_webhook)
+                                else
+                                    stringResource(R.string.history_fail_webhook)
                                 Text(text = reason, color = GarageColors.DangerPastel, fontSize = 12.sp)
                                 if (entry.detail != null && entry.detail != "AUTH_FAILURE") {
                                     Text(

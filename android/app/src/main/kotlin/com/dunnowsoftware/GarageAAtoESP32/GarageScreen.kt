@@ -10,11 +10,15 @@ import androidx.lifecycle.LifecycleOwner
 import com.dunnowsoftware.GarageAAtoESP32.R
 import com.dunnowsoftware.GarageAAtoESP32.ble.BleScanner
 import com.dunnowsoftware.GarageAAtoESP32.ble.GarageBleManager
-import com.dunnowsoftware.GarageAAtoESP32.ble.OpenResult
+import com.dunnowsoftware.GarageAAtoESP32.transport.OpenResult
+import com.dunnowsoftware.GarageAAtoESP32.transport.OpenTransport
+import com.dunnowsoftware.GarageAAtoESP32.transport.WebhookTransport
+import com.dunnowsoftware.GarageAAtoESP32.transport.activeTransport
 import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryEntry
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryStore
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenOutcome
+import com.dunnowsoftware.GarageAAtoESP32.data.TransportType
 import com.dunnowsoftware.GarageAAtoESP32.data.TriggerSource
 import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchResult
 import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchSending
@@ -27,7 +31,7 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
     // read so we pick up phone-side edits (re-pair, password change, demo
     // toggle) the next time AA reads them.
     private fun prefs() = DevicePreferences(carContext)
-    private val bleManager = GarageBleManager(carContext)
+    private var currentTransport: OpenTransport? = null
     private val presenceScanner = BleScanner(carContext)
 
     private enum class UiState { IDLE, CONNECTING, SUCCESS, AUTO_SUCCESS, FAILURE, AUTO_FAILURE }
@@ -210,10 +214,14 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
     }
 
     private fun buildLoading(): Template {
+        val maxAttempts = if (prefs().activeTransportType == TransportType.WEBHOOK)
+            WebhookTransport.MAX_ATTEMPTS
+        else
+            GarageBleManager.MAX_ATTEMPTS
         val msg = if (connectAttempt <= 1)
             carContext.getString(R.string.aa_connecting)
         else
-            carContext.getString(R.string.aa_connecting_attempt, connectAttempt, GarageBleManager.MAX_ATTEMPTS)
+            carContext.getString(R.string.aa_connecting_attempt, connectAttempt, maxAttempts)
         return MessageTemplate.Builder(msg)
             .setHeader(Header.Builder().setStartHeaderAction(Action.APP_ICON).build())
             .setLoading(true)
@@ -243,7 +251,7 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
         }
     }
 
-    // ── BLE trigger ───────────────────────────────────────────────────────────
+    // ── Open trigger ──────────────────────────────────────────────────────────
 
     private fun triggerOpen() {
         val p = prefs()
@@ -251,14 +259,18 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
             triggerDemo()
             return
         }
-        val paired = p.pairedDevice ?: return
+        val transportType = p.activeTransportType
+        val deviceAddress = p.pairedDevice?.address ?: ""
+        val deviceName = p.pairedDevice?.name ?: p.webhookConfig?.name ?: ""
+        val transport = activeTransport(carContext) ?: return
 
         uiState = UiState.CONNECTING
         invalidate()
         notifyWatchSending(carContext)
 
-        bleManager.connectAndOpen(paired.address, paired.password,
-            trigger = com.dunnowsoftware.GarageAAtoESP32.data.TriggerSource.MANUAL_AA,
+        currentTransport = transport
+        transport.open(
+            trigger = TriggerSource.MANUAL_AA,
             onAttempt = { n ->
                 carContext.mainExecutor.execute {
                     connectAttempt = n
@@ -270,20 +282,17 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
                 when (result) {
                     is OpenResult.Success -> {
                         val ts = System.currentTimeMillis()
-                        val p = prefs()
-                        p.lastAutoFiredAt = ts
-                        p.pairedDevice?.let { dev ->
-                            OpenHistoryStore.append(
-                                carContext,
-                                OpenHistoryEntry(
-                                    timestampMs   = ts,
-                                    deviceAddress = dev.address,
-                                    deviceName    = dev.name,
-                                    trigger       = TriggerSource.MANUAL_AA,
-                                    outcome       = OpenOutcome.SUCCESS,
-                                ),
-                            )
-                        }
+                        prefs().lastAutoFiredAt = ts
+                        OpenHistoryStore.append(
+                            carContext,
+                            OpenHistoryEntry(
+                                timestampMs   = ts,
+                                deviceAddress = deviceAddress,
+                                deviceName    = deviceName,
+                                trigger       = TriggerSource.MANUAL_AA,
+                                outcome       = OpenOutcome.SUCCESS,
+                            ),
+                        )
                         notifyWatchResult(carContext, true)
                         uiState = UiState.SUCCESS
                         invalidate()
@@ -292,18 +301,17 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
                         }, 2000)
                     }
                     is OpenResult.Failure -> {
-                        prefs().pairedDevice?.let { dev ->
-                            OpenHistoryStore.append(
-                                carContext,
-                                OpenHistoryEntry(
-                                    timestampMs   = System.currentTimeMillis(),
-                                    deviceAddress = dev.address,
-                                    deviceName    = dev.name,
-                                    trigger       = TriggerSource.MANUAL_AA,
-                                    outcome       = OpenOutcome.FAILED_BLE,
-                                ),
-                            )
-                        }
+                        val outcome = if (transportType == TransportType.WEBHOOK) OpenOutcome.FAILED_WEBHOOK else OpenOutcome.FAILED_BLE
+                        OpenHistoryStore.append(
+                            carContext,
+                            OpenHistoryEntry(
+                                timestampMs   = System.currentTimeMillis(),
+                                deviceAddress = deviceAddress,
+                                deviceName    = deviceName,
+                                trigger       = TriggerSource.MANUAL_AA,
+                                outcome       = outcome,
+                            ),
+                        )
                         uiState = UiState.FAILURE
                         failureReason = result.reason
                         invalidate()

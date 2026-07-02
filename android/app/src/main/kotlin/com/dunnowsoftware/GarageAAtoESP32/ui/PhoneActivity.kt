@@ -42,12 +42,13 @@ import androidx.core.content.ContextCompat
 import com.dunnowsoftware.GarageAAtoESP32.DemoOpener
 import com.dunnowsoftware.GarageAAtoESP32.R
 import com.dunnowsoftware.GarageAAtoESP32.ble.BleConstants
-import com.dunnowsoftware.GarageAAtoESP32.ble.GarageBleManager
-import com.dunnowsoftware.GarageAAtoESP32.ble.OpenResult
+import com.dunnowsoftware.GarageAAtoESP32.transport.OpenResult
+import com.dunnowsoftware.GarageAAtoESP32.transport.activeTransport
 import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryEntry
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryStore
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenOutcome
+import com.dunnowsoftware.GarageAAtoESP32.data.TransportType
 import com.dunnowsoftware.GarageAAtoESP32.data.TriggerSource
 import com.dunnowsoftware.GarageAAtoESP32.data.getSavedLocaleTag
 import com.dunnowsoftware.GarageAAtoESP32.data.localeListFromTag
@@ -75,7 +76,7 @@ import java.util.Locale
 class PhoneActivity : AppCompatActivity() {
 
     private lateinit var prefs: DevicePreferences
-    private val bleManager by lazy { GarageBleManager(this) }
+    private var currentTransport: com.dunnowsoftware.GarageAAtoESP32.transport.OpenTransport? = null
     private val shortcutOpenPending = mutableStateOf(false)
 
     override fun attachBaseContext(newBase: Context) {
@@ -126,7 +127,7 @@ class PhoneActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        bleManager.cleanup()
+        currentTransport?.cleanup()
     }
 
     private fun triggerOpen(onResult: (OpenResult) -> Unit) {
@@ -137,19 +138,27 @@ class PhoneActivity : AppCompatActivity() {
             )
             return
         }
-        val paired = prefs.pairedDevice
-        if (paired == null) {
+        val transportType = prefs.activeTransportType
+        val deviceAddress = prefs.pairedDevice?.address ?: ""
+        val deviceName = prefs.pairedDevice?.name ?: prefs.webhookConfig?.name ?: ""
+        val transport = activeTransport(this)
+        if (transport == null) {
             onResult(OpenResult.Failure("No paired device"))
             return
         }
-        bleManager.connectAndOpen(paired.address, paired.password) { result ->
-            val outcome = if (result is OpenResult.Success) OpenOutcome.SUCCESS else OpenOutcome.FAILED_BLE
+        currentTransport = transport
+        transport.open(trigger = TriggerSource.MANUAL_PHONE) { result ->
+            val outcome = when {
+                result is OpenResult.Success -> OpenOutcome.SUCCESS
+                transportType == TransportType.WEBHOOK -> OpenOutcome.FAILED_WEBHOOK
+                else -> OpenOutcome.FAILED_BLE
+            }
             OpenHistoryStore.append(
                 this,
                 OpenHistoryEntry(
                     timestampMs   = System.currentTimeMillis(),
-                    deviceAddress = paired.address,
-                    deviceName    = paired.name,
+                    deviceAddress = deviceAddress,
+                    deviceName    = deviceName,
                     trigger       = TriggerSource.MANUAL_PHONE,
                     outcome       = outcome,
                 ),
@@ -170,6 +179,7 @@ private sealed interface Route {
     data object Language       : Route
     data object GeofencePicker : Route
     data object History        : Route
+    data object WebhookSetup   : Route
     data class GeofenceOnboarding(
         val stepIds: List<String>,
         val afterPickerNeeded: Boolean,
@@ -204,7 +214,27 @@ private fun AppRoot(
     when (current) {
         Route.Welcome -> WelcomeScreen(
             onGetStarted = { push(Route.Scan) },
+            onUseWebhook = { push(Route.WebhookSetup) },
         )
+
+        Route.WebhookSetup -> {
+            val existing = remember(stateBust) { prefs.webhookConfig }
+            WebhookSetupScreen(
+                initialName = existing?.name.orEmpty(),
+                initialUrl = existing?.url.orEmpty(),
+                initialToken = existing?.authToken.orEmpty(),
+                onSave = { name, url, token ->
+                    prefs.webhookConfig = com.dunnowsoftware.GarageAAtoESP32.data.WebhookConfig(
+                        url = url,
+                        authToken = token,
+                        name = name,
+                    )
+                    bust()
+                    replaceAll(Route.Main)
+                },
+                onCancel = { pop() },
+            )
+        }
 
         Route.ChangePassword -> SetPasswordScreen(
             initialPassword = prefs.pairedDevice?.password.orEmpty(),
@@ -301,6 +331,8 @@ private fun AppRoot(
                 deviceName = remember(stateBust) { prefs.pairedDevice?.name },
                 deviceAddress = remember(stateBust) { prefs.pairedDevice?.address },
                 deviceHasWebLog = remember(stateBust) { prefs.pairedDevice?.hasWebLog == true },
+                webhookName = remember(stateBust) { prefs.webhookConfig?.name },
+                webhookUrl = remember(stateBust) { prefs.webhookConfig?.url },
                 demoMode = remember(stateBust) { prefs.demoMode },
                 currentLocaleTag = remember(stateBust) { getSavedLocaleTag(ctx) },
                 presence = rememberPresence(prefs, stateBust),
@@ -315,6 +347,12 @@ private fun AppRoot(
                     prefs.unpairDevice()
                     bust()
                     replaceAll(Route.Scan)
+                },
+                onRemoveWebhook = {
+                    GeofenceManager(ctx).unregister(com.dunnowsoftware.GarageAAtoESP32.geofence.WEBHOOK_PSEUDO_ADDRESS)
+                    prefs.clearWebhookConfig()
+                    bust()
+                    replaceAll(Route.Welcome)
                 },
                 onPairAnother = { push(Route.ScanAnother) },
                 onToggleDemo = { v ->
@@ -713,6 +751,7 @@ private fun routeKey(r: Route): String = when (r) {
     Route.Language       -> "language"
     Route.GeofencePicker -> "geofence_picker"
     Route.History        -> "history"
+    Route.WebhookSetup   -> "webhook_setup"
     is Route.GeofenceOnboarding -> "geo_onboard:${r.stepIds.joinToString(",")}:${r.afterPickerNeeded}"
 }
 
@@ -726,6 +765,7 @@ private fun keyRoute(k: String): Route = when {
     k == "language"         -> Route.Language
     k == "geofence_picker"  -> Route.GeofencePicker
     k == "history"          -> Route.History
+    k == "webhook_setup"    -> Route.WebhookSetup
     k.startsWith("geo_onboard:") -> {
         val payload = k.removePrefix("geo_onboard:")
         val lastColon = payload.lastIndexOf(':')

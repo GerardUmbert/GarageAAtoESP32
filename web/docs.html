@@ -276,6 +276,7 @@
       <a href="#quick-settings">Quick Settings tile</a>
       <a href="#web-log">ESP32 web log</a>
       <a href="#home-assistant">Home Assistant</a>
+      <a href="#webhook-transport">Webhook mode (no ESP32)</a>
 
       <div class="sidebar-group">Auto-open</div>
       <a href="#geofence-auto-open">How it works</a>
@@ -883,6 +884,43 @@ flowchart TD
         <div class="callout callout-note">
           <div class="callout-icon">ℹ️</div>
           <p>Deep sleep is disabled in this mode. The device must be wall-powered. BLE advertising runs continuously so the Android app connects instantly whenever you are home.</p>
+        </div>
+
+        <!-- ── WEBHOOK TRANSPORT (APP-SIDE, NO ESP32) ── -->
+        <h2 id="webhook-transport">Webhook mode (no ESP32 required)</h2>
+        <p>Everything above describes <em>this project's own ESP32</em> exposing a webhook. The Android app also supports the reverse: pairing directly with <strong>any</strong> webhook URL instead of an ESP32 at all. If your garage is already automated through Home Assistant, ESPHome, or any other system that can accept an HTTP request, you don't need this project's hardware — just point the app at that URL.</p>
+
+        <div class="callout callout-note">
+          <div class="callout-icon">ℹ️</div>
+          <p>This is a separate, app-side feature from the firmware integration above. Pairing is <strong>mutually exclusive</strong> — a device is paired with either a BLE ESP32 or a webhook, never both at once.</p>
+        </div>
+
+        <div class="callout callout-note">
+          <div class="callout-icon">ℹ️</div>
+          <p><strong>At-home deployments</strong> (wall-powered, on your home WiFi) get the most out of combining both integrations: keep this project's ESP32 with its own <a href="#home-assistant">Home Assistant firmware webhook</a> enabled for full local RF range to the fob and reliable delivery via HA's automation logs, then trigger it from an HA automation. This is different from the <strong>shared/communal garage</strong> case this project primarily targets, where there is usually no WiFi or internet at the garage at all — BLE-direct pairing is the only option there, and app-side webhook mode doesn't apply.</p>
+        </div>
+
+        <h3>Setting it up</h3>
+        <p>On first launch, choose <em>"I already have a webhook / Home Assistant automation"</em> instead of scanning for a device. You can also switch to webhook mode later from Settings. Enter a name, the webhook URL, and — only if your endpoint requires it — a Bearer token under <strong>Advanced</strong>.</p>
+
+        <h3>Authentication is optional</h3>
+        <p>Home Assistant's native webhook trigger (<code>Settings → Automations & Scenes → Webhook</code>) needs nothing but the URL — the <code>webhook_id</code> embedded in it is itself the secret, so there's no separate header to configure. Point the app at that URL and you're done:</p>
+        <pre><code>curl -X POST -H "Content-Type: application/json" \
+  -d '{"reason":"manual","timestamp":1735689600,"model":"Pixel 8"}' \
+  http://your-ha-ip:8123/api/webhook/your-webhook-id</code></pre>
+        <p>If your target instead expects an <code>Authorization: Bearer &lt;token&gt;</code> header — for example, this project's own firmware HA integration described above — fill in the token field under Advanced. It's only sent when non-empty.</p>
+
+        <h3>What gets sent</h3>
+        <p>Every open request POSTs a small JSON body so the receiving automation can log or branch on it if you want:</p>
+        <pre><code>{"reason": "geofence", "timestamp": 1735689600, "model": "Pixel 8"}</code></pre>
+        <p><code>reason</code> is one of <code>manual</code>, <code>geofence</code>, <code>voice</code>, or <code>watch</code> — the same trigger vocabulary used everywhere else in the app.</p>
+
+        <h3>What still works</h3>
+        <p>Every trigger source works identically regardless of which transport is active: manual tap, Android Auto, the Wear OS tile, geofence auto-open, and voice all call the same "open" action under the hood — only the transport underneath (BLE vs. HTTP) changes. Geofence auto-open in webhook mode skips the Android-Auto-connected gate (there's no ESP32/AA BLE state to check) and relies on the speed-based trigger path instead. Retry behavior mirrors BLE: 3 attempts with backoff, and an auth failure (HTTP 401/403) does not retry.</p>
+
+        <div class="callout callout-note">
+          <div class="callout-icon">ℹ️</div>
+          <p>The app cannot verify or secure a third-party endpoint — that's the operator's responsibility. HTTPS is strongly recommended if the webhook is reachable outside your LAN.</p>
         </div>
 
         <!-- ── SECURITY ── -->

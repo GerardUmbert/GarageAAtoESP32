@@ -6,6 +6,7 @@
     <string name="welcome_subtitle">Yksi napautus Android Autosta. Ei pilveä, ei Wi‑Fiä, ei tilausta — vain Bluetooth.</string>
     <string name="welcome_get_started">Aloita</string>
     <string name="welcome_no_account">Ei pilvitilin tarvetta.</string>
+    <string name="welcome_use_webhook">Minulla on jo webhook / Home Assistant -automaatio</string>
 
     <string name="status_in_range">Kantaman sisällä</string>
     <string name="status_out_of_range">Kantaman ulkopuolella</string>
@@ -38,8 +39,23 @@
     <string name="pair_confirm">Yhdistä</string>
     <string name="pair_cancel">Peruuta</string>
 
+    <string name="webhook_setup_title">Yhdistä webhook</string>
+    <string name="webhook_setup_subtitle">Avaa autotallisi kutsumalla URL-osoitetta ESP32:n yhdistämisen sijaan — toimii Home Assistantin webhook-liipaisimen tai minkä tahansa hallitsemasi HTTP-päätepisteen kanssa.</string>
+    <string name="webhook_setup_name_label">NIMI</string>
+    <string name="webhook_setup_name_hint">esim. Home Assistant</string>
+    <string name="webhook_setup_url_label">WEBHOOK-URL</string>
+    <string name="webhook_setup_url_hint">https://…</string>
+    <string name="webhook_setup_advanced_show">Lisäasetukset — tämä päätepiste vaatii todennuksen</string>
+    <string name="webhook_setup_advanced_hide">Piilota lisäasetukset</string>
+    <string name="webhook_setup_token_label">BEARER-TUNNUS (VALINNAINEN)</string>
+    <string name="webhook_setup_token_hint">Jätä tyhjäksi, jos ei tarvita</string>
+    <string name="webhook_setup_token_description">Tarvitaan vain päätepisteille, jotka odottavat Authorization-otsaketta. Home Assistantin natiivi webhook-liipaisin ei tarvitse sitä — itse URL on salaisuus.</string>
+    <string name="webhook_setup_security_note">Tämä lähettää pyynnön kolmannen osapuolen URL-osoitteeseen, jota hallitset itse. Emme voi vahvistaa tai suojata kyseistä päätepistettä — se on sinun vastuullasi.</string>
+    <string name="webhook_setup_save">Tallenna</string>
+
     <string name="settings_title">Asetukset</string>
     <string name="settings_paired_badge">YHDISTETTY</string>
+    <string name="settings_webhook_badge">WEBHOOK</string>
     <string name="settings_device_default_name">ESP32 autotallissa</string>
     <string name="settings_repairbutton">Yhdistä uudelleen</string>
     <string name="settings_password_button">Salasana</string>
@@ -171,7 +187,9 @@
     <string name="history_detail_suppressed">Syy: %1$s</string>
     <string name="history_device_label">Avain: %1$s</string>
     <string name="history_fail_ble">Ei vastausta ESP32:lta</string>
+    <string name="history_fail_webhook">Webhook-pyyntö epäonnistui</string>
     <string name="history_fail_auth">Väärä salasana — todennus epäonnistui</string>
+    <string name="history_fail_auth_webhook">Todennus epäonnistui — tarkista webhook-tunnus</string>
     <string name="history_day_today">Tänään</string>
     <string name="history_day_yesterday">Eilen</string>
     <string name="history_day_last_week">Viime %1$s</string>

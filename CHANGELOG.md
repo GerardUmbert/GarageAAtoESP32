@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.11.0]
+
+### Phone — Added
+- New pairing mode: **webhook transport**. Instead of pairing a BLE ESP32, connect the app directly to a webhook URL — e.g. a Home Assistant native webhook trigger or `rest_command`, or any HTTP endpoint you control
+- BLE pairing and webhook pairing are mutually exclusive — a device is paired with one or the other, never both
+- All existing trigger sources reuse the webhook path automatically: manual tap, Android Auto, Wear OS tile, watch-to-phone RPC, geofence auto-open, and voice
+- New "Connect a webhook" setup screen, reachable from the Welcome screen ("I already have a webhook / Home Assistant automation") and from Settings
+- Authentication is optional — a bare URL works out of the box for Home Assistant's native webhook trigger (the `webhook_id` in the URL is itself the secret, no header required); an optional Bearer token field is available under Advanced for endpoints that expect an `Authorization` header
+- Webhook requests mirror the BLE payload's metadata as JSON: `{"reason": "...", "timestamp": ..., "model": "..."}`
+- Same retry model as BLE: 3 attempts, 2s backoff, 5s per-attempt timeout; auth failures (401/403) do not retry
+- Geofence auto-open works in webhook mode too — the Android-Auto-connected gate is skipped (nothing to check without an ESP32), falling back to the existing speed-based trigger path
+- New "failed webhook" outcome in the open history log, distinct from BLE failures
+- Settings screen shows a WEBHOOK badge and masked URL when a webhook is paired, with its own Remove flow
+- Fully translated into all supported languages (es, fr, de, ca, fi, it, pt-PT)
+
+No firmware or flash tool changes — this is entirely an Android app feature and works with any webhook-capable target, not just this project's own ESP32 firmware.
+
 ## [1.10.0]
 
 ### Firmware — Added

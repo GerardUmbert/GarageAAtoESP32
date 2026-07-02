@@ -7,6 +7,7 @@
     <string name="welcome_subtitle">A single tap from Android Auto. No cloud, no Wi‑Fi, no subscription — just Bluetooth.</string>
     <string name="welcome_get_started">Get started</string>
     <string name="welcome_no_account">No cloud account needed.</string>
+    <string name="welcome_use_webhook">I already have a webhook / Home Assistant automation</string>
 
     <!-- Status bar -->
     <string name="status_in_range">In range</string>
@@ -43,9 +44,25 @@
     <string name="pair_confirm">Pair</string>
     <string name="pair_cancel">Cancel</string>
 
+    <!-- Webhook setup screen -->
+    <string name="webhook_setup_title">Connect a webhook</string>
+    <string name="webhook_setup_subtitle">Open your garage by calling a URL instead of pairing an ESP32 — works with a Home Assistant webhook trigger or any HTTP endpoint you control.</string>
+    <string name="webhook_setup_name_label">NAME</string>
+    <string name="webhook_setup_name_hint">e.g. Home Assistant</string>
+    <string name="webhook_setup_url_label">WEBHOOK URL</string>
+    <string name="webhook_setup_url_hint">https://…</string>
+    <string name="webhook_setup_advanced_show">Advanced — this endpoint requires auth</string>
+    <string name="webhook_setup_advanced_hide">Hide advanced options</string>
+    <string name="webhook_setup_token_label">BEARER TOKEN (OPTIONAL)</string>
+    <string name="webhook_setup_token_hint">Leave blank if not required</string>
+    <string name="webhook_setup_token_description">Only needed for endpoints that expect an Authorization header. A Home Assistant native webhook trigger doesn\'t need one — the URL itself is the secret.</string>
+    <string name="webhook_setup_security_note">This sends a request to a third-party URL you control. We can\'t verify or secure that endpoint — that\'s your responsibility.</string>
+    <string name="webhook_setup_save">Save</string>
+
     <!-- Settings screen -->
     <string name="settings_title">Settings</string>
     <string name="settings_paired_badge">PAIRED</string>
+    <string name="settings_webhook_badge">WEBHOOK</string>
     <string name="settings_device_default_name">ESP32 Garage</string>
     <string name="settings_repairbutton">Re-pair</string>
     <string name="settings_password_button">Password</string>
@@ -187,7 +204,9 @@
     <string name="history_detail_suppressed">Reason: %1$s</string>
     <string name="history_device_label">Opener: %1$s</string>
     <string name="history_fail_ble">No response from the ESP32</string>
+    <string name="history_fail_webhook">Webhook request failed</string>
     <string name="history_fail_auth">Wrong password — authentication failed</string>
+    <string name="history_fail_auth_webhook">Auth failed — check webhook token</string>
     <string name="history_day_today">Today</string>
     <string name="history_day_yesterday">Yesterday</string>
     <string name="history_day_last_week">Last %1$s</string>

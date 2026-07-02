@@ -50,6 +50,8 @@ fun SettingsScreen(
     deviceName: String?,
     deviceAddress: String?,
     deviceHasWebLog: Boolean = false,
+    webhookName: String? = null,
+    webhookUrl: String? = null,
     demoMode: Boolean,
     currentLocaleTag: String?,
     presence: PresenceStatus = PresenceStatus.OutOfRange,
@@ -59,6 +61,7 @@ fun SettingsScreen(
     onChangePassword: () -> Unit,
     onRepair: () -> Unit,
     onUnpair: () -> Unit,
+    onRemoveWebhook: () -> Unit = {},
     onPairAnother: () -> Unit,
     onToggleDemo: (Boolean) -> Unit,
     onLanguageScreen: () -> Unit,
@@ -89,7 +92,72 @@ fun SettingsScreen(
 
         // Paired hero card
         item {
-            if (deviceAddress != null) {
+            if (webhookUrl != null) {
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(22.dp))
+                            .background(GarageColors.Surface)
+                            .border(1.dp, GarageColors.Hairline, RoundedCornerShape(22.dp))
+                            .padding(20.dp),
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Outlined.Wifi,
+                                contentDescription = null,
+                                tint = GarageColors.Accent,
+                                modifier = Modifier.size(14.dp),
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(R.string.settings_webhook_badge),
+                                color = GarageColors.Accent,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                letterSpacing = 1.2.sp,
+                                modifier = Modifier.weight(1f),
+                            )
+                            val ctxRemove = LocalContext.current
+                            Box(
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .clip(CircleShape)
+                                    .background(GarageColors.DangerSoft)
+                                    .clickable {
+                                        vibrate(ctxRemove, HAPTIC_TAP)
+                                        onRemoveWebhook()
+                                    },
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = "×",
+                                    color = GarageColors.Danger,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    lineHeight = 18.sp,
+                                )
+                            }
+                        }
+                        Spacer(Modifier.height(10.dp))
+                        Text(
+                            text = webhookName ?: stringResource(R.string.settings_device_default_name),
+                            color = GarageColors.Text,
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = (-0.4).sp,
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = maskUrl(webhookUrl),
+                            color = GarageColors.TextDim,
+                            fontSize = 13.sp,
+                            fontFamily = FontFamily.Monospace,
+                        )
+                    }
+                }
+                Spacer(Modifier.height(28.dp))
+            } else if (deviceAddress != null) {
                 Box(modifier = Modifier.fillMaxWidth()) {
                     Column(
                         modifier = Modifier
@@ -396,6 +464,23 @@ fun SettingsScreen(
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             )
         }
+    }
+}
+
+/**
+ * Truncates a webhook URL for display. The URL itself may be the sensitive
+ * value (e.g. an unguessable HA webhook_id embedded in the path), so it's
+ * masked similarly to how a token would be — scheme+host visible, path
+ * collapsed.
+ */
+private fun maskUrl(url: String): String {
+    return try {
+        val u = java.net.URI(url)
+        val host = u.host ?: return url.take(28) + if (url.length > 28) "…" else ""
+        val scheme = u.scheme ?: "http"
+        "$scheme://$host/…"
+    } catch (_: Throwable) {
+        url.take(28) + if (url.length > 28) "…" else ""
     }
 }
 

@@ -12,11 +12,15 @@ import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchAutoFired
 import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchResult
 import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchSending
 import com.dunnowsoftware.GarageAAtoESP32.ble.GarageBleManager
-import com.dunnowsoftware.GarageAAtoESP32.ble.OpenResult
+import com.dunnowsoftware.GarageAAtoESP32.transport.OpenResult
+import com.dunnowsoftware.GarageAAtoESP32.transport.OpenTransport
+import com.dunnowsoftware.GarageAAtoESP32.transport.WebhookTransport
+import com.dunnowsoftware.GarageAAtoESP32.transport.activeTransport
 import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryEntry
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryStore
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenOutcome
+import com.dunnowsoftware.GarageAAtoESP32.data.TransportType
 import com.dunnowsoftware.GarageAAtoESP32.data.TriggerSource
 import com.dunnowsoftware.GarageAAtoESP32.geofence.EXTRA_DEVICE_ADDRESS
 
@@ -38,19 +42,18 @@ class GeofenceForegroundService : Service() {
     }
 
     @Volatile private var cancelled = false
-    private lateinit var bleManager: GarageBleManager
+    private var currentTransport: OpenTransport? = null
 
     override fun onCreate() {
         super.onCreate()
-        bleManager = GarageBleManager(this)
         createNotificationChannels()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
-            GeofenceLogger.i(this, TAG, "Stop requested via EXIT — aborting BLE attempts")
+            GeofenceLogger.i(this, TAG, "Stop requested via EXIT — aborting open attempts")
             cancelled = true
-            bleManager.cleanup()
+            currentTransport?.cleanup()
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf(startId)
             return START_NOT_STICKY
@@ -73,17 +76,24 @@ class GeofenceForegroundService : Service() {
 
     private fun fireOpen(deviceAddress: String, gateDetail: String?, startId: Int) {
         val prefs = DevicePreferences(this)
+        val transportType = prefs.activeTransportType
         val device = prefs.pairedDevice
-        if (device == null || device.address != deviceAddress) {
+        val webhook = prefs.webhookConfig
+        val (resolvedName, matches) = when {
+            device != null   -> device.name to (device.address == deviceAddress)
+            webhook != null  -> webhook.name to (deviceAddress == WEBHOOK_PSEUDO_ADDRESS)
+            else              -> null to false
+        }
+        if (!matches || resolvedName == null) {
             GeofenceLogger.w(this, TAG, "Device $deviceAddress not found in prefs — aborting")
             stopSelf(startId)
             return
         }
 
-        attemptSession(device.address, device.name, device.password, gateDetail, attemptsLeft = GEOFENCE_MAX_ATTEMPTS, startId)
+        attemptSession(deviceAddress, resolvedName, transportType, gateDetail, attemptsLeft = GEOFENCE_MAX_ATTEMPTS, startId)
     }
 
-    private fun attemptSession(address: String, deviceName: String, password: String, gateDetail: String?, attemptsLeft: Int, startId: Int) {
+    private fun attemptSession(address: String, deviceName: String, transportType: TransportType?, gateDetail: String?, attemptsLeft: Int, startId: Int) {
         if (attemptsLeft <= 0) {
             GeofenceLogger.w(this, TAG, "All $GEOFENCE_MAX_ATTEMPTS attempts exhausted for $address — giving up")
             DevicePreferences(this).lastAutoFailedAt = System.currentTimeMillis()
@@ -94,7 +104,7 @@ class GeofenceForegroundService : Service() {
                     deviceAddress = address,
                     deviceName    = deviceName,
                     trigger       = TriggerSource.AUTO_GEOFENCE,
-                    outcome       = OpenOutcome.FAILED_BLE,
+                    outcome       = if (transportType == TransportType.WEBHOOK) OpenOutcome.FAILED_WEBHOOK else OpenOutcome.FAILED_BLE,
                     detail        = gateDetail,
                 ),
             )
@@ -106,24 +116,33 @@ class GeofenceForegroundService : Service() {
             stopSelf(startId)
             return
         }
-        val sessionAttempts = minOf(attemptsLeft, GarageBleManager.MAX_ATTEMPTS)
-        GeofenceLogger.d(this, TAG, "BLE session start — ${attemptsLeft} attempts remaining (this session: up to $sessionAttempts)")
+        val transport = activeTransport(this)
+        if (transport == null) {
+            GeofenceLogger.w(this, TAG, "No active transport for $address — aborting")
+            stopSelf(startId)
+            return
+        }
+        val sessionMaxAttempts = if (transportType == TransportType.WEBHOOK)
+            WebhookTransport.MAX_ATTEMPTS
+        else
+            GarageBleManager.MAX_ATTEMPTS
+        val sessionAttempts = minOf(attemptsLeft, sessionMaxAttempts)
+        GeofenceLogger.d(this, TAG, "Open session start — ${attemptsLeft} attempts remaining (this session: up to $sessionAttempts)")
         var sessionAttemptCount = 0
 
-        bleManager.cleanup()
-        bleManager.connectAndOpen(
-            deviceAddress = address,
-            userPin = password,
+        currentTransport?.cleanup()
+        currentTransport = transport
+        transport.open(
             trigger = TriggerSource.AUTO_GEOFENCE,
             onAttempt = { n ->
                 sessionAttemptCount = n
-                GeofenceLogger.d(this, TAG, "BLE attempt $n (session), ${attemptsLeft - n + 1} total remaining after this")
+                GeofenceLogger.d(this, TAG, "Open attempt $n (session), ${attemptsLeft - n + 1} total remaining after this")
             },
         ) { result ->
             when (result) {
                 is OpenResult.Success -> {
                     val ts = System.currentTimeMillis()
-                    GeofenceLogger.i(this, TAG, "BLE open SUCCESS for $address — writing lastAutoFiredAt=$ts")
+                    GeofenceLogger.i(this, TAG, "Open SUCCESS for $address — writing lastAutoFiredAt=$ts")
                     DevicePreferences(this).lastAutoFiredAt = ts
                     LocalBroadcastManager.getInstance(this)
                         .sendBroadcast(Intent(ACTION_AUTO_OPENED))
@@ -146,7 +165,7 @@ class GeofenceForegroundService : Service() {
                 }
                 is OpenResult.Failure -> {
                     if (result.isAuthFailure) {
-                        GeofenceLogger.w(this, TAG, "BLE open AUTH FAILURE for $address — wrong password, not retrying")
+                        GeofenceLogger.w(this, TAG, "Open AUTH FAILURE for $address — not retrying")
                         DevicePreferences(this).lastAutoFailedAt = System.currentTimeMillis()
                         OpenHistoryStore.append(
                             this,
@@ -155,7 +174,7 @@ class GeofenceForegroundService : Service() {
                                 deviceAddress = address,
                                 deviceName    = deviceName,
                                 trigger       = TriggerSource.AUTO_GEOFENCE,
-                                outcome       = OpenOutcome.FAILED_BLE,
+                                outcome       = if (transportType == TransportType.WEBHOOK) OpenOutcome.FAILED_WEBHOOK else OpenOutcome.FAILED_BLE,
                                 detail        = "AUTH_FAILURE",
                             ),
                         )
@@ -166,12 +185,12 @@ class GeofenceForegroundService : Service() {
                         postResultNotification(success = false)
                         stopSelf(startId)
                     } else if (cancelled) {
-                        GeofenceLogger.i(this, TAG, "BLE session aborted — EXIT received while retrying")
+                        GeofenceLogger.i(this, TAG, "Open session aborted — EXIT received while retrying")
                         stopSelf(startId)
                     } else {
                         val remaining = attemptsLeft - sessionAttemptCount
-                        GeofenceLogger.d(this, TAG, "BLE session failed (${result.reason}) — ${remaining} attempts left, chaining next session")
-                        attemptSession(address, deviceName, password, gateDetail, remaining, startId)
+                        GeofenceLogger.d(this, TAG, "Open session failed (${result.reason}) — ${remaining} attempts left, chaining next session")
+                        attemptSession(address, deviceName, transportType, gateDetail, remaining, startId)
                     }
                 }
             }
@@ -225,7 +244,7 @@ class GeofenceForegroundService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
-        bleManager.cleanup()
+        currentTransport?.cleanup()
         super.onDestroy()
     }
 }

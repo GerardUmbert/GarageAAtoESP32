@@ -87,6 +87,21 @@ Connect your phone to Android Auto. Open **Garage Opener** and tap **Open Garage
 
 ---
 
+## No ESP32? Use a webhook instead
+
+Already automated your garage through Home Assistant, ESPHome, or anything else that can accept an HTTP request? You don't need any of this project's hardware. The app has a second, mutually-exclusive pairing mode: instead of scanning for an ESP32 over BLE, point it at a **webhook URL**.
+
+- Every trigger source works exactly the same — manual tap, Android Auto, the watch tile, geofence auto-open, voice — the app just calls your webhook instead of a BLE device.
+- Works out of the box with Home Assistant's native webhook trigger (`Settings → Automations → Webhook`) — paste the URL, no token needed, since the `webhook_id` in the URL is itself the secret.
+- If your endpoint expects an `Authorization: Bearer <token>` header (for example, this project's own [Home Assistant firmware integration](docs/provisioning.md)), an optional token field is available under **Advanced**.
+- To set it up: on first launch, choose **"I already have a webhook / Home Assistant automation"** instead of scanning for a device. You can switch to this mode later from Settings as well.
+
+This is entirely an app-side feature — no firmware or flash tool changes required, and it works with any HTTP endpoint, not just Home Assistant.
+
+**This is also the best option if you're deploying this project's own ESP32 at home** (wall-powered, on your home WiFi) rather than in a shared/communal garage. At home you have internet and can wire your ESP32's own HA webhook mode (see [Home Assistant integration](docs/provisioning.md) below) into an HA automation — HA fires the webhook, the ESP32 triggers the relay with full local RF range to the fob, and you get proper delivery confirmation through HA's own automation logs. This is different from the primary shared-garage use case this project targets, where there typically **is no WiFi/internet available at all** and BLE-direct is the only option — see [Two ways to deploy](#two-ways-to-deploy) above.
+
+---
+
 ## Choose your trigger mechanism
 
 The ESP32 supports **three ways** to press the fob's button. Pick the one that fits your situation; the firmware handles all three from a single config flag (`TRIGGER_MODE` in `firmware/include/config.h`).

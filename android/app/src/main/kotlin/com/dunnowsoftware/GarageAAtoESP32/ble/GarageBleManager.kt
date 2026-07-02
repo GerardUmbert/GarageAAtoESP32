@@ -8,13 +8,9 @@ import android.os.Handler
 import android.os.Looper
 import android.os.ParcelUuid
 import com.dunnowsoftware.GarageAAtoESP32.data.TriggerSource
+import com.dunnowsoftware.GarageAAtoESP32.transport.OpenResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-
-sealed class OpenResult {
-    data class Success(val caps: Int = 0) : OpenResult()
-    data class Failure(val reason: String, val isAuthFailure: Boolean = false) : OpenResult()
-}
 
 class GarageBleManager(private val context: Context) {
 

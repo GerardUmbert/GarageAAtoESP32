@@ -6,6 +6,7 @@
     <string name="welcome_subtitle">Ein Tipp in Android Auto. Keine Cloud, kein WLAN, kein Abo — nur Bluetooth.</string>
     <string name="welcome_get_started">Loslegen</string>
     <string name="welcome_no_account">Kein Cloud-Konto erforderlich.</string>
+    <string name="welcome_use_webhook">Ich habe bereits einen Webhook / eine Home-Assistant-Automatisierung</string>
 
     <string name="status_in_range">In Reichweite</string>
     <string name="status_out_of_range">Außer Reichweite</string>
@@ -38,8 +39,23 @@
     <string name="pair_confirm">Koppeln</string>
     <string name="pair_cancel">Abbrechen</string>
 
+    <string name="webhook_setup_title">Webhook verbinden</string>
+    <string name="webhook_setup_subtitle">Öffne deine Garage durch Aufruf einer URL statt einen ESP32 zu koppeln — funktioniert mit einem Home-Assistant-Webhook-Trigger oder jedem HTTP-Endpunkt, den du kontrollierst.</string>
+    <string name="webhook_setup_name_label">NAME</string>
+    <string name="webhook_setup_name_hint">z. B. Home Assistant</string>
+    <string name="webhook_setup_url_label">WEBHOOK-URL</string>
+    <string name="webhook_setup_url_hint">https://…</string>
+    <string name="webhook_setup_advanced_show">Erweitert — dieser Endpunkt erfordert Authentifizierung</string>
+    <string name="webhook_setup_advanced_hide">Erweiterte Optionen ausblenden</string>
+    <string name="webhook_setup_token_label">BEARER-TOKEN (OPTIONAL)</string>
+    <string name="webhook_setup_token_hint">Leer lassen, falls nicht erforderlich</string>
+    <string name="webhook_setup_token_description">Nur nötig für Endpunkte, die einen Authorization-Header erwarten. Ein nativer Home-Assistant-Webhook-Trigger braucht keinen — die URL selbst ist das Geheimnis.</string>
+    <string name="webhook_setup_security_note">Dies sendet eine Anfrage an eine URL eines Drittanbieters, die du kontrollierst. Wir können diesen Endpunkt weder prüfen noch absichern — das liegt in deiner Verantwortung.</string>
+    <string name="webhook_setup_save">Speichern</string>
+
     <string name="settings_title">Einstellungen</string>
     <string name="settings_paired_badge">GEKOPPELT</string>
+    <string name="settings_webhook_badge">WEBHOOK</string>
     <string name="settings_device_default_name">ESP32 in der Garage</string>
     <string name="settings_repairbutton">Neu koppeln</string>
     <string name="settings_password_button">Passwort</string>
@@ -171,7 +187,9 @@
     <string name="history_detail_suppressed">Grund: %1$s</string>
     <string name="history_device_label">Öffner: %1$s</string>
     <string name="history_fail_ble">Keine Antwort vom ESP32</string>
+    <string name="history_fail_webhook">Webhook-Anfrage fehlgeschlagen</string>
     <string name="history_fail_auth">Falsches Passwort — Authentifizierung fehlgeschlagen</string>
+    <string name="history_fail_auth_webhook">Authentifizierung fehlgeschlagen — Webhook-Token prüfen</string>
     <string name="history_day_today">Heute</string>
     <string name="history_day_yesterday">Gestern</string>
     <string name="history_day_last_week">Letzten %1$s</string>

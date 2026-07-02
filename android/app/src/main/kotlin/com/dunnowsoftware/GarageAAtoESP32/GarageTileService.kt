@@ -4,19 +4,21 @@ import android.os.Handler
 import android.os.Looper
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
-import com.dunnowsoftware.GarageAAtoESP32.ble.GarageBleManager
-import com.dunnowsoftware.GarageAAtoESP32.ble.OpenResult
+import com.dunnowsoftware.GarageAAtoESP32.transport.OpenResult
+import com.dunnowsoftware.GarageAAtoESP32.transport.OpenTransport
+import com.dunnowsoftware.GarageAAtoESP32.transport.activeTransport
 import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryEntry
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryStore
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenOutcome
+import com.dunnowsoftware.GarageAAtoESP32.data.TransportType
 import com.dunnowsoftware.GarageAAtoESP32.data.TriggerSource
 import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchResult
 import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchSending
 
 class GarageTileService : TileService() {
 
-    private val bleManager by lazy { GarageBleManager(this) }
+    private var currentTransport: OpenTransport? = null
 
     override fun onStartListening() {
         updateTile()
@@ -40,10 +42,14 @@ class GarageTileService : TileService() {
             return
         }
 
-        val paired = prefs.pairedDevice ?: return
+        val transportType = prefs.activeTransportType
+        val deviceAddress = prefs.pairedDevice?.address ?: ""
+        val deviceName = prefs.pairedDevice?.name ?: prefs.webhookConfig?.name ?: ""
+        val transport = activeTransport(this) ?: return
         setTileBusy()
         notifyWatchSending(this)
-        bleManager.connectAndOpen(paired.address, paired.password,
+        currentTransport = transport
+        transport.open(
             trigger = TriggerSource.MANUAL_PHONE,
         ) { result ->
             mainLooper.let { android.os.Handler(it).post {
@@ -54,8 +60,8 @@ class GarageTileService : TileService() {
                             this,
                             OpenHistoryEntry(
                                 timestampMs   = ts,
-                                deviceAddress = paired.address,
-                                deviceName    = paired.name,
+                                deviceAddress = deviceAddress,
+                                deviceName    = deviceName,
                                 trigger       = TriggerSource.MANUAL_PHONE,
                                 outcome       = OpenOutcome.SUCCESS,
                             ),
@@ -63,14 +69,15 @@ class GarageTileService : TileService() {
                         onOpenSuccess()
                     }
                     is OpenResult.Failure -> {
+                        val outcome = if (transportType == TransportType.WEBHOOK) OpenOutcome.FAILED_WEBHOOK else OpenOutcome.FAILED_BLE
                         OpenHistoryStore.append(
                             this,
                             OpenHistoryEntry(
                                 timestampMs   = System.currentTimeMillis(),
-                                deviceAddress = paired.address,
-                                deviceName    = paired.name,
+                                deviceAddress = deviceAddress,
+                                deviceName    = deviceName,
                                 trigger       = TriggerSource.MANUAL_PHONE,
-                                outcome       = OpenOutcome.FAILED_BLE,
+                                outcome       = outcome,
                                 detail        = result.reason,
                             ),
                         )
@@ -82,7 +89,7 @@ class GarageTileService : TileService() {
     }
 
     override fun onStopListening() {
-        bleManager.cleanup()
+        currentTransport?.cleanup()
     }
 
     private fun updateTile() {

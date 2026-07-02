@@ -1,11 +1,12 @@
 package com.dunnowsoftware.GarageAAtoESP32.wear
 
-import com.dunnowsoftware.GarageAAtoESP32.ble.GarageBleManager
-import com.dunnowsoftware.GarageAAtoESP32.ble.OpenResult
+import com.dunnowsoftware.GarageAAtoESP32.transport.OpenResult
+import com.dunnowsoftware.GarageAAtoESP32.transport.activeTransport
 import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryEntry
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryStore
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenOutcome
+import com.dunnowsoftware.GarageAAtoESP32.data.TransportType
 import com.dunnowsoftware.GarageAAtoESP32.data.TriggerSource
 import android.content.Intent
 import android.os.Handler
@@ -32,8 +33,11 @@ class WearMessageListenerService : WearableListenerService() {
         inFlight = true
 
         val prefs = DevicePreferences(this)
-        val device = prefs.pairedDevice
-        if (device == null) {
+        val transportType = prefs.activeTransportType
+        val deviceAddress = prefs.pairedDevice?.address ?: ""
+        val deviceName = prefs.pairedDevice?.name ?: prefs.webhookConfig?.name ?: ""
+        val transport = activeTransport(this)
+        if (transport == null) {
             inFlight = false
             notifyWatchResult(this, false)
             return
@@ -44,10 +48,7 @@ class WearMessageListenerService : WearableListenerService() {
             LocalBroadcastManager.getInstance(this).sendBroadcast(Intent(ACTION_WEAR_SENDING))
         }
 
-        val bleManager = GarageBleManager(this)
-        bleManager.connectAndOpen(
-            deviceAddress = device.address,
-            userPin = device.password,
+        transport.open(
             trigger = TriggerSource.WEAR,
             onAttempt = {},
         ) { result ->
@@ -59,8 +60,8 @@ class WearMessageListenerService : WearableListenerService() {
                         this,
                         OpenHistoryEntry(
                             timestampMs   = ts,
-                            deviceAddress = device.address,
-                            deviceName    = device.name,
+                            deviceAddress = deviceAddress,
+                            deviceName    = deviceName,
                             trigger       = TriggerSource.WEAR,
                             outcome       = OpenOutcome.SUCCESS,
                             detail        = null,
@@ -71,18 +72,19 @@ class WearMessageListenerService : WearableListenerService() {
                             .sendBroadcast(Intent(GeofenceForegroundService.ACTION_AUTO_OPENED))
                     }
                     notifyWatchResult(this, true)
-                    bleManager.cleanup()
+                    transport.cleanup()
                     inFlight = false
                 }
                 is OpenResult.Failure -> {
+                    val outcome = if (transportType == TransportType.WEBHOOK) OpenOutcome.FAILED_WEBHOOK else OpenOutcome.FAILED_BLE
                     OpenHistoryStore.append(
                         this,
                         OpenHistoryEntry(
                             timestampMs   = System.currentTimeMillis(),
-                            deviceAddress = device.address,
-                            deviceName    = device.name,
+                            deviceAddress = deviceAddress,
+                            deviceName    = deviceName,
                             trigger       = TriggerSource.WEAR,
-                            outcome       = OpenOutcome.FAILED_BLE,
+                            outcome       = outcome,
                             detail        = result.reason,
                         ),
                     )
@@ -91,7 +93,7 @@ class WearMessageListenerService : WearableListenerService() {
                             .sendBroadcast(Intent(GeofenceForegroundService.ACTION_AUTO_FAILED))
                     }
                     notifyWatchResult(this, false)
-                    bleManager.cleanup()
+                    transport.cleanup()
                     inFlight = false
                 }
             }

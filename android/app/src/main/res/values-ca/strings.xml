@@ -6,6 +6,7 @@
     <string name="welcome_subtitle">Un toc des d\'Android Auto. Sense núvol, sense Wi‑Fi, sense subscripció — només Bluetooth.</string>
     <string name="welcome_get_started">Comença</string>
     <string name="welcome_no_account">No cal compte al núvol.</string>
+    <string name="welcome_use_webhook">Ja tinc un webhook / una automatització de Home Assistant</string>
 
     <string name="status_in_range">A l\'abast</string>
     <string name="status_out_of_range">Fora de l\'abast</string>
@@ -38,8 +39,23 @@
     <string name="pair_confirm">Vincular</string>
     <string name="pair_cancel">Cancel·lar</string>
 
+    <string name="webhook_setup_title">Connecta un webhook</string>
+    <string name="webhook_setup_subtitle">Obre el teu garatge cridant una URL en lloc de vincular un ESP32 — funciona amb un desencadenant de webhook de Home Assistant o qualsevol endpoint HTTP que controlis.</string>
+    <string name="webhook_setup_name_label">NOM</string>
+    <string name="webhook_setup_name_hint">p. ex. Home Assistant</string>
+    <string name="webhook_setup_url_label">URL DEL WEBHOOK</string>
+    <string name="webhook_setup_url_hint">https://…</string>
+    <string name="webhook_setup_advanced_show">Avançat — aquest endpoint requereix autenticació</string>
+    <string name="webhook_setup_advanced_hide">Amaga les opcions avançades</string>
+    <string name="webhook_setup_token_label">TOKEN BEARER (OPCIONAL)</string>
+    <string name="webhook_setup_token_hint">Deixa-ho en blanc si no cal</string>
+    <string name="webhook_setup_token_description">Només cal per a endpoints que esperen una capçalera Authorization. Un desencadenant de webhook natiu de Home Assistant no en necessita — la mateixa URL és el secret.</string>
+    <string name="webhook_setup_security_note">Això envia una sol·licitud a una URL de tercers que tu controles. No podem verificar ni protegir aquest endpoint — és responsabilitat teva.</string>
+    <string name="webhook_setup_save">Desa</string>
+
     <string name="settings_title">Configuració</string>
     <string name="settings_paired_badge">VINCULAT</string>
+    <string name="settings_webhook_badge">WEBHOOK</string>
     <string name="settings_device_default_name">ESP32 del garatge</string>
     <string name="settings_repairbutton">Revincular</string>
     <string name="settings_password_button">Contrasenya</string>
@@ -171,7 +187,9 @@
     <string name="history_detail_suppressed">Motiu: %1$s</string>
     <string name="history_device_label">Obertura: %1$s</string>
     <string name="history_fail_ble">Sense resposta de l\'ESP32</string>
+    <string name="history_fail_webhook">Ha fallat la sol·licitud del webhook</string>
     <string name="history_fail_auth">Contrasenya incorrecta — autenticació fallida</string>
+    <string name="history_fail_auth_webhook">Autenticació fallida — revisa el token del webhook</string>
     <string name="history_day_today">Avui</string>
     <string name="history_day_yesterday">Ahir</string>
     <string name="history_day_last_week">%1$s passat</string>
