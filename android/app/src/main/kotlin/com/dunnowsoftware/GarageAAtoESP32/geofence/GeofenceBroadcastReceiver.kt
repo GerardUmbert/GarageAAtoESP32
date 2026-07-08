@@ -159,17 +159,15 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
             return
         }
 
-        // Gate 1 — AA connected. Only meaningful in BLE mode: AA/gearhead
-        // connection state has no bearing on a webhook target (no ESP32,
-        // no BLE at all), so webhook mode skips straight to the fallback
-        // speed/activity gates.
-        if (transportType == TransportType.BLE) {
-            val aaConnected = com.dunnowsoftware.GarageAAtoESP32.AndroidAutoState.isConnected
-            if (aaConnected) {
-                GeofenceLogger.i(context, TAG, "ENTER — device=$deviceAddress AA connected=true — Gate 1 PASS")
-                fireIfNotDebounced(context, deviceAddress, gateDetail = "AA_CONNECTED")
-                return
-            }
+        // Gate 1 — AA connected. This reflects OS-level Android Auto
+        // projection state (CarConnection), independent of transport type —
+        // a webhook-only user can just as well be projecting to a car head
+        // unit, so this gate applies to both transports equally.
+        val aaConnected = com.dunnowsoftware.GarageAAtoESP32.AndroidAutoState.isConnected
+        if (aaConnected) {
+            GeofenceLogger.i(context, TAG, "ENTER — device=$deviceAddress AA connected=true — Gate 1 PASS")
+            fireIfNotDebounced(context, deviceAddress, gateDetail = "AA_CONNECTED")
+            return
         }
 
         // Gates 2-4 run off the main thread (network/IO calls).

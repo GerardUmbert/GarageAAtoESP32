@@ -62,6 +62,7 @@
     <string name="settings_repairbutton">Recoupler</string>
     <string name="settings_password_button">Mot de passe</string>
     <string name="settings_pair_another">Coupler un autre appareil</string>
+    <string name="settings_webhook_edit_button">Modifier</string>
     <string name="settings_no_device_title">Aucun ouvre-porte couplé</string>
     <string name="settings_no_device_subtitle">Couplez un ESP32 pour commencer.</string>
     <string name="settings_pair_opener">Coupler un ouvre-porte</string>
@@ -118,7 +119,7 @@
     <string name="settings_geofence_location_set">Défini</string>
     <string name="settings_geofence_location_not_set">Non défini</string>
     <string name="settings_geofence_toggle_label">Ouvrir à l\'arrivée</string>
-    <string name="settings_geofence_toggle_desc_active">S\'ouvre en approchant du garage en conduisant avec Android Auto</string>
+    <string name="settings_geofence_toggle_desc_active">S\'ouvre automatiquement en approchant du garage en conduisant</string>
     <string name="settings_geofence_toggle_desc_no_location">Définissez d\'abord l\'emplacement du garage</string>
 
     <!-- Geofence picker screen -->

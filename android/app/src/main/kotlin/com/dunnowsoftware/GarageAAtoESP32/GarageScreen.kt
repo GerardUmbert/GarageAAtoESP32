@@ -177,16 +177,23 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
         val p = prefs()
         val configured = p.isConfigured
         val paired = p.pairedDevice
+        val webhook = p.webhookConfig
         val deviceName = when {
             p.demoMode     -> carContext.getString(R.string.aa_demo_mode)
             paired != null -> paired.name
+            webhook != null -> webhook.name
             else           -> carContext.getString(R.string.aa_not_configured)
         }
+        // BLE presence (in range/out of range) has no equivalent for webhook
+        // targets — there's no proximity signal to report (no BLE, and this
+        // screen doesn't check geofence/location), so the tag is omitted
+        // entirely rather than showing a permanently-wrong "out of range".
         val presenceTag = when {
-            !configured -> null
-            p.demoMode  -> carContext.getString(R.string.aa_in_range)
-            inRange     -> carContext.getString(R.string.aa_in_range)
-            else        -> carContext.getString(R.string.aa_out_of_range)
+            !configured      -> null
+            p.demoMode       -> carContext.getString(R.string.aa_in_range)
+            paired == null   -> null
+            inRange          -> carContext.getString(R.string.aa_in_range)
+            else             -> carContext.getString(R.string.aa_out_of_range)
         }
         // Merge presence + device name on the same body line, with the
         // presence tag in front so the dot is the first thing the eye

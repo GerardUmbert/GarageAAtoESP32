@@ -62,6 +62,7 @@
     <string name="settings_repairbutton">Ri-abbina</string>
     <string name="settings_password_button">Password</string>
     <string name="settings_pair_another">Abbina un altro dispositivo</string>
+    <string name="settings_webhook_edit_button">Modifica</string>
     <string name="settings_no_device_title">Nessun apriporta abbinato</string>
     <string name="settings_no_device_subtitle">Abbina un ESP32 per iniziare.</string>
     <string name="settings_pair_opener">Abbina un apriporta</string>
@@ -118,7 +119,7 @@
     <string name="settings_geofence_location_set">Impostata</string>
     <string name="settings_geofence_location_not_set">Non impostata</string>
     <string name="settings_geofence_toggle_label">Apri all\'arrivo</string>
-    <string name="settings_geofence_toggle_desc_active">Si apre avvicinandosi al garage mentre si guida con Android Auto</string>
+    <string name="settings_geofence_toggle_desc_active">Si apre automaticamente avvicinandosi al garage mentre si guida</string>
     <string name="settings_geofence_toggle_desc_no_location">Imposta prima la posizione del garage</string>
 
     <!-- Geofence picker screen -->

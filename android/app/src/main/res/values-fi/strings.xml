@@ -62,6 +62,7 @@
     <string name="settings_repairbutton">Yhdistä uudelleen</string>
     <string name="settings_password_button">Salasana</string>
     <string name="settings_pair_another">Yhdistä toinen laite</string>
+    <string name="settings_webhook_edit_button">Muokkaa</string>
     <string name="settings_no_device_title">Ei yhdistettyä avaajaa</string>
     <string name="settings_no_device_subtitle">Yhdistä ESP32 aloittaaksesi.</string>
     <string name="settings_pair_opener">Yhdistä avaaja</string>
@@ -118,7 +119,7 @@
     <string name="settings_geofence_location_set">Asetettu</string>
     <string name="settings_geofence_location_not_set">Ei asetettu</string>
     <string name="settings_geofence_toggle_label">Avaa saapuessa</string>
-    <string name="settings_geofence_toggle_desc_active">Avautuu lähestyttäessä tallia Android Auto yhteydessä</string>
+    <string name="settings_geofence_toggle_desc_active">Avautuu automaattisesti lähestyttäessä tallia ajon aikana</string>
     <string name="settings_geofence_toggle_desc_no_location">Aseta tallin sijainti ensin</string>
 
     <!-- Geofence picker screen -->

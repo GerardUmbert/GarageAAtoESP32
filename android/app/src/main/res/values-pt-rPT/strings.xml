@@ -62,6 +62,7 @@
     <string name="settings_repairbutton">Re-emparelhar</string>
     <string name="settings_password_button">Palavra-passe</string>
     <string name="settings_pair_another">Emparelhar outro dispositivo</string>
+    <string name="settings_webhook_edit_button">Editar</string>
     <string name="settings_no_device_title">Nenhum abridor emparelhado</string>
     <string name="settings_no_device_subtitle">Emparelha um ESP32 para começar.</string>
     <string name="settings_pair_opener">Emparelhar um abridor</string>
@@ -118,7 +119,7 @@
     <string name="settings_geofence_location_set">Definida</string>
     <string name="settings_geofence_location_not_set">Não definida</string>
     <string name="settings_geofence_toggle_label">Abrir à chegada</string>
-    <string name="settings_geofence_toggle_desc_active">Abre ao aproximar-se da garagem a conduzir com Android Auto</string>
+    <string name="settings_geofence_toggle_desc_active">Abre automaticamente ao aproximar-se da garagem enquanto conduz</string>
     <string name="settings_geofence_toggle_desc_no_location">Defina primeiro a localização da garagem</string>
 
     <!-- Geofence picker screen -->

@@ -69,6 +69,7 @@
     <string name="settings_repairbutton">Re-pair</string>
     <string name="settings_password_button">Password</string>
     <string name="settings_pair_another">Pair another device</string>
+    <string name="settings_webhook_edit_button">Edit</string>
     <string name="settings_no_device_title">No opener paired</string>
     <string name="settings_no_device_subtitle">Pair an ESP32 to get started.</string>
     <string name="settings_pair_opener">Pair an opener</string>
@@ -138,7 +139,7 @@
     <string name="settings_geofence_location_set">Set</string>
     <string name="settings_geofence_location_not_set">Not set</string>
     <string name="settings_geofence_toggle_label">Auto-open on arrival</string>
-    <string name="settings_geofence_toggle_desc_active">Opens when you approach your garage while driving with Android Auto</string>
+    <string name="settings_geofence_toggle_desc_active">Opens automatically when you approach your garage while driving</string>
     <string name="settings_geofence_toggle_desc_no_location">Set a garage location first</string>
 
     <!-- Geofence picker screen -->

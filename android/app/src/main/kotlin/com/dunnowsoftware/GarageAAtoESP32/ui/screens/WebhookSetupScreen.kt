@@ -103,6 +103,7 @@ fun WebhookSetupScreen(
             hint = stringResource(R.string.webhook_setup_url_hint),
             keyboardType = KeyboardType.Uri,
             imeAction = ImeAction.Done,
+            singleLine = false,
         )
 
         Spacer(Modifier.height(16.dp))
@@ -223,6 +224,7 @@ private fun FieldCard(
     focusRequester: FocusRequester? = null,
     keyboardType: KeyboardType = KeyboardType.Text,
     imeAction: ImeAction = ImeAction.Next,
+    singleLine: Boolean = true,
 ) {
     Column(
         modifier = Modifier
@@ -245,7 +247,7 @@ private fun FieldCard(
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
-            singleLine = true,
+            singleLine = singleLine,
             textStyle = TextStyle(
                 color = GarageColors.Text,
                 fontSize = 18.sp,

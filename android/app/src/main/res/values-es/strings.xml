@@ -62,6 +62,7 @@
     <string name="settings_repairbutton">Revincular</string>
     <string name="settings_password_button">Contraseña</string>
     <string name="settings_pair_another">Vincular otro dispositivo</string>
+    <string name="settings_webhook_edit_button">Editar</string>
     <string name="settings_no_device_title">Ningún abridor vinculado</string>
     <string name="settings_no_device_subtitle">Vincula un ESP32 para empezar.</string>
     <string name="settings_pair_opener">Vincular un abridor</string>
@@ -118,7 +119,7 @@
     <string name="settings_geofence_location_set">Configurada</string>
     <string name="settings_geofence_location_not_set">No configurada</string>
     <string name="settings_geofence_toggle_label">Abrir al llegar</string>
-    <string name="settings_geofence_toggle_desc_active">Se abre al aproximarse al garaje conduciendo con Android Auto</string>
+    <string name="settings_geofence_toggle_desc_active">Se abre automáticamente al aproximarse al garaje mientras conduces</string>
     <string name="settings_geofence_toggle_desc_no_location">Configura primero la ubicación del garaje</string>
 
     <!-- Geofence picker screen -->

@@ -284,7 +284,7 @@ char *buildHtml() {
     pos += snprintf(html + pos, bufSize - pos,
         "<main class='main'>"
         "<div class='page-title'>%s</div>"
-        "<div class='page-sub'>Event log &nbsp;&#8231;&nbsp; auto-refreshes every 30 s</div>"
+        "<div class='page-sub'>Event log &nbsp;&#8231;&nbsp; auto-refreshes every 30 s &nbsp;&#8231;&nbsp; times shown in UTC (webhook opens) &mdash; the ESP32 has no timezone of its own</div>"
         "<div class='stats'>"
           "<div class='stat'><div class='stat-val' id='vis'>%lu</div><div class='stat-lbl'>Showing</div></div>"
           "<div class='stat'><div class='stat-val'>%lu</div><div class='stat-lbl'>Opened</div></div>"

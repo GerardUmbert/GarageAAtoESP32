@@ -62,6 +62,7 @@ fun SettingsScreen(
     onRepair: () -> Unit,
     onUnpair: () -> Unit,
     onRemoveWebhook: () -> Unit = {},
+    onEditWebhook: () -> Unit = {},
     onPairAnother: () -> Unit,
     onToggleDemo: (Boolean) -> Unit,
     onLanguageScreen: () -> Unit,
@@ -153,6 +154,12 @@ fun SettingsScreen(
                             color = GarageColors.TextDim,
                             fontSize = 13.sp,
                             fontFamily = FontFamily.Monospace,
+                        )
+                        Spacer(Modifier.height(16.dp))
+                        SecondaryAction(
+                            text = stringResource(R.string.settings_webhook_edit_button),
+                            onClick = onEditWebhook,
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     }
                 }
@@ -342,8 +349,8 @@ fun SettingsScreen(
             Spacer(Modifier.height(24.dp))
         }
 
-        // AUTO-OPEN section (only visible when a device is paired)
-        if (deviceAddress != null) {
+        // AUTO-OPEN section (visible whenever a transport — BLE or webhook — is configured)
+        if (deviceAddress != null || webhookUrl != null) {
             item {
                 SectionHeader(stringResource(R.string.settings_autoopen_header))
                 Card {

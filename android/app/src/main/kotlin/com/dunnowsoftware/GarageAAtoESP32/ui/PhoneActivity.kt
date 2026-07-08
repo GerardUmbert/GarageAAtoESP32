@@ -338,8 +338,8 @@ private fun AppRoot(
                 demoMode = remember(stateBust) { prefs.demoMode },
                 currentLocaleTag = remember(stateBust) { getSavedLocaleTag(ctx) },
                 presence = rememberPresence(prefs, stateBust),
-                geofenceSet = remember(stateBust) { prefs.pairedDevice?.hasGeofence == true },
-                geofenceEnabled = remember(stateBust) { prefs.pairedDevice?.isGeofenceActive == true },
+                geofenceSet = remember(stateBust) { prefs.activeGeofenceCapable?.hasGeofence == true },
+                geofenceEnabled = remember(stateBust) { prefs.activeGeofenceCapable?.isGeofenceActive == true },
                 onBack = { pop() },
                 onChangePassword = { push(Route.ChangePassword) },
                 onRepair = { push(Route.Scan) },
@@ -356,6 +356,7 @@ private fun AppRoot(
                     bust()
                     replaceAll(Route.Welcome)
                 },
+                onEditWebhook = { push(Route.WebhookSetup) },
                 onPairAnother = { push(Route.ScanAnother) },
                 onToggleDemo = { v ->
                     prefs.demoMode = v
@@ -405,18 +406,22 @@ private fun AppRoot(
                     else push(Route.GeofenceOnboarding(missing.map { it.name }, afterPickerNeeded = true))
                 },
                 onToggleGeofence = { enabled ->
+                    val addressKey = when (prefs.activeTransportType) {
+                        com.dunnowsoftware.GarageAAtoESP32.data.TransportType.BLE -> prefs.pairedDevice?.address
+                        com.dunnowsoftware.GarageAAtoESP32.data.TransportType.WEBHOOK -> com.dunnowsoftware.GarageAAtoESP32.geofence.WEBHOOK_PSEUDO_ADDRESS
+                        null -> null
+                    }
                     if (!enabled) {
-                        prefs.setGeofenceEnabled(false)
-                        val device = prefs.pairedDevice
-                        if (device != null) GeofenceManager(ctx).unregister(device.address)
+                        prefs.setActiveGeofenceEnabled(false)
+                        if (addressKey != null) GeofenceManager(ctx).unregister(addressKey)
                         bust()
                     } else {
-                        val geofenceSet = prefs.pairedDevice?.hasGeofence == true
+                        val geofenceSet = prefs.activeGeofenceCapable?.hasGeofence == true
                         val missing = collectMissingSteps(geofenceAlreadySet = geofenceSet)
                         if (missing.isEmpty()) {
-                            prefs.setGeofenceEnabled(true)
-                            val device = prefs.pairedDevice
-                            if (device != null) GeofenceManager(ctx).register(device)
+                            prefs.setActiveGeofenceEnabled(true)
+                            val geofenceTarget = prefs.activeGeofenceCapable
+                            if (addressKey != null && geofenceTarget != null) GeofenceManager(ctx).register(addressKey, geofenceTarget)
                             bust()
                         } else {
                             push(Route.GeofenceOnboarding(missing.map { it.name }, afterPickerNeeded = !geofenceSet))
@@ -496,9 +501,14 @@ private fun AppRoot(
                     if (route.afterPickerNeeded) {
                         push(Route.GeofencePicker)
                     } else {
-                        prefs.setGeofenceEnabled(true)
-                        val device = prefs.pairedDevice
-                        if (device != null) GeofenceManager(ctx).register(device)
+                        prefs.setActiveGeofenceEnabled(true)
+                        val geofenceTarget = prefs.activeGeofenceCapable
+                        val addressKey = when (prefs.activeTransportType) {
+                            com.dunnowsoftware.GarageAAtoESP32.data.TransportType.BLE -> prefs.pairedDevice?.address
+                            com.dunnowsoftware.GarageAAtoESP32.data.TransportType.WEBHOOK -> com.dunnowsoftware.GarageAAtoESP32.geofence.WEBHOOK_PSEUDO_ADDRESS
+                            null -> null
+                        }
+                        if (addressKey != null && geofenceTarget != null) GeofenceManager(ctx).register(addressKey, geofenceTarget)
                         bust()
                     }
                 },
@@ -509,19 +519,29 @@ private fun AppRoot(
         }
 
         Route.GeofencePicker -> {
-            val device = remember(stateBust) { prefs.pairedDevice }
+            // "Active geofence target" is whichever transport (BLE device or webhook) is
+            // currently paired — geofence config lives on that one record either way.
+            val geofenceTarget = remember(stateBust) { prefs.activeGeofenceCapable }
+            val ble = remember(stateBust) { prefs.pairedDevice }
+            val webhook = remember(stateBust) { prefs.webhookConfig }
+            val pickerDeviceName = ble?.name ?: webhook?.name
+            val pickerAddressKey = when {
+                ble != null     -> ble.address
+                webhook != null -> com.dunnowsoftware.GarageAAtoESP32.geofence.WEBHOOK_PSEUDO_ADDRESS
+                else            -> null
+            }
             GeofencePickerScreen(
-                initialLat = device?.geofenceLat,
-                initialLng = device?.geofenceLng,
-                initialRadiusM = device?.geofenceRadiusM,
-                initialOuterOffsetM = device?.geofenceOuterOffsetM,
-                deviceName = device?.name,
-                deviceAddress = device?.address,
+                initialLat = geofenceTarget?.geofenceLat,
+                initialLng = geofenceTarget?.geofenceLng,
+                initialRadiusM = geofenceTarget?.geofenceRadiusM,
+                initialOuterOffsetM = geofenceTarget?.geofenceOuterOffsetM,
+                deviceName = pickerDeviceName,
+                deviceAddress = pickerAddressKey,
                 onSave = { lat, lng, radius, outerOffset ->
-                    prefs.updateGeofence(lat, lng, radius, outerOffset)
-                    val updated = prefs.pairedDevice
-                    if (updated?.isGeofenceActive == true) {
-                        GeofenceManager(ctx).register(updated)
+                    prefs.updateActiveGeofence(lat, lng, radius, outerOffset)
+                    val updated = prefs.activeGeofenceCapable
+                    if (updated?.isGeofenceActive == true && pickerAddressKey != null) {
+                        GeofenceManager(ctx).register(pickerAddressKey, updated)
                     }
                     bust()
                     pop()

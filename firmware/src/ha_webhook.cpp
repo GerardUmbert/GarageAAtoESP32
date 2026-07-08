@@ -111,11 +111,13 @@ static void handleOpen() {
         return;
     }
 
+    // Request the relay fire before anything else (HTTP response, NVS log
+    // write) — those are network/flash I/O and must not delay the trigger.
+    onGarageOpen();
     server.send(200, "text/plain", "OK");
 #ifdef ENABLE_WEBLOG
     WebLog::appendSuccess(currentTimeOrUnknown(), OpenReason::MANUAL, "Webhook");
 #endif
-    onGarageOpen();
 }
 
 static void handleHealth() {

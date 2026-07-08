@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.11.1]
+
+### Phone — Fixed
+- Webhook devices now show the "Auto-open on arrival" geofence section in Settings — it was silently hidden because the section was gated on having a BLE device paired, ignoring webhook configs entirely
+- Geofence auto-open's Android-Auto-connected trigger now fires for webhook devices too, matching BLE — it was incorrectly restricted to BLE-only, even though Android Auto connection state has nothing to do with which transport delivers the open command
+- Corrected the auto-open toggle description, which claimed Android Auto was required — untrue for either transport, since GPS speed and activity recognition also trigger auto-open independently
+- Added an "Edit" button to the webhook card in Settings so the URL and token can be changed without deleting and re-adding the webhook
+- Webhook URL field is now multi-line in the setup screen so long URLs (e.g. Home Assistant webhook IDs) are fully visible while editing
+- Android Auto screen now shows the webhook's name instead of "Not configured" when paired via webhook, and no longer shows a permanently-wrong "out of range" tag for webhook devices (BLE presence has no equivalent over a webhook, so the tag is omitted instead)
+
 ## [1.11.0]
 
 ### Phone — Added
@@ -14,7 +24,7 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - Authentication is optional — a bare URL works out of the box for Home Assistant's native webhook trigger (the `webhook_id` in the URL is itself the secret, no header required); an optional Bearer token field is available under Advanced for endpoints that expect an `Authorization` header
 - Webhook requests mirror the BLE payload's metadata as JSON: `{"reason": "...", "timestamp": ..., "model": "..."}`
 - Same retry model as BLE: 3 attempts, 2s backoff, 5s per-attempt timeout; auth failures (401/403) do not retry
-- Geofence auto-open works in webhook mode too — the Android-Auto-connected gate is skipped (nothing to check without an ESP32), falling back to the existing speed-based trigger path
+- Geofence auto-open works in webhook mode too, using the same gates as BLE (Android-Auto-connected, GPS speed, activity recognition)
 - New "failed webhook" outcome in the open history log, distinct from BLE failures
 - Settings screen shows a WEBHOOK badge and masked URL when a webhook is paired, with its own Remove flow
 - Fully translated into all supported languages (es, fr, de, ca, fi, it, pt-PT)
