@@ -26,6 +26,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
+import androidx.wear.compose.foundation.lazy.items
+import androidx.wear.compose.material.Chip
+import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.Text
 
 enum class WatchOpenState { Idle, Sending, Opened, Failed }
@@ -33,8 +37,18 @@ enum class WatchOpenState { Idle, Sending, Opened, Failed }
 @Composable
 fun WatchMainScreen(
     state: WatchOpenState,
+    devices: List<WatchDevice> = emptyList(),
+    selectedId: String? = null,
     onOpen: () -> Unit,
+    onOpenDevice: (String) -> Unit = {},
 ) {
+    // A picker only makes sense with 2+ known devices and while idle — mid-send/result
+    // states keep showing the hero button so the tap target and feedback stay
+    // where the user is already looking, same as the single-device case.
+    if (devices.size > 1 && state == WatchOpenState.Idle) {
+        WatchDevicePicker(devices = devices, selectedId = selectedId, onPick = onOpenDevice)
+        return
+    }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -42,6 +56,41 @@ fun WatchMainScreen(
         contentAlignment = Alignment.Center,
     ) {
         WatchHeroButton(state = state, onClick = onOpen)
+    }
+}
+
+@Composable
+private fun WatchDevicePicker(
+    devices: List<WatchDevice>,
+    selectedId: String?,
+    onPick: (String) -> Unit,
+) {
+    ScalingLazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(WearColors.Bg),
+    ) {
+        items(devices) { device ->
+            val isSelected = device.id == selectedId
+            Chip(
+                onClick = { onPick(device.id) },
+                label = { Text(device.name.ifEmpty { stringResource(R.string.watch_device_default_name) }) },
+                secondaryLabel = {
+                    Text(
+                        if (device.transport == WatchTransportType.WEBHOOK)
+                            stringResource(R.string.watch_transport_webhook)
+                        else
+                            stringResource(R.string.watch_transport_ble)
+                    )
+                },
+                colors = ChipDefaults.chipColors(
+                    backgroundColor = if (isSelected) WearColors.Surface else WearColors.Bg,
+                    contentColor = WearColors.Text,
+                    secondaryContentColor = WearColors.TextDim,
+                ),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
 }
 

@@ -31,7 +31,8 @@ private const val RING_SIZE_DP = 112f
  * background tile refreshes — both requestUpdate() and short freshness intervals are throttled —
  * so a tile cannot repaint itself to show an async OPENING/OPENED result. Instead, tapping the
  * tile launches WearActivity with EXTRA_AUTO_OPEN, which fires the open and shows the full
- * animated feedback (and haptics) that the app already does reliably.
+ * animated feedback (and haptics) that the app already does reliably — unless 2+ devices are
+ * paired, in which case it lands on the device picker instead of guessing which one to fire.
  */
 class GarageOpenerTileService : TileService() {
 

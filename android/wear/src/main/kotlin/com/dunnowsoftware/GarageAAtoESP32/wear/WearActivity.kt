@@ -8,6 +8,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.*
 import androidx.lifecycle.lifecycleScope
+import com.google.android.gms.wearable.DataClient
+import com.google.android.gms.wearable.DataEvent
+import com.google.android.gms.wearable.DataEventBuffer
+import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.Wearable
@@ -21,7 +25,7 @@ private const val PATH_RESULT = "/garage/result"
 private const val TIMEOUT_MS  = 30_000L
 private const val RESULT_DISPLAY_MS = 2_000L
 
-class WearActivity : ComponentActivity(), MessageClient.OnMessageReceivedListener {
+class WearActivity : ComponentActivity(), MessageClient.OnMessageReceivedListener, DataClient.OnDataChangedListener {
 
     companion object {
         const val EXTRA_AUTO_OPEN    = "auto_open"
@@ -30,7 +34,12 @@ class WearActivity : ComponentActivity(), MessageClient.OnMessageReceivedListene
     }
 
     private var openState by mutableStateOf(WatchOpenState.Idle)
+    private var deviceList by mutableStateOf(WatchDeviceList(emptyList(), null))
     private var timeoutJob: Job? = null
+    // Tile launches with EXTRA_AUTO_OPEN before the device list has loaded from the
+    // Data Layer (async). Deferred until the first load callback lands, so the
+    // 1-vs-2+-device decision below is made with a real list, not an empty guess.
+    private var pendingAutoOpen = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,11 +49,27 @@ class WearActivity : ComponentActivity(), MessageClient.OnMessageReceivedListene
         setContent {
             WatchMainScreen(
                 state = openState,
-                onOpen = ::sendOpenCommand,
+                devices = deviceList.devices,
+                selectedId = deviceList.selectedId,
+                onOpen = { sendOpenCommand(null) },
+                onOpenDevice = { id -> sendOpenCommand(id) },
             )
         }
+        loadWatchDeviceList(this) { onDeviceListLoaded(it) }
         // Only handle launch intent on a fresh launch, not on recreate.
         if (savedInstanceState == null) handleIntent(intent)
+    }
+
+    private fun onDeviceListLoaded(list: WatchDeviceList) {
+        deviceList = list
+        if (pendingAutoOpen) {
+            pendingAutoOpen = false
+            // 2+ known devices: land on the picker (already showing, since deviceList
+            // just updated) instead of guessing which one the tile tap meant — same
+            // "open the app, then pick" flow as tapping the tile with the app already
+            // open. 0/1 devices: nothing to pick between, fire immediately as before.
+            if (list.devices.size <= 1) sendOpenCommand(null)
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -57,7 +82,8 @@ class WearActivity : ComponentActivity(), MessageClient.OnMessageReceivedListene
         when {
             intent?.getBooleanExtra(EXTRA_AUTO_OPEN, false) == true -> {
                 intent.removeExtra(EXTRA_AUTO_OPEN)
-                sendOpenCommand()
+                pendingAutoOpen = true
+                onDeviceListLoaded(deviceList) // fires immediately if the list is already loaded (e.g. re-tap)
             }
             intent?.getBooleanExtra(EXTRA_SHOW_SENDING, false) == true -> {
                 intent.removeExtra(EXTRA_SHOW_SENDING)
@@ -90,14 +116,24 @@ class WearActivity : ComponentActivity(), MessageClient.OnMessageReceivedListene
     override fun onResume() {
         super.onResume()
         Wearable.getMessageClient(this).addListener(this)
+        Wearable.getDataClient(this).addListener(this)
+        loadWatchDeviceList(this) { deviceList = it }
     }
 
     override fun onPause() {
         super.onPause()
         Wearable.getMessageClient(this).removeListener(this)
+        Wearable.getDataClient(this).removeListener(this)
     }
 
-    private fun sendOpenCommand() {
+    override fun onDataChanged(dataEvents: DataEventBuffer) {
+        val item = dataEvents.firstOrNull { it.type == DataEvent.TYPE_CHANGED && it.dataItem.uri.path == "/garage/devices" }
+            ?: return
+        deviceList = parseWatchDeviceList(DataMapItem.fromDataItem(item.dataItem))
+    }
+
+    /** [deviceId] null means "fire whatever's selected" (single-device / legacy path); non-null is an explicit picker tap. */
+    private fun sendOpenCommand(deviceId: String?) {
         if (openState != WatchOpenState.Idle) return
         openState = WatchOpenState.Sending
         window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -109,9 +145,10 @@ class WearActivity : ComponentActivity(), MessageClient.OnMessageReceivedListene
                     showResult(success = false)
                     return@launch
                 }
+                val payload = (deviceId ?: "").toByteArray()
                 nodes.forEach { node ->
                     Wearable.getMessageClient(this@WearActivity)
-                        .sendMessage(node.id, PATH_OPEN, ByteArray(0))
+                        .sendMessage(node.id, PATH_OPEN, payload)
                         .await()
                 }
                 timeoutJob = launch {

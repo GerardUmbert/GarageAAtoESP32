@@ -10,4 +10,7 @@
     <string name="watch_sending">OPENING…</string>
     <string name="watch_opened">OPENED</string>
     <string name="watch_failed">FAILED</string>
+    <string name="watch_device_default_name">Garage</string>
+    <string name="watch_transport_ble">BLE</string>
+    <string name="watch_transport_webhook">WEBHOOK</string>
 </resources>

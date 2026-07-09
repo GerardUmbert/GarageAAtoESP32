@@ -22,6 +22,7 @@ import com.dunnowsoftware.GarageAAtoESP32.data.TransportType
 import com.dunnowsoftware.GarageAAtoESP32.data.TriggerSource
 import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchResult
 import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchSending
+import com.dunnowsoftware.GarageAAtoESP32.wear.syncDevicesToWatch
 
 class GarageScreen(carContext: CarContext) : Screen(carContext) {
 
@@ -176,6 +177,54 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
 
     private fun buildMain(): Template {
         val p = prefs()
+        // 2+ real devices (not demo mode, which has nothing to pick between) get a
+        // row-per-device picker instead of the single button; tapping a row both
+        // opens that device and updates selectedDeviceId so every other surface
+        // (phone dropdown, watch) reflects the same choice next time it's shown.
+        if (!p.demoMode && p.devices.size > 1) {
+            return buildDevicePicker(p)
+        }
+        return buildSingleDevice(p)
+    }
+
+    private fun buildDevicePicker(p: DevicePreferences): Template {
+        val itemList = ItemList.Builder()
+        p.devices.forEach { device ->
+            val isWebhook = device.transport == TransportType.WEBHOOK
+            val presenceTag = if (isWebhook) null else {
+                if (device.ble?.address == scanStartedForAddress && inRange)
+                    carContext.getString(R.string.aa_in_range)
+                else
+                    carContext.getString(R.string.aa_out_of_range)
+            }
+            val title = if (presenceTag != null) "$presenceTag - ${device.name}" else device.name
+            itemList.addItem(
+                Row.Builder()
+                    .setTitle(title)
+                    .addText(
+                        if (isWebhook) carContext.getString(R.string.settings_webhook_badge)
+                        else carContext.getString(R.string.settings_paired_badge)
+                    )
+                    .setOnClickListener {
+                        p.selectedDeviceId = device.id
+                        syncDevicesToWatch(carContext)
+                        triggerOpen()
+                    }
+                    .build()
+            )
+        }
+        return ListTemplate.Builder()
+            .setHeader(
+                Header.Builder()
+                    .setStartHeaderAction(Action.APP_ICON)
+                    .setTitle(carContext.getString(R.string.aa_garage_door))
+                    .build()
+            )
+            .setSingleList(itemList.build())
+            .build()
+    }
+
+    private fun buildSingleDevice(p: DevicePreferences): Template {
         val configured = p.isConfigured
         val selected = p.selectedDevice
         val deviceName = when {

@@ -67,6 +67,7 @@ import com.dunnowsoftware.GarageAAtoESP32.wear.installWearCompanion
 import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchAutoFired
 import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchResult
 import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchSending
+import com.dunnowsoftware.GarageAAtoESP32.wear.syncDevicesToWatch
 import com.dunnowsoftware.GarageAAtoESP32.wear.WearMessageListenerService
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
@@ -216,6 +217,11 @@ private fun AppRoot(
     fun replaceAll(r: Route) { routeStack = listOf(r) }
     fun bust() { stateBust++ }
 
+    // Refresh the watch's copy of the device list on every launch, covering the
+    // case where devices changed while the watch was unreachable (off, out of
+    // BT range) and missed the per-mutation push below.
+    LaunchedEffect(Unit) { syncDevicesToWatch(ctx) }
+
     BackHandler(enabled = routeStack.size > 1) { pop() }
 
     when (current) {
@@ -244,6 +250,7 @@ private fun AppRoot(
                     } else {
                         prefs.addDevice(com.dunnowsoftware.GarageAAtoESP32.data.GarageDevice.webhook(config = config))
                     }
+                    syncDevicesToWatch(ctx)
                     editingDeviceId = null
                     bust()
                     replaceAll(Route.Main)
@@ -317,6 +324,7 @@ private fun AppRoot(
                                 ),
                             )
                         )
+                        syncDevicesToWatch(ctx)
                         pendingPair = null
                         bust()
                         replaceAll(Route.Main)
@@ -338,6 +346,7 @@ private fun AppRoot(
             onHistory = { push(Route.History) },
             onSelectDevice = { deviceId ->
                 prefs.selectedDeviceId = deviceId
+                syncDevicesToWatch(ctx)
                 bust()
             },
         )
@@ -355,6 +364,7 @@ private fun AppRoot(
                 val device = prefs.device(deviceId)
                 GeofenceManager(ctx).unregister(device?.addressKey ?: deviceId)
                 prefs.removeDevice(deviceId)
+                syncDevicesToWatch(ctx)
                 bust()
                 if (prefs.devices.isEmpty()) replaceAll(Route.Scan) else replaceAll(Route.Settings)
             }
@@ -452,6 +462,7 @@ private fun AppRoot(
                     onRemove = {
                         GeofenceManager(ctx).unregister(device.addressKey)
                         prefs.removeDevice(route.deviceId)
+                        syncDevicesToWatch(ctx)
                         bust()
                         pop()
                     },

@@ -33,6 +33,14 @@ class WearMessageListenerService : WearableListenerService() {
         inFlight = true
 
         val prefs = DevicePreferences(this)
+        // A watch picker tap sends the chosen device's id as the payload (UTF-8
+        // string); the legacy/no-picker case sends an empty payload and we fall
+        // back to whatever's currently selected, same as AA/tile.
+        val requestedId = String(event.data).takeIf { it.isNotEmpty() }
+        if (requestedId != null && requestedId != prefs.selectedDeviceId && prefs.device(requestedId) != null) {
+            prefs.selectedDeviceId = requestedId
+            syncDevicesToWatch(this)
+        }
         val selected = prefs.selectedDevice
         val transportType = selected?.transport
         val deviceAddress = selected?.addressKey ?: ""
