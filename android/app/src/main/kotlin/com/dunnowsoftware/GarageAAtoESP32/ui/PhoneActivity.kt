@@ -858,7 +858,7 @@ private fun rememberPresence(prefs: DevicePreferences, stateBust: Int, deviceId:
         }
     }
 
-    val staleAfterMs = 15_000L
+    val staleAfterMs = 8_000L
     return if (lastSeenMs > 0 && (nowMs - lastSeenMs) < staleAfterMs)
         PresenceStatus.InRange
     else
@@ -893,7 +893,7 @@ private fun rememberMultiPresence(bleAddresses: Set<String>, stateBust: Int): Ma
         }
     }
 
-    val staleAfterMs = 15_000L
+    val staleAfterMs = 8_000L
     return bleAddresses.associateWith { address ->
         val seen = lastSeenMs[address] ?: 0L
         seen > 0 && (nowMs - seen) < staleAfterMs

@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.12.3]
+
+### Phone — Fixed
+- BLE presence in the "Selected opener" dropdown and Settings device list was checking only the currently-selected device, so unrelated paired devices could never show as in-range no matter how close they actually were. All BLE presence checks now scan for every paired device's address at once.
+- Lowered how long a device is shown "in range" after its last BLE advertisement from 15s to 8s, so unplugging or losing a device shows up roughly twice as fast, while still absorbing a couple of missed advertisement cycles without flickering.
+
+### Android Auto — Fixed
+- The 2+ device picker had the same single-address presence bug as the phone dropdown — only the currently-selected device could ever show as in-range. Now scans all paired BLE devices at once, same fix as the phone side.
+- With 2+ devices paired, entering BLE range of the selected device no longer auto-opens it on its own — that was firing with no way to know which device the user actually wanted, since presence is only an unambiguous signal with exactly one device paired. Requires an explicit picker tap until a real geofence-based "Automatic" resolution exists.
+
 ## [1.12.2]
 
 ### Phone — Fixed

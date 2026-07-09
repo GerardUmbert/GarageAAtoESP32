@@ -65,40 +65,55 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
     // geofence-then-BLE-in-range double-open that toggles the gate back closed.
     private val autoFireDebounceMs = 10_000L
 
-    // Presence: matches the phone main screen. lastSeenMs=0 + inRange=false
-    // means we've never heard from the paired device this session.
+    // Presence: matches the phone main screen. No entry for an address in
+    // lastSeenByAddress means we've never heard from that device this session.
     private val presenceHandler = Handler(Looper.getMainLooper())
-    private var lastSeenMs = 0L
+    // Per-BLE-address last-seen timestamps, so the 2+ device picker can show each
+    // device's own in-range status instead of only ever knowing about whichever
+    // one is currently selected. Keyed by MAC; a single-device install only ever
+    // has one entry, same effective behavior as before.
+    private val lastSeenByAddress = mutableMapOf<String, Long>()
     private var inRange = false
-    // The MAC the running scan was started for. If prefs change (user re-pairs
-    // on the phone), we'll notice the divergence on the next tick and restart
-    // the scan with the new address.
-    private var scanStartedForAddress: String? = null
-    // 15s is generous: covers Android's LOW_POWER scan duty cycle and the
-    // worst-case adv interval. Smaller windows cause the in-range/out-of-range
-    // line to flicker between callbacks even when the device is stably present.
-    private val presenceStaleAfterMs = 15_000L
+    // The set of MACs the running scan was started for. If prefs change (user
+    // re-pairs on the phone, or adds/removes a device), we'll notice the
+    // divergence on the next tick and restart the scan with the new set.
+    private var scanStartedForAddresses: Set<String> = emptySet()
+    // Long enough to absorb a couple of missed advertisement cycles without the
+    // in-range/out-of-range line flickering, short enough that unplugging a
+    // device shows up in a reasonable time rather than staying "in range" for
+    // a long stale window.
+    private val presenceStaleAfterMs = 8_000L
     private val presenceCheckIntervalMs = 1500L
     private val presenceCheckRunnable = object : Runnable {
         override fun run() {
-            // If the saved device address has changed since we started the
-            // scan (re-pair on the phone, or a different device selected),
-            // restart the scan with the new MAC.
-            val currentAddress = prefs().selectedDevice?.ble?.address
-            if (currentAddress != scanStartedForAddress) {
+            // If the set of paired BLE addresses has changed since we started the
+            // scan (re-pair on the phone, device added/removed), restart the scan
+            // with the new set.
+            val currentAddresses = prefs().devices.mapNotNull { it.ble?.address }.toSet()
+            if (currentAddresses != scanStartedForAddresses) {
                 stopPresenceScan()
                 startPresenceScan()
                 presenceHandler.postDelayed(this, presenceCheckIntervalMs)
                 return
             }
-            val nowInRange = lastSeenMs > 0 &&
-                (System.currentTimeMillis() - lastSeenMs) < presenceStaleAfterMs
+            val selectedAddress = prefs().selectedDevice?.ble?.address
+            val selectedLastSeen = selectedAddress?.let { lastSeenByAddress[it] } ?: 0L
+            val nowInRange = selectedLastSeen > 0 &&
+                (System.currentTimeMillis() - selectedLastSeen) < presenceStaleAfterMs
             if (nowInRange != inRange) {
                 inRange = nowInRange
                 val now = System.currentTimeMillis()
-                val lastFired = prefs().lastAutoFiredAt
+                val p = prefs()
+                val lastFired = p.lastAutoFiredAt
                 val debounceOk = (now - lastFired) > autoFireDebounceMs
-                if (inRange && debounceOk && uiState == UiState.IDLE && prefs().isConfigured) {
+                // BLE presence is only an unambiguous "the door to open" signal when
+                // there's exactly one paired device. With 2+, "selectedDevice came into
+                // range" says nothing about which device the user actually wants right
+                // now — auto-firing here would silently guess. Until Phase 3's real
+                // geofence-based resolution exists, 2+ devices require an explicit AA
+                // picker tap; presence still drives the in-range/out-of-range UI, just
+                // not an automatic trigger.
+                if (inRange && debounceOk && uiState == UiState.IDLE && p.isConfigured && p.devices.size <= 1) {
                     triggerOpen()
                 } else if (uiState == UiState.IDLE) {
                     invalidate()
@@ -155,13 +170,13 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
 
     private fun startPresenceScan() {
         val p = prefs()
-        val address = p.selectedDevice?.ble?.address ?: return
-        if (p.demoMode) return
+        val addresses = p.devices.mapNotNull { it.ble?.address }.toSet()
+        if (addresses.isEmpty() || p.demoMode) return
         try {
-            presenceScanner.startPresence(address) { _ ->
-                lastSeenMs = System.currentTimeMillis()
+            presenceScanner.startPresenceMulti(addresses) { found ->
+                lastSeenByAddress[found.address] = System.currentTimeMillis()
             }
-            scanStartedForAddress = address
+            scanStartedForAddresses = addresses
         } catch (_: Throwable) {
             // Permissions / BT off — leave inRange=false so the UI shows the
             // out-of-range hint. Don't crash.
@@ -173,9 +188,9 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
     private fun stopPresenceScan() {
         presenceScanner.stop()
         presenceHandler.removeCallbacks(presenceCheckRunnable)
-        lastSeenMs = 0
+        lastSeenByAddress.clear()
         inRange = false
-        scanStartedForAddress = null
+        scanStartedForAddresses = emptySet()
     }
 
     override fun onGetTemplate(): Template {
@@ -208,7 +223,9 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
         p.devices.forEach { device ->
             val isWebhook = device.transport == TransportType.WEBHOOK
             val presenceTag = if (isWebhook) null else {
-                if (device.ble?.address == scanStartedForAddress && inRange)
+                val lastSeen = device.ble?.address?.let { lastSeenByAddress[it] } ?: 0L
+                val deviceInRange = lastSeen > 0 && (System.currentTimeMillis() - lastSeen) < presenceStaleAfterMs
+                if (deviceInRange)
                     carContext.getString(R.string.aa_in_range)
                 else
                     carContext.getString(R.string.aa_out_of_range)
