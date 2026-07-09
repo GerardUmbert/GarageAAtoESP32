@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.12.2]
+
+### Phone — Fixed
+- The "Selected opener" dropdown wasn't refreshing when a device was picked from the watch app — it now updates immediately, reusing the same signal already sent when the watch hands off an open request.
+
+### Wear OS — Fixed
+- The device picker list wasn't centered on the watch face — chips sat flush against the screen edges with no padding, reading as off-center on the round display. Added horizontal/vertical padding so the list and each row sit clear of the curved bezel.
+
+## [1.12.1]
+
+### Android Auto — Added
+- Device picker: with 2+ paired openers, Android Auto now shows a list (name, transport badge, live BLE presence) instead of always firing the last-selected device. Tapping a row opens that device and updates the phone's selection.
+
+### Wear OS — Added
+- Watch app and swipe-in tile gained the same device picker as Android Auto. Picking a device on the watch also updates the phone's selection.
+- New phone-to-watch sync keeps the watch's copy of the device list current (previously the watch had no awareness of paired devices at all).
+
+### Wear OS — Fixed
+- The swipe-in quick tile no longer blind-fires the last-selected device when 2+ openers are paired — it now waits for the synced list and lands on the picker instead, so a stale selection can't be triggered by accident.
+
 ## [1.12.0]
 
 ### Phone — Added

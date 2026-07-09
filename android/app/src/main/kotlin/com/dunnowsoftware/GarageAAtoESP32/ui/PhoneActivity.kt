@@ -349,6 +349,7 @@ private fun AppRoot(
                 syncDevicesToWatch(ctx)
                 bust()
             },
+            onDeviceSelectionChangedExternally = { bust() },
         )
 
         Route.Settings -> {
@@ -638,6 +639,7 @@ private fun MainHost(
     onSettings: () -> Unit,
     onHistory: () -> Unit,
     onSelectDevice: (String) -> Unit,
+    onDeviceSelectionChangedExternally: () -> Unit,
 ) {
     val ctx = androidx.compose.ui.platform.LocalContext.current
     var openState by remember { mutableStateOf(OpenState.Idle) }
@@ -657,6 +659,10 @@ private fun MainHost(
                 when (intent.action) {
                     WearMessageListenerService.ACTION_WEAR_SENDING -> {
                         if (openState == OpenState.Idle) openState = OpenState.Sending
+                        // A watch-side device pick (if any) is already written to prefs by
+                        // the time this fires — re-read so the "Selected opener" dropdown
+                        // doesn't keep showing a stale value until an unrelated bust().
+                        onDeviceSelectionChangedExternally()
                     }
                     GeofenceForegroundService.ACTION_AUTO_OPENED -> {
                         if (openState != OpenState.Failed) openState = OpenState.Opened

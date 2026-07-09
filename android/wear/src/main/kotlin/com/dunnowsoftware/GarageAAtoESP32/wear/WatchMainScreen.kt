@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.items
+import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.Text
@@ -65,31 +66,45 @@ private fun WatchDevicePicker(
     selectedId: String?,
     onPick: (String) -> Unit,
 ) {
-    ScalingLazyColumn(
+    val listState = rememberScalingLazyListState()
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(WearColors.Bg),
     ) {
-        items(devices) { device ->
-            val isSelected = device.id == selectedId
-            Chip(
-                onClick = { onPick(device.id) },
-                label = { Text(device.name.ifEmpty { stringResource(R.string.watch_device_default_name) }) },
-                secondaryLabel = {
-                    Text(
-                        if (device.transport == WatchTransportType.WEBHOOK)
-                            stringResource(R.string.watch_transport_webhook)
-                        else
-                            stringResource(R.string.watch_transport_ble)
-                    )
-                },
-                colors = ChipDefaults.chipColors(
-                    backgroundColor = if (isSelected) WearColors.Surface else WearColors.Bg,
-                    contentColor = WearColors.Text,
-                    secondaryContentColor = WearColors.TextDim,
-                ),
-                modifier = Modifier.fillMaxWidth(),
-            )
+        ScalingLazyColumn(
+            state = listState,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            // Chips were flush against fillMaxSize() with no content padding, so on a
+            // round screen they ran under the bezel curve on both edges and the whole
+            // list read as left-heavy/off-center. Horizontal padding keeps chips inside
+            // the visible circle; vertical padding lets ScalingLazyColumn's built-in
+            // auto-centering settle a short list in the middle of the screen instead of
+            // anchored to the top.
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 24.dp),
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            items(devices) { device ->
+                val isSelected = device.id == selectedId
+                Chip(
+                    onClick = { onPick(device.id) },
+                    label = { Text(device.name.ifEmpty { stringResource(R.string.watch_device_default_name) }) },
+                    secondaryLabel = {
+                        Text(
+                            if (device.transport == WatchTransportType.WEBHOOK)
+                                stringResource(R.string.watch_transport_webhook)
+                            else
+                                stringResource(R.string.watch_transport_ble)
+                        )
+                    },
+                    colors = ChipDefaults.chipColors(
+                        backgroundColor = if (isSelected) WearColors.Surface else WearColors.Bg,
+                        contentColor = WearColors.Text,
+                        secondaryContentColor = WearColors.TextDim,
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
 }
