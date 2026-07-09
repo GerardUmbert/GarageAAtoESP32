@@ -141,23 +141,17 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
 
     private fun handleEnter(context: Context, deviceAddress: String, event: GeofencingEvent) {
         val prefs = DevicePreferences(context)
-        val transportType = prefs.activeTransportType
-        val device = prefs.pairedDevice
-        val webhook = prefs.webhookConfig
+        val device = prefs.devices.firstOrNull { it.addressKey == deviceAddress }
 
-        val capable = when {
-            device != null && device.address == deviceAddress   -> device
-            webhook != null && deviceAddress == WEBHOOK_PSEUDO_ADDRESS -> webhook
-            else -> null
-        }
-        if (capable == null) {
-            GeofenceLogger.w(context, TAG, "ENTER for $deviceAddress — not the active transport (BLE=${device?.address} webhook=${webhook != null}), dropping")
+        if (device == null) {
+            GeofenceLogger.w(context, TAG, "ENTER for $deviceAddress — no matching paired device, dropping")
             return
         }
-        if (!capable.isGeofenceActive) {
-            GeofenceLogger.d(context, TAG, "ENTER for $deviceAddress — geofence inactive (hasGeofence=${capable.hasGeofence} enabled=${capable.geofenceEnabled}), dropping")
+        if (!device.isGeofenceActive) {
+            GeofenceLogger.d(context, TAG, "ENTER for $deviceAddress — geofence inactive (hasGeofence=${device.hasGeofence} enabled=${device.geofenceEnabled}), dropping")
             return
         }
+        val transportType = device.transport
 
         // Gate 1 — AA connected. This reflects OS-level Android Auto
         // projection state (CarConnection), independent of transport type —
@@ -186,7 +180,8 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
 
     private fun checkFallbackGatesAndFire(context: Context, deviceAddress: String, triggerSpeedKmh: Float) {
         val prefs = DevicePreferences(context)
-        val deviceName = prefs.pairedDevice?.name ?: prefs.webhookConfig?.name
+        val device = prefs.devices.firstOrNull { it.addressKey == deviceAddress }
+        val deviceName = device?.name
 
         // Gate 2: triggerSpeed — free, already in the geofence event.
         if (triggerSpeedKmh >= MIN_TRIGGER_SPEED_KMH) {
@@ -248,6 +243,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
                             trigger       = TriggerSource.AUTO_GEOFENCE,
                             outcome       = OpenOutcome.SUPPRESSED,
                             detail        = suppressToken,
+                            deviceId      = device?.id,
                         ),
                     )
                 }
@@ -266,6 +262,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
                         trigger       = TriggerSource.AUTO_GEOFENCE,
                         outcome       = OpenOutcome.SUPPRESSED,
                         detail        = suppressToken,
+                        deviceId      = device?.id,
                     ),
                 )
             }

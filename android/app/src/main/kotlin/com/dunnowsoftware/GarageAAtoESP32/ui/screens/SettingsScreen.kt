@@ -8,13 +8,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dunnowsoftware.GarageAAtoESP32.R
+import com.dunnowsoftware.GarageAAtoESP32.data.TransportType
 import com.dunnowsoftware.GarageAAtoESP32.ui.HAPTIC_TAP
 import com.dunnowsoftware.GarageAAtoESP32.ui.vibrate
 import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageColors
@@ -45,32 +50,43 @@ internal val supportedLanguages = listOf(
     LangOption("fi",    "Suomi"),
 )
 
+/** Lightweight, UI-facing view of a GarageDevice — SettingsScreen doesn't need the full data model. */
+data class DeviceSummary(
+    val id: String,
+    val name: String,
+    val transport: TransportType,
+    val bleAddress: String? = null,
+    val bleHasWebLog: Boolean = false,
+    val webhookUrl: String? = null,
+)
+
 @Composable
 fun SettingsScreen(
-    deviceName: String?,
-    deviceAddress: String?,
-    deviceHasWebLog: Boolean = false,
-    webhookName: String? = null,
-    webhookUrl: String? = null,
+    devices: List<DeviceSummary>,
     demoMode: Boolean,
     currentLocaleTag: String?,
     presence: PresenceStatus = PresenceStatus.OutOfRange,
+    /** BLE address -> in-range, for the multi-device list. Webhook devices are absent (no presence concept). */
+    blePresence: Map<String, Boolean> = emptyMap(),
     geofenceSet: Boolean = false,
     geofenceEnabled: Boolean = false,
     onBack: () -> Unit,
-    onChangePassword: () -> Unit,
+    onChangePassword: (deviceId: String) -> Unit,
     onRepair: () -> Unit,
-    onUnpair: () -> Unit,
-    onRemoveWebhook: () -> Unit = {},
-    onEditWebhook: () -> Unit = {},
+    onUnpair: (deviceId: String) -> Unit,
+    onRemoveWebhook: (deviceId: String) -> Unit = {},
+    onEditWebhook: (deviceId: String) -> Unit = {},
     onPairAnother: () -> Unit,
     onToggleDemo: (Boolean) -> Unit,
     onLanguageScreen: () -> Unit,
     onGeofencePicker: () -> Unit = {},
     onToggleGeofence: (Boolean) -> Unit = {},
     onShareLog: () -> Unit = {},
-    onConnectToAp: () -> Unit = {},
+    onConnectToAp: (deviceId: String) -> Unit = {},
+    onDeviceDetail: (deviceId: String) -> Unit = {},
 ) {
+    val single = devices.singleOrNull()
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -91,194 +107,8 @@ fun SettingsScreen(
             )
         }
 
-        // Paired hero card
-        item {
-            if (webhookUrl != null) {
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(22.dp))
-                            .background(GarageColors.Surface)
-                            .border(1.dp, GarageColors.Hairline, RoundedCornerShape(22.dp))
-                            .padding(20.dp),
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Outlined.Wifi,
-                                contentDescription = null,
-                                tint = GarageColors.Accent,
-                                modifier = Modifier.size(14.dp),
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                text = stringResource(R.string.settings_webhook_badge),
-                                color = GarageColors.Accent,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium,
-                                letterSpacing = 1.2.sp,
-                                modifier = Modifier.weight(1f),
-                            )
-                            val ctxRemove = LocalContext.current
-                            Box(
-                                modifier = Modifier
-                                    .size(28.dp)
-                                    .clip(CircleShape)
-                                    .background(GarageColors.DangerSoft)
-                                    .clickable {
-                                        vibrate(ctxRemove, HAPTIC_TAP)
-                                        onRemoveWebhook()
-                                    },
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Text(
-                                    text = "×",
-                                    color = GarageColors.Danger,
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    lineHeight = 18.sp,
-                                )
-                            }
-                        }
-                        Spacer(Modifier.height(10.dp))
-                        Text(
-                            text = webhookName ?: stringResource(R.string.settings_device_default_name),
-                            color = GarageColors.Text,
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = (-0.4).sp,
-                        )
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            text = maskUrl(webhookUrl),
-                            color = GarageColors.TextDim,
-                            fontSize = 13.sp,
-                            fontFamily = FontFamily.Monospace,
-                        )
-                        Spacer(Modifier.height(16.dp))
-                        SecondaryAction(
-                            text = stringResource(R.string.settings_webhook_edit_button),
-                            onClick = onEditWebhook,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
-                }
-                Spacer(Modifier.height(28.dp))
-            } else if (deviceAddress != null) {
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(22.dp))
-                            .background(GarageColors.Surface)
-                            .border(1.dp, GarageColors.Hairline, RoundedCornerShape(22.dp))
-                            .padding(20.dp),
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            val dotColor = if (presence == PresenceStatus.InRange) GarageColors.Accent else GarageColors.TextFaint
-                            Box(
-                                modifier = Modifier
-                                    .size(8.dp)
-                                    .clip(CircleShape)
-                                    .background(dotColor),
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            val badgeText = stringResource(R.string.settings_paired_badge) +
-                                if (presence == PresenceStatus.InRange) " · " + stringResource(R.string.status_in_range)
-                                else ""
-                            Text(
-                                text = badgeText,
-                                color = if (presence == PresenceStatus.InRange) GarageColors.Accent else GarageColors.TextDim,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium,
-                                letterSpacing = 1.2.sp,
-                                modifier = Modifier.weight(1f),
-                            )
-                            val ctxUnpair = LocalContext.current
-                            Box(
-                                modifier = Modifier
-                                    .size(28.dp)
-                                    .clip(CircleShape)
-                                    .background(GarageColors.DangerSoft)
-                                    .clickable {
-                                        vibrate(ctxUnpair, HAPTIC_TAP)
-                                        onUnpair()
-                                    },
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Text(
-                                    text = "×",
-                                    color = GarageColors.Danger,
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    lineHeight = 18.sp,
-                                )
-                            }
-                        }
-                        Spacer(Modifier.height(10.dp))
-                        Text(
-                            text = deviceName ?: stringResource(R.string.settings_device_default_name),
-                            color = GarageColors.Text,
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = (-0.4).sp,
-                        )
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(top = 4.dp),
-                        ) {
-                            Text(
-                                text = deviceAddress,
-                                color = GarageColors.TextDim,
-                                fontSize = 13.sp,
-                                fontFamily = FontFamily.Monospace,
-                                modifier = Modifier.weight(1f),
-                            )
-                            if (deviceHasWebLog) {
-                                val ctxWifi = LocalContext.current
-                                Box(
-                                    modifier = Modifier
-                                        .size(30.dp)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(GarageColors.Surface2)
-                                        .clickable {
-                                            vibrate(ctxWifi, HAPTIC_TAP)
-                                            onConnectToAp()
-                                        },
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Outlined.Wifi,
-                                        contentDescription = null,
-                                        tint = GarageColors.Accent,
-                                        modifier = Modifier.size(16.dp),
-                                    )
-                                }
-                            }
-                        }
-                        Spacer(Modifier.height(16.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            SecondaryAction(
-                                text = stringResource(R.string.settings_repairbutton),
-                                onClick = onRepair,
-                                modifier = Modifier.weight(1f),
-                            )
-                            SecondaryAction(
-                                text = stringResource(R.string.settings_password_button),
-                                onClick = onChangePassword,
-                                modifier = Modifier.weight(1f),
-                            )
-                        }
-                    }
-                }
-                Spacer(Modifier.height(12.dp))
-                SecondaryAction(
-                    text = stringResource(R.string.settings_pair_another),
-                    onClick = onPairAnother,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Spacer(Modifier.height(28.dp))
-            } else {
+        if (devices.isEmpty()) {
+            item {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -306,6 +136,60 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
+                Spacer(Modifier.height(28.dp))
+            }
+        } else if (single != null) {
+            // Single-device layout: unchanged from the pre-multi-device UI — hero card
+            // with inline actions, no device list, no "Selected opener" dropdown.
+            item {
+                DeviceHeroCard(
+                    device = single,
+                    presence = presence,
+                    onUnpair = { onUnpair(single.id) },
+                    onRemoveWebhook = { onRemoveWebhook(single.id) },
+                    onEditWebhook = { onEditWebhook(single.id) },
+                    onRepair = onRepair,
+                    onChangePassword = { onChangePassword(single.id) },
+                    onConnectToAp = { onConnectToAp(single.id) },
+                )
+                Spacer(Modifier.height(12.dp))
+                SecondaryAction(
+                    text = stringResource(R.string.settings_pair_another),
+                    onClick = onPairAnother,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(28.dp))
+            }
+        } else {
+            // Multi-device layout: device list replaces the hero card; per-device
+            // settings (geofence, password, etc.) move to Device Detail. The
+            // "Selected opener" picker itself lives on the main screen, not here.
+            item {
+                SectionHeader(stringResource(R.string.settings_devices_header))
+                Card {
+                    devices.forEachIndexed { index, device ->
+                        DeviceRow(
+                            device = device,
+                            inRange = device.bleAddress?.let { blePresence[it] },
+                            onClick = { onDeviceDetail(device.id) },
+                        )
+                        if (index != devices.lastIndex) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(1.dp)
+                                    .padding(horizontal = 18.dp)
+                                    .background(GarageColors.Hairline),
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+                SecondaryAction(
+                    text = stringResource(R.string.settings_pair_another),
+                    onClick = onPairAnother,
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 Spacer(Modifier.height(28.dp))
             }
         }
@@ -349,8 +233,11 @@ fun SettingsScreen(
             Spacer(Modifier.height(24.dp))
         }
 
-        // AUTO-OPEN section (visible whenever a transport — BLE or webhook — is configured)
-        if (deviceAddress != null || webhookUrl != null) {
+        // AUTO-OPEN section: only shown here for the single-device case. With 2+
+        // devices this moves into each device's Device Detail screen instead, since
+        // a single global location picker is ambiguous once there's more than one
+        // garage.
+        if (single != null) {
             item {
                 SectionHeader(stringResource(R.string.settings_autoopen_header))
                 Card {
@@ -473,6 +360,258 @@ fun SettingsScreen(
         }
     }
 }
+
+@Composable
+private fun DeviceHeroCard(
+    device: DeviceSummary,
+    presence: PresenceStatus,
+    onUnpair: () -> Unit,
+    onRemoveWebhook: () -> Unit,
+    onEditWebhook: () -> Unit,
+    onRepair: () -> Unit,
+    onChangePassword: () -> Unit,
+    onConnectToAp: () -> Unit,
+) {
+    if (device.transport == TransportType.WEBHOOK) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(22.dp))
+                    .background(GarageColors.Surface)
+                    .border(1.dp, GarageColors.Hairline, RoundedCornerShape(22.dp))
+                    .padding(20.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Outlined.Wifi,
+                        contentDescription = null,
+                        tint = GarageColors.Accent,
+                        modifier = Modifier.size(14.dp),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(R.string.settings_webhook_badge),
+                        color = GarageColors.Accent,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        letterSpacing = 1.2.sp,
+                        modifier = Modifier.weight(1f),
+                    )
+                    val ctxRemove = LocalContext.current
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(GarageColors.DangerSoft)
+                            .clickable {
+                                vibrate(ctxRemove, HAPTIC_TAP)
+                                onRemoveWebhook()
+                            },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = "×",
+                            color = GarageColors.Danger,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            lineHeight = 18.sp,
+                        )
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    text = device.name.ifEmpty { stringResource(R.string.settings_device_default_name) },
+                    color = GarageColors.Text,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = (-0.4).sp,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = maskUrl(device.webhookUrl.orEmpty()),
+                    color = GarageColors.TextDim,
+                    fontSize = 13.sp,
+                    fontFamily = FontFamily.Monospace,
+                )
+                Spacer(Modifier.height(16.dp))
+                SecondaryAction(
+                    text = stringResource(R.string.settings_webhook_edit_button),
+                    onClick = onEditWebhook,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+    } else {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(22.dp))
+                    .background(GarageColors.Surface)
+                    .border(1.dp, GarageColors.Hairline, RoundedCornerShape(22.dp))
+                    .padding(20.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    val dotColor = if (presence == PresenceStatus.InRange) GarageColors.Accent else GarageColors.TextFaint
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(dotColor),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    val badgeText = stringResource(R.string.settings_paired_badge) +
+                        if (presence == PresenceStatus.InRange) " · " + stringResource(R.string.status_in_range)
+                        else ""
+                    Text(
+                        text = badgeText,
+                        color = if (presence == PresenceStatus.InRange) GarageColors.Accent else GarageColors.TextDim,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        letterSpacing = 1.2.sp,
+                        modifier = Modifier.weight(1f),
+                    )
+                    val ctxUnpair = LocalContext.current
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(GarageColors.DangerSoft)
+                            .clickable {
+                                vibrate(ctxUnpair, HAPTIC_TAP)
+                                onUnpair()
+                            },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = "×",
+                            color = GarageColors.Danger,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            lineHeight = 18.sp,
+                        )
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    text = device.name.ifEmpty { stringResource(R.string.settings_device_default_name) },
+                    color = GarageColors.Text,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = (-0.4).sp,
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(top = 4.dp),
+                ) {
+                    Text(
+                        text = device.bleAddress.orEmpty(),
+                        color = GarageColors.TextDim,
+                        fontSize = 13.sp,
+                        fontFamily = FontFamily.Monospace,
+                        modifier = Modifier.weight(1f),
+                    )
+                    if (device.bleHasWebLog) {
+                        val ctxWifi = LocalContext.current
+                        Box(
+                            modifier = Modifier
+                                .size(30.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(GarageColors.Surface2)
+                                .clickable {
+                                    vibrate(ctxWifi, HAPTIC_TAP)
+                                    onConnectToAp()
+                                },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Description,
+                                contentDescription = null,
+                                tint = GarageColors.Accent,
+                                modifier = Modifier.size(16.dp),
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(16.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SecondaryAction(
+                        text = stringResource(R.string.settings_repairbutton),
+                        onClick = onRepair,
+                        modifier = Modifier.weight(1f),
+                    )
+                    SecondaryAction(
+                        text = stringResource(R.string.settings_password_button),
+                        onClick = onChangePassword,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DeviceRow(device: DeviceSummary, inRange: Boolean?, onClick: () -> Unit) {
+    val ctx = LocalContext.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                vibrate(ctx, HAPTIC_TAP)
+                onClick()
+            }
+            .padding(horizontal = 18.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (device.transport == TransportType.BLE) {
+            // Real presence dot — green when this device's BLE advertisement was
+            // seen recently, grey otherwise.
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(if (inRange == true) GarageColors.Accent else GarageColors.TextFaint),
+            )
+        } else {
+            // Webhooks have no proximity/health signal to check — assumed reachable
+            // by default rather than shown as a false "not connected" state.
+            Icon(
+                imageVector = Icons.Outlined.Wifi,
+                contentDescription = null,
+                tint = GarageColors.Accent,
+                modifier = Modifier.size(14.dp),
+            )
+        }
+        Spacer(Modifier.width(10.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = device.name.ifEmpty { stringResource(R.string.settings_device_default_name) },
+                color = GarageColors.Text,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+            )
+            Text(
+                text = if (device.transport == TransportType.WEBHOOK)
+                    stringResource(R.string.settings_webhook_badge)
+                else if (inRange == true)
+                    stringResource(R.string.settings_paired_badge) + " · " + stringResource(R.string.status_in_range)
+                else
+                    stringResource(R.string.settings_paired_badge),
+                color = GarageColors.TextDim,
+                fontSize = 12.sp,
+            )
+        }
+        Text(
+            text = "›",
+            color = GarageColors.TextFaint,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Light,
+        )
+    }
+}
+
 
 /**
  * Truncates a webhook URL for display. The URL itself may be the sensitive

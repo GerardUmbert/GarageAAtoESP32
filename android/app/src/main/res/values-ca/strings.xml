@@ -20,6 +20,8 @@
     <string name="main_today">Avui, %1$s</string>
     <string name="main_not_configured">No configurat</string>
     <string name="main_demo_mode">Mode de demostració</string>
+    <string name="main_webhook_prefix">Webhook</string>
+    <string name="main_esp32_prefix">ESP32</string>
 
     <string name="scan_title">Cercant el teu\ndispositiu…</string>
     <string name="scan_subtitle">Assegura\'t que l\'ESP32 estigui encès. Situa\'t a uns quants metres.</string>
@@ -63,6 +65,9 @@
     <string name="settings_password_button">Contrasenya</string>
     <string name="settings_pair_another">Vincular un altre dispositiu</string>
     <string name="settings_webhook_edit_button">Edita</string>
+    <string name="settings_selected_opener_header">Dispositiu seleccionat</string>
+    <string name="settings_devices_header">Dispositius</string>
+    <string name="device_detail_remove">Elimina aquest dispositiu</string>
     <string name="settings_no_device_title">Cap dispositiu vinculat</string>
     <string name="settings_no_device_subtitle">Vincula un ESP32 per començar.</string>
     <string name="settings_pair_opener">Vincular un dispositiu</string>

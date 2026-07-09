@@ -138,10 +138,11 @@ class PhoneActivity : AppCompatActivity() {
             )
             return
         }
-        val transportType = prefs.activeTransportType
-        val deviceAddress = prefs.pairedDevice?.address ?: ""
-        val deviceName = prefs.pairedDevice?.name ?: prefs.webhookConfig?.name ?: ""
-        val transport = activeTransport(this)
+        val selected = prefs.selectedDevice
+        val transportType = selected?.transport
+        val deviceAddress = selected?.addressKey ?: ""
+        val deviceName = selected?.name ?: ""
+        val transport = activeTransport(this, selected?.id)
         if (transport == null) {
             onResult(OpenResult.Failure("No paired device"))
             return
@@ -161,6 +162,7 @@ class PhoneActivity : AppCompatActivity() {
                     deviceName    = deviceName,
                     trigger       = TriggerSource.MANUAL_PHONE,
                     outcome       = outcome,
+                    deviceId      = selected?.id,
                 ),
             )
             runOnUiThread { onResult(result) }
@@ -180,6 +182,7 @@ private sealed interface Route {
     data object GeofencePicker : Route
     data object History        : Route
     data object WebhookSetup   : Route
+    data class DeviceDetail(val deviceId: String) : Route
     data class GeofenceOnboarding(
         val stepIds: List<String>,
         val afterPickerNeeded: Boolean,
@@ -200,6 +203,10 @@ private fun AppRoot(
     }
     var stateBust by remember { mutableIntStateOf(0) }
     var pendingPair by remember { mutableStateOf<com.dunnowsoftware.GarageAAtoESP32.ble.FoundDevice?>(null) }
+    // Which device a single-purpose edit route (WebhookSetup as "Edit", ChangePassword)
+    // is currently acting on. Set right before pushing that route; null when pushing
+    // WebhookSetup for "Add a device" instead.
+    var editingDeviceId by remember { mutableStateOf<String?>(null) }
     val current = routeStack.last()
 
     fun push(r: Route) { routeStack = routeStack + r }
@@ -218,37 +225,59 @@ private fun AppRoot(
         )
 
         Route.WebhookSetup -> {
-            val existing = remember(stateBust) { prefs.webhookConfig }
+            // Editing an existing webhook device (reached via "Edit" from Settings/Device
+            // Detail) carries its id in editingDeviceId so onSave updates it in place
+            // instead of appending a new device.
+            val editing = remember(stateBust) { editingDeviceId?.let { prefs.device(it) } }
             WebhookSetupScreen(
-                initialName = existing?.name.orEmpty(),
-                initialUrl = existing?.url.orEmpty(),
-                initialToken = existing?.authToken.orEmpty(),
+                initialName = editing?.webhook?.name.orEmpty(),
+                initialUrl = editing?.webhook?.url.orEmpty(),
+                initialToken = editing?.webhook?.authToken.orEmpty(),
                 onSave = { name, url, token ->
-                    prefs.webhookConfig = com.dunnowsoftware.GarageAAtoESP32.data.WebhookConfig(
+                    val config = com.dunnowsoftware.GarageAAtoESP32.data.WebhookConfig(
                         url = url,
                         authToken = token,
                         name = name,
                     )
+                    if (editing != null) {
+                        prefs.updateDevice(editing.withWebhook(config))
+                    } else {
+                        prefs.addDevice(com.dunnowsoftware.GarageAAtoESP32.data.GarageDevice.webhook(config = config))
+                    }
+                    editingDeviceId = null
                     bust()
                     replaceAll(Route.Main)
                 },
-                onCancel = { pop() },
+                onCancel = {
+                    editingDeviceId = null
+                    pop()
+                },
             )
         }
 
-        Route.ChangePassword -> SetPasswordScreen(
-            initialPassword = prefs.pairedDevice?.password.orEmpty(),
-            onSave = { pwd ->
-                prefs.updatePairedPassword(pwd)
-                bust()
-                pop()
-                Toast.makeText(ctx, ctx.getString(R.string.toast_password_updated), Toast.LENGTH_SHORT).show()
-            },
-            onBack = { pop() },
-            title = ctx.getString(R.string.password_screen_change_title),
-            description = ctx.getString(R.string.password_screen_change_description),
-            saveLabel = ctx.getString(R.string.password_screen_change_save),
-        )
+        Route.ChangePassword -> {
+            val target = remember(stateBust) { editingDeviceId?.let { prefs.device(it) } }
+            SetPasswordScreen(
+                initialPassword = target?.ble?.password.orEmpty(),
+                onSave = { pwd ->
+                    val ble = target?.ble
+                    if (target != null && ble != null) {
+                        prefs.updateDevice(target.withBle(ble.copy(password = pwd)))
+                    }
+                    editingDeviceId = null
+                    bust()
+                    pop()
+                    Toast.makeText(ctx, ctx.getString(R.string.toast_password_updated), Toast.LENGTH_SHORT).show()
+                },
+                onBack = {
+                    editingDeviceId = null
+                    pop()
+                },
+                title = ctx.getString(R.string.password_screen_change_title),
+                description = ctx.getString(R.string.password_screen_change_description),
+                saveLabel = ctx.getString(R.string.password_screen_change_save),
+            )
+        }
 
         Route.Scan -> ScanScreen(
             onPicked = { dev ->
@@ -261,7 +290,7 @@ private fun AppRoot(
         )
 
         Route.ScanAnother -> ScanScreen(
-            excludeAddress = remember(stateBust) { prefs.pairedDevice?.address },
+            excludeAddresses = remember(stateBust) { prefs.devices.mapNotNull { it.ble?.address }.toSet() },
             onPicked = { dev ->
                 pendingPair = dev
                 push(Route.Pair)
@@ -278,11 +307,15 @@ private fun AppRoot(
                 PairScreen(
                     device = dev,
                     onPair = { pwd ->
-                        prefs.pairedDevice = com.dunnowsoftware.GarageAAtoESP32.data.PairedDevice(
-                            address = dev.address,
-                            name = dev.name,
-                            password = pwd,
-                            hasWebLog = dev.hasWebLog,
+                        prefs.addDevice(
+                            com.dunnowsoftware.GarageAAtoESP32.data.GarageDevice.ble(
+                                device = com.dunnowsoftware.GarageAAtoESP32.data.PairedDevice(
+                                    address = dev.address,
+                                    name = dev.name,
+                                    password = pwd,
+                                    hasWebLog = dev.hasWebLog,
+                                ),
+                            )
                         )
                         pendingPair = null
                         bust()
@@ -303,60 +336,49 @@ private fun AppRoot(
             shortcutOpenPending = shortcutOpenPending,
             onSettings = { push(Route.Settings) },
             onHistory = { push(Route.History) },
+            onSelectDevice = { deviceId ->
+                prefs.selectedDeviceId = deviceId
+                bust()
+            },
         )
 
         Route.Settings -> {
-            fun collectMissingSteps(geofenceAlreadySet: Boolean): List<OnboardingStepId> {
-                val missing = mutableListOf<OnboardingStepId>()
-                if (!geofenceAlreadySet) {
-                    if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
-                        missing += OnboardingStepId.FINE_LOCATION
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
-                        ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED)
-                        missing += OnboardingStepId.BACKGROUND_LOCATION
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
-                        ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACTIVITY_RECOGNITION) != PackageManager.PERMISSION_GRANTED)
-                        missing += OnboardingStepId.ACTIVITY_RECOGNITION
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                        ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
-                        missing += OnboardingStepId.NOTIFICATIONS
-                }
-                val pm = ctx.getSystemService(Context.POWER_SERVICE) as PowerManager
-                if (!pm.isIgnoringBatteryOptimizations(ctx.packageName))
-                    missing += OnboardingStepId.BATTERY
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !ctx.packageManager.isAutoRevokeWhitelisted)
-                    missing += OnboardingStepId.UNUSED_APP
-                return missing
+            fun collectMissingSteps(geofenceAlreadySet: Boolean) = collectMissingStepsFor(ctx, geofenceAlreadySet)
+
+            val devices = remember(stateBust) { prefs.devices.map { it.toSummary() } }
+            val single = devices.singleOrNull()
+            val singleDevice = remember(stateBust) { prefs.devices.singleOrNull() }
+            val bleAddresses = remember(stateBust) { devices.mapNotNull { it.bleAddress }.toSet() }
+            val blePresence = if (single == null) rememberMultiPresence(bleAddresses, stateBust) else emptyMap()
+
+            fun unpairOrRemove(deviceId: String) {
+                val device = prefs.device(deviceId)
+                GeofenceManager(ctx).unregister(device?.addressKey ?: deviceId)
+                prefs.removeDevice(deviceId)
+                bust()
+                if (prefs.devices.isEmpty()) replaceAll(Route.Scan) else replaceAll(Route.Settings)
             }
 
             SettingsScreen(
-                deviceName = remember(stateBust) { prefs.pairedDevice?.name },
-                deviceAddress = remember(stateBust) { prefs.pairedDevice?.address },
-                deviceHasWebLog = remember(stateBust) { prefs.pairedDevice?.hasWebLog == true },
-                webhookName = remember(stateBust) { prefs.webhookConfig?.name },
-                webhookUrl = remember(stateBust) { prefs.webhookConfig?.url },
+                devices = devices,
                 demoMode = remember(stateBust) { prefs.demoMode },
                 currentLocaleTag = remember(stateBust) { getSavedLocaleTag(ctx) },
                 presence = rememberPresence(prefs, stateBust),
-                geofenceSet = remember(stateBust) { prefs.activeGeofenceCapable?.hasGeofence == true },
-                geofenceEnabled = remember(stateBust) { prefs.activeGeofenceCapable?.isGeofenceActive == true },
+                blePresence = blePresence,
+                geofenceSet = remember(stateBust) { singleDevice?.hasGeofence == true },
+                geofenceEnabled = remember(stateBust) { singleDevice?.isGeofenceActive == true },
                 onBack = { pop() },
-                onChangePassword = { push(Route.ChangePassword) },
+                onChangePassword = { deviceId ->
+                    editingDeviceId = deviceId
+                    push(Route.ChangePassword)
+                },
                 onRepair = { push(Route.Scan) },
-                onUnpair = {
-                    val addr = prefs.pairedDevice?.address
-                    if (addr != null) GeofenceManager(ctx).unregister(addr)
-                    prefs.unpairDevice()
-                    bust()
-                    replaceAll(Route.Scan)
+                onUnpair = { deviceId -> unpairOrRemove(deviceId) },
+                onRemoveWebhook = { deviceId -> unpairOrRemove(deviceId) },
+                onEditWebhook = { deviceId ->
+                    editingDeviceId = deviceId
+                    push(Route.WebhookSetup)
                 },
-                onRemoveWebhook = {
-                    GeofenceManager(ctx).unregister(com.dunnowsoftware.GarageAAtoESP32.geofence.WEBHOOK_PSEUDO_ADDRESS)
-                    prefs.clearWebhookConfig()
-                    bust()
-                    replaceAll(Route.Welcome)
-                },
-                onEditWebhook = { push(Route.WebhookSetup) },
                 onPairAnother = { push(Route.ScanAnother) },
                 onToggleDemo = { v ->
                     prefs.demoMode = v
@@ -378,57 +400,93 @@ private fun AppRoot(
                         ctx.startActivity(Intent.createChooser(shareIntent, ctx.getString(R.string.toast_log_share_title)))
                     }
                 },
-                onConnectToAp = {
-                    val paired = prefs.pairedDevice
-                    if (paired != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        val macParts = paired.address.split(":")
-                        val ssid = if (macParts.size == 6)
-                            "${paired.name}_${macParts[3]}${macParts[4]}${macParts[5]}"
-                        else paired.name
-
-                        val specifier = android.net.wifi.WifiNetworkSpecifier.Builder()
-                            .setSsid(ssid)
-                            .setWpa2Passphrase(paired.password)
-                            .setIsHiddenSsid(true)
-                            .build()
-                        val request = android.net.NetworkRequest.Builder()
-                            .addTransportType(android.net.NetworkCapabilities.TRANSPORT_WIFI)
-                            .removeCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                            .setNetworkSpecifier(specifier)
-                            .build()
-                        val cm = ctx.getSystemService(android.net.ConnectivityManager::class.java)
-                        cm.requestNetwork(request, object : android.net.ConnectivityManager.NetworkCallback() {})
-                    }
-                },
+                onConnectToAp = { deviceId -> connectToDeviceAp(ctx, prefs.device(deviceId)?.ble) },
+                onDeviceDetail = { deviceId -> push(Route.DeviceDetail(deviceId)) },
                 onGeofencePicker = {
+                    if (single == null) return@SettingsScreen
+                    editingDeviceId = single.id
                     val missing = collectMissingSteps(geofenceAlreadySet = false)
                     if (missing.isEmpty()) push(Route.GeofencePicker)
                     else push(Route.GeofenceOnboarding(missing.map { it.name }, afterPickerNeeded = true))
                 },
                 onToggleGeofence = { enabled ->
-                    val addressKey = when (prefs.activeTransportType) {
-                        com.dunnowsoftware.GarageAAtoESP32.data.TransportType.BLE -> prefs.pairedDevice?.address
-                        com.dunnowsoftware.GarageAAtoESP32.data.TransportType.WEBHOOK -> com.dunnowsoftware.GarageAAtoESP32.geofence.WEBHOOK_PSEUDO_ADDRESS
-                        null -> null
-                    }
+                    val device = singleDevice ?: return@SettingsScreen
                     if (!enabled) {
-                        prefs.setActiveGeofenceEnabled(false)
-                        if (addressKey != null) GeofenceManager(ctx).unregister(addressKey)
+                        prefs.setGeofenceEnabled(device.id, false)
+                        GeofenceManager(ctx).unregister(device.addressKey)
                         bust()
                     } else {
-                        val geofenceSet = prefs.activeGeofenceCapable?.hasGeofence == true
+                        val geofenceSet = device.hasGeofence
                         val missing = collectMissingSteps(geofenceAlreadySet = geofenceSet)
                         if (missing.isEmpty()) {
-                            prefs.setActiveGeofenceEnabled(true)
-                            val geofenceTarget = prefs.activeGeofenceCapable
-                            if (addressKey != null && geofenceTarget != null) GeofenceManager(ctx).register(addressKey, geofenceTarget)
+                            prefs.setGeofenceEnabled(device.id, true)
+                            val updated = prefs.device(device.id)
+                            if (updated != null) GeofenceManager(ctx).register(updated)
                             bust()
                         } else {
+                            editingDeviceId = device.id
                             push(Route.GeofenceOnboarding(missing.map { it.name }, afterPickerNeeded = !geofenceSet))
                         }
                     }
                 },
             )
+        }
+
+        is Route.DeviceDetail -> {
+            val route = current as Route.DeviceDetail
+            val device = remember(stateBust) { prefs.device(route.deviceId) }
+            if (device == null) {
+                LaunchedEffect(Unit) { pop() }
+            } else {
+                DeviceDetailScreen(
+                    device = device.toSummary(),
+                    presence = rememberPresence(prefs, stateBust, deviceId = route.deviceId),
+                    geofenceSet = device.hasGeofence,
+                    geofenceEnabled = device.isGeofenceActive,
+                    onBack = { pop() },
+                    onChangePassword = {
+                        editingDeviceId = route.deviceId
+                        push(Route.ChangePassword)
+                    },
+                    onRepair = { push(Route.Scan) },
+                    onRemove = {
+                        GeofenceManager(ctx).unregister(device.addressKey)
+                        prefs.removeDevice(route.deviceId)
+                        bust()
+                        pop()
+                    },
+                    onEditWebhook = {
+                        editingDeviceId = route.deviceId
+                        push(Route.WebhookSetup)
+                    },
+                    onConnectToAp = { connectToDeviceAp(ctx, device.ble) },
+                    onGeofencePicker = {
+                        editingDeviceId = route.deviceId
+                        val missing = collectMissingStepsFor(ctx, geofenceAlreadySet = false)
+                        if (missing.isEmpty()) push(Route.GeofencePicker)
+                        else push(Route.GeofenceOnboarding(missing.map { it.name }, afterPickerNeeded = true))
+                    },
+                    onToggleGeofence = { enabled ->
+                        if (!enabled) {
+                            prefs.setGeofenceEnabled(route.deviceId, false)
+                            GeofenceManager(ctx).unregister(device.addressKey)
+                            bust()
+                        } else {
+                            val geofenceSet = device.hasGeofence
+                            val missing = collectMissingStepsFor(ctx, geofenceAlreadySet = geofenceSet)
+                            if (missing.isEmpty()) {
+                                prefs.setGeofenceEnabled(route.deviceId, true)
+                                val updated = prefs.device(route.deviceId)
+                                if (updated != null) GeofenceManager(ctx).register(updated)
+                                bust()
+                            } else {
+                                editingDeviceId = route.deviceId
+                                push(Route.GeofenceOnboarding(missing.map { it.name }, afterPickerNeeded = !geofenceSet))
+                            }
+                        }
+                    },
+                )
+            }
         }
 
         is Route.GeofenceOnboarding -> {
@@ -501,14 +559,12 @@ private fun AppRoot(
                     if (route.afterPickerNeeded) {
                         push(Route.GeofencePicker)
                     } else {
-                        prefs.setActiveGeofenceEnabled(true)
-                        val geofenceTarget = prefs.activeGeofenceCapable
-                        val addressKey = when (prefs.activeTransportType) {
-                            com.dunnowsoftware.GarageAAtoESP32.data.TransportType.BLE -> prefs.pairedDevice?.address
-                            com.dunnowsoftware.GarageAAtoESP32.data.TransportType.WEBHOOK -> com.dunnowsoftware.GarageAAtoESP32.geofence.WEBHOOK_PSEUDO_ADDRESS
-                            null -> null
+                        val deviceId = editingDeviceId
+                        if (deviceId != null) {
+                            prefs.setGeofenceEnabled(deviceId, true)
+                            val updated = prefs.device(deviceId)
+                            if (updated != null) GeofenceManager(ctx).register(updated)
                         }
-                        if (addressKey != null && geofenceTarget != null) GeofenceManager(ctx).register(addressKey, geofenceTarget)
                         bust()
                     }
                 },
@@ -519,29 +575,24 @@ private fun AppRoot(
         }
 
         Route.GeofencePicker -> {
-            // "Active geofence target" is whichever transport (BLE device or webhook) is
-            // currently paired — geofence config lives on that one record either way.
-            val geofenceTarget = remember(stateBust) { prefs.activeGeofenceCapable }
-            val ble = remember(stateBust) { prefs.pairedDevice }
-            val webhook = remember(stateBust) { prefs.webhookConfig }
-            val pickerDeviceName = ble?.name ?: webhook?.name
-            val pickerAddressKey = when {
-                ble != null     -> ble.address
-                webhook != null -> com.dunnowsoftware.GarageAAtoESP32.geofence.WEBHOOK_PSEUDO_ADDRESS
-                else            -> null
-            }
+            // editingDeviceId is set by whichever entry point pushed this route
+            // (Settings' single-device Auto-open section, or a Device Detail screen).
+            val target = remember(stateBust) { editingDeviceId?.let { prefs.device(it) } }
             GeofencePickerScreen(
-                initialLat = geofenceTarget?.geofenceLat,
-                initialLng = geofenceTarget?.geofenceLng,
-                initialRadiusM = geofenceTarget?.geofenceRadiusM,
-                initialOuterOffsetM = geofenceTarget?.geofenceOuterOffsetM,
-                deviceName = pickerDeviceName,
-                deviceAddress = pickerAddressKey,
+                initialLat = target?.geofenceLat,
+                initialLng = target?.geofenceLng,
+                initialRadiusM = target?.geofenceRadiusM,
+                initialOuterOffsetM = target?.geofenceOuterOffsetM,
+                deviceName = target?.name,
+                deviceAddress = target?.addressKey,
                 onSave = { lat, lng, radius, outerOffset ->
-                    prefs.updateActiveGeofence(lat, lng, radius, outerOffset)
-                    val updated = prefs.activeGeofenceCapable
-                    if (updated?.isGeofenceActive == true && pickerAddressKey != null) {
-                        GeofenceManager(ctx).register(pickerAddressKey, updated)
+                    val id = editingDeviceId
+                    if (id != null) {
+                        prefs.updateGeofence(id, lat, lng, radius, outerOffset)
+                        val updated = prefs.device(id)
+                        if (updated?.isGeofenceActive == true) {
+                            GeofenceManager(ctx).register(updated)
+                        }
                     }
                     bust()
                     pop()
@@ -559,7 +610,9 @@ private fun AppRoot(
         )
 
         Route.History -> HistoryScreen(
-            deviceAddress = remember(stateBust) { prefs.pairedDevice?.address },
+            // Unfiltered once there's more than one device — "the" device to filter
+            // by is only unambiguous in the single-device case.
+            deviceAddress = remember(stateBust) { prefs.devices.singleOrNull()?.addressKey },
             onBack = { pop() },
         )
     }
@@ -573,6 +626,7 @@ private fun MainHost(
     shortcutOpenPending: androidx.compose.runtime.MutableState<Boolean>,
     onSettings: () -> Unit,
     onHistory: () -> Unit,
+    onSelectDevice: (String) -> Unit,
 ) {
     val ctx = androidx.compose.ui.platform.LocalContext.current
     var openState by remember { mutableStateOf(OpenState.Idle) }
@@ -649,13 +703,25 @@ private fun MainHost(
     }
 
     val deviceLabel = remember(stateBust) {
-        val paired = prefs.pairedDevice
+        val selected = prefs.selectedDevice
         when {
-            prefs.demoMode -> ctx.getString(R.string.main_demo_mode)
-            paired != null -> "ESP32 · ${paired.name}"
-            else           -> ctx.getString(R.string.main_not_configured)
+            prefs.demoMode    -> ctx.getString(R.string.main_demo_mode)
+            selected != null  -> {
+                val prefix = if (selected.transport == com.dunnowsoftware.GarageAAtoESP32.data.TransportType.WEBHOOK)
+                    ctx.getString(R.string.main_webhook_prefix)
+                else
+                    ctx.getString(R.string.main_esp32_prefix)
+                "$prefix · ${selected.name}"
+            }
+            else              -> ctx.getString(R.string.main_not_configured)
         }
     }
+    val deviceOptions = remember(stateBust) {
+        prefs.devices.map { MainDeviceOption(id = it.id, name = it.name, transport = it.transport, bleAddress = it.ble?.address) }
+    }
+    val dropdownBleAddresses = remember(stateBust) { deviceOptions.mapNotNull { it.bleAddress }.toSet() }
+    val dropdownBlePresence =
+        if (deviceOptions.size > 1) rememberMultiPresence(dropdownBleAddresses, stateBust) else emptyMap()
 
     val presence = rememberPresence(prefs, stateBust)
 
@@ -666,6 +732,9 @@ private fun MainHost(
         lastOpenedLabel = lastOpened.takeIf { it > 0 }?.let { formatTime(ctx, it) },
         onSettings = onSettings,
         onHistory = onHistory,
+        deviceOptions = deviceOptions,
+        onSelectDevice = onSelectDevice,
+        blePresence = dropdownBlePresence,
         showWearBanner = showWearBanner,
         onWearInstall = {
             installWearCompanion(ctx)
@@ -700,10 +769,13 @@ private fun MainHost(
 }
 
 @Composable
-private fun rememberPresence(prefs: DevicePreferences, stateBust: Int): PresenceStatus {
+private fun rememberPresence(prefs: DevicePreferences, stateBust: Int, deviceId: String? = null): PresenceStatus {
     val ctx = androidx.compose.ui.platform.LocalContext.current
     val demo = remember(stateBust) { prefs.demoMode }
-    val address = remember(stateBust) { prefs.pairedDevice?.address }
+    val address = remember(stateBust, deviceId) {
+        val device = if (deviceId != null) prefs.device(deviceId) else prefs.selectedDevice
+        device?.ble?.address
+    }
 
     if (demo) return PresenceStatus.InRange
     if (address.isNullOrEmpty()) return PresenceStatus.NotPaired
@@ -735,9 +807,97 @@ private fun rememberPresence(prefs: DevicePreferences, stateBust: Int): Presence
         PresenceStatus.OutOfRange
 }
 
+/**
+ * In-range status for every BLE device in [bleAddresses] at once — used by the
+ * multi-device Settings list, where each BLE row needs its own presence dot.
+ * Webhook devices have no BLE presence concept and simply won't appear as keys.
+ */
+@Composable
+private fun rememberMultiPresence(bleAddresses: Set<String>, stateBust: Int): Map<String, Boolean> {
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val lastSeenMs = remember(stateBust, bleAddresses) { mutableStateMapOf<String, Long>() }
+    var nowMs by remember(bleAddresses) { mutableLongStateOf(System.currentTimeMillis()) }
+
+    DisposableEffect(bleAddresses) {
+        val scanner = com.dunnowsoftware.GarageAAtoESP32.ble.BleScanner(ctx)
+        try {
+            scanner.startPresenceMulti(bleAddresses) { found ->
+                lastSeenMs[found.address] = System.currentTimeMillis()
+            }
+        } catch (_: Throwable) { }
+        onDispose { scanner.stop() }
+    }
+
+    LaunchedEffect(bleAddresses) {
+        while (true) {
+            nowMs = System.currentTimeMillis()
+            delay(1000)
+        }
+    }
+
+    val staleAfterMs = 15_000L
+    return bleAddresses.associateWith { address ->
+        val seen = lastSeenMs[address] ?: 0L
+        seen > 0 && (nowMs - seen) < staleAfterMs
+    }
+}
+
 private fun initialStack(prefs: DevicePreferences): List<Route> = when {
     prefs.isConfigured -> listOf(Route.Main)
     else               -> listOf(Route.Welcome)
+}
+
+private fun com.dunnowsoftware.GarageAAtoESP32.data.GarageDevice.toSummary() = DeviceSummary(
+    id = id,
+    name = name,
+    transport = transport,
+    bleAddress = ble?.address,
+    bleHasWebLog = ble?.hasWebLog == true,
+    webhookUrl = webhook?.url,
+)
+
+private fun collectMissingStepsFor(ctx: Context, geofenceAlreadySet: Boolean): List<OnboardingStepId> {
+    val missing = mutableListOf<OnboardingStepId>()
+    if (!geofenceAlreadySet) {
+        if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+            missing += OnboardingStepId.FINE_LOCATION
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+            ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED)
+            missing += OnboardingStepId.BACKGROUND_LOCATION
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+            ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACTIVITY_RECOGNITION) != PackageManager.PERMISSION_GRANTED)
+            missing += OnboardingStepId.ACTIVITY_RECOGNITION
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
+            missing += OnboardingStepId.NOTIFICATIONS
+    }
+    val pm = ctx.getSystemService(Context.POWER_SERVICE) as PowerManager
+    if (!pm.isIgnoringBatteryOptimizations(ctx.packageName))
+        missing += OnboardingStepId.BATTERY
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !ctx.packageManager.isAutoRevokeWhitelisted)
+        missing += OnboardingStepId.UNUSED_APP
+    return missing
+}
+
+private fun connectToDeviceAp(ctx: Context, paired: com.dunnowsoftware.GarageAAtoESP32.data.PairedDevice?) {
+    if (paired == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
+    val macParts = paired.address.split(":")
+    val ssid = if (macParts.size == 6)
+        "${paired.name}_${macParts[3]}${macParts[4]}${macParts[5]}"
+    else paired.name
+
+    val specifier = android.net.wifi.WifiNetworkSpecifier.Builder()
+        .setSsid(ssid)
+        .setWpa2Passphrase(paired.password)
+        .setIsHiddenSsid(true)
+        .build()
+    val request = android.net.NetworkRequest.Builder()
+        .addTransportType(android.net.NetworkCapabilities.TRANSPORT_WIFI)
+        .removeCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+        .setNetworkSpecifier(specifier)
+        .build()
+    val cm = ctx.getSystemService(android.net.ConnectivityManager::class.java)
+    cm.requestNetwork(request, object : android.net.ConnectivityManager.NetworkCallback() {})
 }
 
 private fun formatTime(ctx: android.content.Context, epochMs: Long): String {
@@ -774,6 +934,7 @@ private fun routeKey(r: Route): String = when (r) {
     Route.GeofencePicker -> "geofence_picker"
     Route.History        -> "history"
     Route.WebhookSetup   -> "webhook_setup"
+    is Route.DeviceDetail -> "device_detail:${r.deviceId}"
     is Route.GeofenceOnboarding -> "geo_onboard:${r.stepIds.joinToString(",")}:${r.afterPickerNeeded}"
 }
 
@@ -788,6 +949,7 @@ private fun keyRoute(k: String): Route = when {
     k == "geofence_picker"  -> Route.GeofencePicker
     k == "history"          -> Route.History
     k == "webhook_setup"    -> Route.WebhookSetup
+    k.startsWith("device_detail:") -> Route.DeviceDetail(k.removePrefix("device_detail:"))
     k.startsWith("geo_onboard:") -> {
         val payload = k.removePrefix("geo_onboard:")
         val lastColon = payload.lastIndexOf(':')

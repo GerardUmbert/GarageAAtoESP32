@@ -42,10 +42,11 @@ class GarageTileService : TileService() {
             return
         }
 
-        val transportType = prefs.activeTransportType
-        val deviceAddress = prefs.pairedDevice?.address ?: ""
-        val deviceName = prefs.pairedDevice?.name ?: prefs.webhookConfig?.name ?: ""
-        val transport = activeTransport(this) ?: return
+        val selected = prefs.selectedDevice
+        val transportType = selected?.transport
+        val deviceAddress = selected?.addressKey ?: ""
+        val deviceName = selected?.name ?: ""
+        val transport = activeTransport(this, selected?.id) ?: return
         setTileBusy()
         notifyWatchSending(this)
         currentTransport = transport
@@ -64,6 +65,7 @@ class GarageTileService : TileService() {
                                 deviceName    = deviceName,
                                 trigger       = TriggerSource.MANUAL_PHONE,
                                 outcome       = OpenOutcome.SUCCESS,
+                                deviceId      = selected?.id,
                             ),
                         )
                         onOpenSuccess()
@@ -79,6 +81,7 @@ class GarageTileService : TileService() {
                                 trigger       = TriggerSource.MANUAL_PHONE,
                                 outcome       = outcome,
                                 detail        = result.reason,
+                                deviceId      = selected?.id,
                             ),
                         )
                         onOpenFailure()

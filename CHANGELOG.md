@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.12.0]
+
+### Phone — Added
+- **Multiple openers.** Pair more than one device at once — any mix of BLE ESP32s and webhooks — instead of a single opener replacing the last one. Existing single-device installs are migrated automatically with no visible change.
+- Main screen shows a "Selected opener" picker once 2+ devices are paired: tap the device name to open a dropdown listing every device with its transport icon (Bluetooth/Wifi), a type subtitle, live in-range coloring for BLE devices, and a rotating chevron indicator. Selecting a device applies immediately across every trigger surface (manual tap, Android Auto, Wear tile, watch app, voice).
+- Settings screen shows a device list (name, transport, live BLE presence dot) once 2+ devices are paired; tapping a device opens a new Device Detail screen with that device's re-pair/change-password (BLE) or edit (webhook) actions, its own geofence auto-open section, and a remove action. Single-device installs keep the original one-card layout unchanged.
+- "Pair another device" / "Add a device" now appends to the list instead of replacing the current pairing.
+
+### Phone — Fixed
+- Android Auto, the Wear tile, and the watch app now all fire whichever device is currently selected, instead of an implicit single paired device.
+- Webhook rows and icons across Settings, Device Detail, and the main-screen picker are shown green (assumed reachable) instead of grey, since a webhook has no proximity signal to check — grey was misleadingly reading as "not connected."
+- Device Detail's "view event log" button now uses a document icon instead of a Wifi icon, so it's no longer visually confused with the webhook transport indicator right next to it.
+
 ## [1.11.1]
 
 ### Phone — Fixed

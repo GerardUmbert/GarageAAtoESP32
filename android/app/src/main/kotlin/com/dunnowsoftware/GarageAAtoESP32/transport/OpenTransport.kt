@@ -24,13 +24,13 @@ interface OpenTransport {
 }
 
 /**
- * Reads [DevicePreferences] and returns the [OpenTransport] for whichever
- * pairing is currently active (BLE device or webhook config — the two are
- * mutually exclusive). Returns null if nothing is configured.
+ * Reads [DevicePreferences] and returns the [OpenTransport] for the given
+ * device id. Returns null if [deviceId] is null or doesn't resolve to a
+ * paired device (e.g. it was removed concurrently).
  */
-fun activeTransport(context: Context): OpenTransport? {
-    val prefs = DevicePreferences(context)
-    prefs.pairedDevice?.let { return BleTransport(context, it) }
-    prefs.webhookConfig?.let { return WebhookTransport(context, it) }
+fun activeTransport(context: Context, deviceId: String?): OpenTransport? {
+    val device = deviceId?.let { DevicePreferences(context).device(it) } ?: return null
+    device.ble?.let { return BleTransport(context, it) }
+    device.webhook?.let { return WebhookTransport(context, it) }
     return null
 }

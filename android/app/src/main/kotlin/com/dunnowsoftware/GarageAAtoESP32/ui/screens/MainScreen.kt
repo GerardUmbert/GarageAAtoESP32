@@ -14,6 +14,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Bluetooth
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
+import androidx.compose.material.icons.outlined.Wifi
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -46,6 +53,14 @@ enum class OpenState { Idle, Sending, Opened, Failed }
 /** Top-of-screen status pill — reflects whether the paired opener is in range. */
 enum class PresenceStatus { InRange, OutOfRange, NotPaired }
 
+/** Minimal device identity for the main-screen opener selector. */
+data class MainDeviceOption(
+    val id: String,
+    val name: String,
+    val transport: com.dunnowsoftware.GarageAAtoESP32.data.TransportType,
+    val bleAddress: String? = null,
+)
+
 @Composable
 fun MainScreen(
     deviceLabel: String,
@@ -58,6 +73,12 @@ fun MainScreen(
     showWearBanner: Boolean = false,
     onWearInstall: () -> Unit = {},
     onWearBannerDismiss: () -> Unit = {},
+    // Populated only when 2+ devices are paired — the label stays plain text
+    // (today's exact single-device behavior) otherwise.
+    deviceOptions: List<MainDeviceOption> = emptyList(),
+    onSelectDevice: (String) -> Unit = {},
+    /** BLE address -> in-range, for the dropdown's per-device indicator. Webhook devices are absent (no presence concept). */
+    blePresence: Map<String, Boolean> = emptyMap(),
 ) {
     Column(
         modifier = Modifier
@@ -121,20 +142,98 @@ fun MainScreen(
                 .padding(horizontal = 32.dp),
         ) {
             Text(
-                text = stringResource(R.string.main_paired_opener),
+                text = if (deviceOptions.size > 1)
+                    stringResource(R.string.settings_selected_opener_header)
+                else
+                    stringResource(R.string.main_paired_opener),
                 color = GarageColors.TextFaint,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
                 letterSpacing = 1.2.sp,
             )
             Spacer(Modifier.height(4.dp))
-            Text(
-                text = deviceLabel,
-                color = GarageColors.Text,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = (-0.3).sp,
-            )
+            if (deviceOptions.size > 1) {
+                var expanded by remember { mutableStateOf(false) }
+                val ctxSel = LocalContext.current
+                Box {
+                    Row(
+                        modifier = Modifier
+                            .clickable {
+                                vibrate(ctxSel, HAPTIC_TAP)
+                                expanded = true
+                            }
+                            .padding(vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = deviceLabel,
+                            color = GarageColors.Text,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            letterSpacing = (-0.3).sp,
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        val chevronRotation by animateFloatAsState(
+                            targetValue = if (expanded) 180f else 0f,
+                            label = "chevronRotation",
+                        )
+                        Icon(
+                            imageVector = Icons.Outlined.KeyboardArrowDown,
+                            contentDescription = null,
+                            tint = GarageColors.TextFaint,
+                            modifier = Modifier
+                                .size(20.dp)
+                                .graphicsLayer { rotationZ = chevronRotation },
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                    ) {
+                        deviceOptions.forEach { option ->
+                            val isWebhook = option.transport == com.dunnowsoftware.GarageAAtoESP32.data.TransportType.WEBHOOK
+                            // Webhooks are assumed reachable (no proximity signal to check) and always shown
+                            // green; BLE devices reflect their actual scanned in-range status.
+                            val inRange = isWebhook || blePresence[option.bleAddress] == true
+                            DropdownMenuItem(
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = if (isWebhook) Icons.Outlined.Wifi else Icons.Outlined.Bluetooth,
+                                        contentDescription = null,
+                                        tint = if (inRange) GarageColors.Accent else GarageColors.TextDim,
+                                    )
+                                },
+                                text = {
+                                    Column {
+                                        Text(option.name)
+                                        Text(
+                                            text = if (isWebhook)
+                                                stringResource(R.string.settings_webhook_badge)
+                                            else
+                                                stringResource(R.string.settings_paired_badge),
+                                            color = GarageColors.TextFaint,
+                                            fontSize = 11.sp,
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    vibrate(ctxSel, HAPTIC_TAP)
+                                    expanded = false
+                                    onSelectDevice(option.id)
+                                },
+                            )
+                        }
+                    }
+                }
+            } else {
+                Text(
+                    text = deviceLabel,
+                    color = GarageColors.Text,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = (-0.3).sp,
+                )
+            }
 
             Spacer(Modifier.weight(1f))
 

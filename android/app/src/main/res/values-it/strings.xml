@@ -20,6 +20,8 @@
     <string name="main_today">Oggi, %1$s</string>
     <string name="main_not_configured">Non configurato</string>
     <string name="main_demo_mode">Modalità demo</string>
+    <string name="main_webhook_prefix">Webhook</string>
+    <string name="main_esp32_prefix">ESP32</string>
 
     <string name="scan_title">Ricerca del tuo\napriporta…</string>
     <string name="scan_subtitle">Assicurati che l\'ESP32 sia acceso. Posizionati a pochi metri.</string>
@@ -63,6 +65,9 @@
     <string name="settings_password_button">Password</string>
     <string name="settings_pair_another">Abbina un altro dispositivo</string>
     <string name="settings_webhook_edit_button">Modifica</string>
+    <string name="settings_selected_opener_header">Apriporta selezionato</string>
+    <string name="settings_devices_header">Apriporta</string>
+    <string name="device_detail_remove">Rimuovi questo apriporta</string>
     <string name="settings_no_device_title">Nessun apriporta abbinato</string>
     <string name="settings_no_device_subtitle">Abbina un ESP32 per iniziare.</string>
     <string name="settings_pair_opener">Abbina un apriporta</string>

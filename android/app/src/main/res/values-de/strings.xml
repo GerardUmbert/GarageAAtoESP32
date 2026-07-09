@@ -20,6 +20,8 @@
     <string name="main_today">Heute, %1$s</string>
     <string name="main_not_configured">Nicht konfiguriert</string>
     <string name="main_demo_mode">Demo-Modus</string>
+    <string name="main_webhook_prefix">Webhook</string>
+    <string name="main_esp32_prefix">ESP32</string>
 
     <string name="scan_title">Suche nach deinem\nÖffner…</string>
     <string name="scan_subtitle">Stelle sicher, dass der ESP32 eingeschaltet ist. Bleib in wenigen Metern Entfernung.</string>
@@ -63,6 +65,9 @@
     <string name="settings_password_button">Passwort</string>
     <string name="settings_pair_another">Weiteres Gerät koppeln</string>
     <string name="settings_webhook_edit_button">Bearbeiten</string>
+    <string name="settings_selected_opener_header">Ausgewählter Öffner</string>
+    <string name="settings_devices_header">Öffner</string>
+    <string name="device_detail_remove">Diesen Öffner entfernen</string>
     <string name="settings_no_device_title">Kein Öffner gekoppelt</string>
     <string name="settings_no_device_subtitle">Koppel einen ESP32, um zu beginnen.</string>
     <string name="settings_pair_opener">Öffner koppeln</string>

@@ -4,9 +4,8 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
+import com.dunnowsoftware.GarageAAtoESP32.data.GarageDevice
 import com.dunnowsoftware.GarageAAtoESP32.data.GeofenceCapable
-import com.dunnowsoftware.GarageAAtoESP32.data.PairedDevice
-import com.dunnowsoftware.GarageAAtoESP32.data.TransportType
 import com.google.android.gms.location.ActivityRecognition
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingRequest
@@ -18,10 +17,6 @@ const val GEOFENCE_OUTER_ID_PREFIX = "garage_outer_"
 const val EXTRA_DEVICE_ADDRESS = "device_address"
 // Outer geofence offset for GPS warmup — added on top of the user-configured radius
 const val OUTER_GEOFENCE_OFFSET_M = 150f
-// Pseudo-address used as the geofence registration key when the active
-// transport is a webhook (no BLE MAC address exists to key on). Single
-// webhook config supported today, so a fixed key is sufficient.
-const val WEBHOOK_PSEUDO_ADDRESS = "webhook"
 
 class GeofenceManager(private val context: Context) {
 
@@ -69,12 +64,12 @@ class GeofenceManager(private val context: Context) {
         }
     }
 
-    fun register(device: PairedDevice) = register(device.address, device)
+    fun register(device: GarageDevice) = register(device.addressKey, device)
 
     /**
      * Registers inner+outer geofences keyed on [addressKey]. [addressKey] is
-     * the BLE MAC for BLE pairings, or [WEBHOOK_PSEUDO_ADDRESS] for webhook
-     * configs (which have no MAC to key on).
+     * [GarageDevice.addressKey] — the BLE MAC for BLE pairings, or the
+     * device's own id for webhook configs (which have no MAC to key on).
      */
     fun register(addressKey: String, capable: GeofenceCapable) {
         val lat = capable.geofenceLat ?: return
@@ -125,27 +120,19 @@ class GeofenceManager(private val context: Context) {
     }
 
     fun reregisterAll() {
-        val prefs = DevicePreferences(context)
-        val device = prefs.pairedDevice
-        val webhook = prefs.webhookConfig
-        when {
-            device != null -> {
-                if (!device.isGeofenceActive) {
-                    GeofenceLogger.d(context, TAG, "reregisterAll: device ${device.address} has no active geofence, skipping")
-                    return
-                }
-                GeofenceLogger.i(context, TAG, "reregisterAll: re-registering geofence for ${device.address}")
-                register(device.address, device) // also calls startActivityUpdates()
-            }
-            webhook != null -> {
-                if (!webhook.isGeofenceActive) {
-                    GeofenceLogger.d(context, TAG, "reregisterAll: webhook config has no active geofence, skipping")
-                    return
-                }
-                GeofenceLogger.i(context, TAG, "reregisterAll: re-registering geofence for webhook config")
-                register(WEBHOOK_PSEUDO_ADDRESS, webhook)
-            }
-            else -> GeofenceLogger.d(context, TAG, "reregisterAll: nothing paired, nothing to register")
+        val devices = DevicePreferences(context).devices
+        if (devices.isEmpty()) {
+            GeofenceLogger.d(context, TAG, "reregisterAll: nothing paired, nothing to register")
+            return
+        }
+        val active = devices.filter { it.isGeofenceActive }
+        if (active.isEmpty()) {
+            GeofenceLogger.d(context, TAG, "reregisterAll: no device has an active geofence, skipping")
+            return
+        }
+        active.forEach { device ->
+            GeofenceLogger.i(context, TAG, "reregisterAll: re-registering geofence for ${device.addressKey}")
+            register(device) // also calls startActivityUpdates()
         }
     }
 }

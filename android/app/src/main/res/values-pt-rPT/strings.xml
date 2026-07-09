@@ -20,6 +20,8 @@
     <string name="main_today">Hoje, %1$s</string>
     <string name="main_not_configured">Não configurado</string>
     <string name="main_demo_mode">Modo de demonstração</string>
+    <string name="main_webhook_prefix">Webhook</string>
+    <string name="main_esp32_prefix">ESP32</string>
 
     <string name="scan_title">À procura do teu\nabridor…</string>
     <string name="scan_subtitle">Certifica-te de que o ESP32 está ligado. Fica a poucos metros dele.</string>
@@ -63,6 +65,9 @@
     <string name="settings_password_button">Palavra-passe</string>
     <string name="settings_pair_another">Emparelhar outro dispositivo</string>
     <string name="settings_webhook_edit_button">Editar</string>
+    <string name="settings_selected_opener_header">Abridor selecionado</string>
+    <string name="settings_devices_header">Abridores</string>
+    <string name="device_detail_remove">Remover este abridor</string>
     <string name="settings_no_device_title">Nenhum abridor emparelhado</string>
     <string name="settings_no_device_subtitle">Emparelha um ESP32 para começar.</string>
     <string name="settings_pair_opener">Emparelhar um abridor</string>

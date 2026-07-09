@@ -83,6 +83,33 @@ class BleScanner(context: Context) {
         scanner.startScan(listOf(filter), settings, cb)
     }
 
+    /**
+     * Same as [startPresence] but tracks several MACs at once — one [ScanFilter]
+     * per address, all sharing a single scan session. Used by the multi-device
+     * Settings list, where each BLE device row needs its own in-range indicator.
+     */
+    fun startPresenceMulti(deviceAddresses: Set<String>, onSeen: (FoundDevice) -> Unit) {
+        stop()
+        if (deviceAddresses.isEmpty()) return
+        val cb = object : ScanCallback() {
+            override fun onScanResult(callbackType: Int, result: ScanResult) {
+                val name = result.device.name ?: "Unknown"
+                onSeen(FoundDevice(name, result.device.address, result.rssi, capsFromResult(result)))
+            }
+        }
+        callback = cb
+
+        val filters = deviceAddresses.map { address ->
+            ScanFilter.Builder().setDeviceAddress(address).build()
+        }
+        val settings = ScanSettings.Builder()
+            .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+            .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
+            .build()
+
+        scanner.startScan(filters, settings, cb)
+    }
+
     fun stop() {
         callback?.let { scanner.stopScan(it) }
         callback = null

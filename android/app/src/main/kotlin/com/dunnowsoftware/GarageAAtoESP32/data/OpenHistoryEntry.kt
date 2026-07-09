@@ -26,6 +26,10 @@ data class OpenHistoryEntry(
     // For AUTO_GEOFENCE SUCCESS/FAILED_BLE: which gate passed (e.g. "IN_VEHICLE", "SPEED", "AA_CONNECTED")
     // For SUPPRESSED: reason (e.g. "ON_FOOT", "SPEED_TOO_LOW", "AA_NOT_CONNECTED")
     val detail: String? = null,
+    // GarageDevice.id this entry is for. Null for entries written before the
+    // multiple-garages migration — deviceAddress/deviceName remain the
+    // display fallback for those.
+    val deviceId: String? = null,
 ) {
     fun toJson(): String = JSONObject().apply {
         put("ts", timestampMs)
@@ -34,6 +38,7 @@ data class OpenHistoryEntry(
         put("trigger", trigger.name)
         put("outcome", outcome.name)
         if (detail != null) put("detail", detail)
+        if (deviceId != null) put("device_id", deviceId)
     }.toString()
 
     companion object {
@@ -46,6 +51,7 @@ data class OpenHistoryEntry(
                 trigger       = TriggerSource.valueOf(o.getString("trigger")),
                 outcome       = OpenOutcome.valueOf(o.getString("outcome")),
                 detail        = o.optString("detail").takeIf { it.isNotEmpty() },
+                deviceId      = o.optString("device_id").takeIf { it.isNotEmpty() },
             )
         } catch (_: Throwable) {
             null

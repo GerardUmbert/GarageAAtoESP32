@@ -76,24 +76,17 @@ class GeofenceForegroundService : Service() {
 
     private fun fireOpen(deviceAddress: String, gateDetail: String?, startId: Int) {
         val prefs = DevicePreferences(this)
-        val transportType = prefs.activeTransportType
-        val device = prefs.pairedDevice
-        val webhook = prefs.webhookConfig
-        val (resolvedName, matches) = when {
-            device != null   -> device.name to (device.address == deviceAddress)
-            webhook != null  -> webhook.name to (deviceAddress == WEBHOOK_PSEUDO_ADDRESS)
-            else              -> null to false
-        }
-        if (!matches || resolvedName == null) {
+        val device = prefs.devices.firstOrNull { it.addressKey == deviceAddress }
+        if (device == null) {
             GeofenceLogger.w(this, TAG, "Device $deviceAddress not found in prefs — aborting")
             stopSelf(startId)
             return
         }
 
-        attemptSession(deviceAddress, resolvedName, transportType, gateDetail, attemptsLeft = GEOFENCE_MAX_ATTEMPTS, startId)
+        attemptSession(deviceAddress, device.id, device.name, device.transport, gateDetail, attemptsLeft = GEOFENCE_MAX_ATTEMPTS, startId)
     }
 
-    private fun attemptSession(address: String, deviceName: String, transportType: TransportType?, gateDetail: String?, attemptsLeft: Int, startId: Int) {
+    private fun attemptSession(address: String, deviceId: String, deviceName: String, transportType: TransportType?, gateDetail: String?, attemptsLeft: Int, startId: Int) {
         if (attemptsLeft <= 0) {
             GeofenceLogger.w(this, TAG, "All $GEOFENCE_MAX_ATTEMPTS attempts exhausted for $address — giving up")
             DevicePreferences(this).lastAutoFailedAt = System.currentTimeMillis()
@@ -106,6 +99,7 @@ class GeofenceForegroundService : Service() {
                     trigger       = TriggerSource.AUTO_GEOFENCE,
                     outcome       = if (transportType == TransportType.WEBHOOK) OpenOutcome.FAILED_WEBHOOK else OpenOutcome.FAILED_BLE,
                     detail        = gateDetail,
+                    deviceId      = deviceId,
                 ),
             )
             LocalBroadcastManager.getInstance(this)
@@ -116,7 +110,7 @@ class GeofenceForegroundService : Service() {
             stopSelf(startId)
             return
         }
-        val transport = activeTransport(this)
+        val transport = activeTransport(this, deviceId)
         if (transport == null) {
             GeofenceLogger.w(this, TAG, "No active transport for $address — aborting")
             stopSelf(startId)
@@ -157,6 +151,7 @@ class GeofenceForegroundService : Service() {
                             trigger       = TriggerSource.AUTO_GEOFENCE,
                             outcome       = OpenOutcome.SUCCESS,
                             detail        = gateDetail,
+                            deviceId      = deviceId,
                         ),
                     )
                     stopForeground(STOP_FOREGROUND_REMOVE)
@@ -176,6 +171,7 @@ class GeofenceForegroundService : Service() {
                                 trigger       = TriggerSource.AUTO_GEOFENCE,
                                 outcome       = if (transportType == TransportType.WEBHOOK) OpenOutcome.FAILED_WEBHOOK else OpenOutcome.FAILED_BLE,
                                 detail        = "AUTH_FAILURE",
+                                deviceId      = deviceId,
                             ),
                         )
                         LocalBroadcastManager.getInstance(this)
@@ -190,7 +186,7 @@ class GeofenceForegroundService : Service() {
                     } else {
                         val remaining = attemptsLeft - sessionAttemptCount
                         GeofenceLogger.d(this, TAG, "Open session failed (${result.reason}) — ${remaining} attempts left, chaining next session")
-                        attemptSession(address, deviceName, transportType, gateDetail, remaining, startId)
+                        attemptSession(address, deviceId, deviceName, transportType, gateDetail, remaining, startId)
                     }
                 }
             }

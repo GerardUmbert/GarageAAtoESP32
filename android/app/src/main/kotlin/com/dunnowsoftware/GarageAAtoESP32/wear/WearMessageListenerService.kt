@@ -33,10 +33,11 @@ class WearMessageListenerService : WearableListenerService() {
         inFlight = true
 
         val prefs = DevicePreferences(this)
-        val transportType = prefs.activeTransportType
-        val deviceAddress = prefs.pairedDevice?.address ?: ""
-        val deviceName = prefs.pairedDevice?.name ?: prefs.webhookConfig?.name ?: ""
-        val transport = activeTransport(this)
+        val selected = prefs.selectedDevice
+        val transportType = selected?.transport
+        val deviceAddress = selected?.addressKey ?: ""
+        val deviceName = selected?.name ?: ""
+        val transport = activeTransport(this, selected?.id)
         if (transport == null) {
             inFlight = false
             notifyWatchResult(this, false)
@@ -65,6 +66,7 @@ class WearMessageListenerService : WearableListenerService() {
                             trigger       = TriggerSource.WEAR,
                             outcome       = OpenOutcome.SUCCESS,
                             detail        = null,
+                            deviceId      = selected?.id,
                         ),
                     )
                     mainHandler.post {
@@ -86,6 +88,7 @@ class WearMessageListenerService : WearableListenerService() {
                             trigger       = TriggerSource.WEAR,
                             outcome       = outcome,
                             detail        = result.reason,
+                            deviceId      = selected?.id,
                         ),
                     )
                     mainHandler.post {

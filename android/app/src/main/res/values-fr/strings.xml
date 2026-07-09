@@ -20,6 +20,8 @@
     <string name="main_today">Aujourd\'hui, %1$s</string>
     <string name="main_not_configured">Non configuré</string>
     <string name="main_demo_mode">Mode démo</string>
+    <string name="main_webhook_prefix">Webhook</string>
+    <string name="main_esp32_prefix">ESP32</string>
 
     <string name="scan_title">Recherche de votre\nouvre-porte…</string>
     <string name="scan_subtitle">Assurez-vous que l\'ESP32 est allumé. Restez à quelques mètres.</string>
@@ -63,6 +65,9 @@
     <string name="settings_password_button">Mot de passe</string>
     <string name="settings_pair_another">Coupler un autre appareil</string>
     <string name="settings_webhook_edit_button">Modifier</string>
+    <string name="settings_selected_opener_header">Ouvre-porte sélectionné</string>
+    <string name="settings_devices_header">Ouvre-portes</string>
+    <string name="device_detail_remove">Supprimer cet ouvre-porte</string>
     <string name="settings_no_device_title">Aucun ouvre-porte couplé</string>
     <string name="settings_no_device_subtitle">Couplez un ESP32 pour commencer.</string>
     <string name="settings_pair_opener">Coupler un ouvre-porte</string>

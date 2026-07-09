@@ -43,7 +43,7 @@ fun ScanScreen(
     onBack: (() -> Unit)? = null,
     onSkip: (() -> Unit)? = null,
     onSelectWebhook: (() -> Unit)? = null,
-    excludeAddress: String? = null,
+    excludeAddresses: Set<String> = emptySet(),
 ) {
     val ctx = LocalContext.current
     val scanner = remember { BleScanner(ctx) }
@@ -70,7 +70,7 @@ fun ScanScreen(
         devices.clear()
         try {
             scanner.start { dev ->
-                if (dev.address == excludeAddress) return@start
+                if (dev.address in excludeAddresses) return@start
                 val idx = devices.indexOfFirst { it.address == dev.address }
                 if (idx == -1) devices.add(dev) else devices[idx] = dev
             }

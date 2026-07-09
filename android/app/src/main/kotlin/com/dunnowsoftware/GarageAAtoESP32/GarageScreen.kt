@@ -65,8 +65,9 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
     private val presenceCheckRunnable = object : Runnable {
         override fun run() {
             // If the saved device address has changed since we started the
-            // scan (re-pair on the phone), restart the scan with the new MAC.
-            val currentAddress = prefs().pairedDevice?.address
+            // scan (re-pair on the phone, or a different device selected),
+            // restart the scan with the new MAC.
+            val currentAddress = prefs().selectedDevice?.ble?.address
             if (currentAddress != scanStartedForAddress) {
                 stopPresenceScan()
                 startPresenceScan()
@@ -137,7 +138,7 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
 
     private fun startPresenceScan() {
         val p = prefs()
-        val address = p.pairedDevice?.address ?: return
+        val address = p.selectedDevice?.ble?.address ?: return
         if (p.demoMode) return
         try {
             presenceScanner.startPresence(address) { _ ->
@@ -176,24 +177,22 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
     private fun buildMain(): Template {
         val p = prefs()
         val configured = p.isConfigured
-        val paired = p.pairedDevice
-        val webhook = p.webhookConfig
+        val selected = p.selectedDevice
         val deviceName = when {
-            p.demoMode     -> carContext.getString(R.string.aa_demo_mode)
-            paired != null -> paired.name
-            webhook != null -> webhook.name
-            else           -> carContext.getString(R.string.aa_not_configured)
+            p.demoMode        -> carContext.getString(R.string.aa_demo_mode)
+            selected != null  -> selected.name
+            else              -> carContext.getString(R.string.aa_not_configured)
         }
         // BLE presence (in range/out of range) has no equivalent for webhook
         // targets — there's no proximity signal to report (no BLE, and this
         // screen doesn't check geofence/location), so the tag is omitted
         // entirely rather than showing a permanently-wrong "out of range".
         val presenceTag = when {
-            !configured      -> null
-            p.demoMode       -> carContext.getString(R.string.aa_in_range)
-            paired == null   -> null
-            inRange          -> carContext.getString(R.string.aa_in_range)
-            else             -> carContext.getString(R.string.aa_out_of_range)
+            !configured           -> null
+            p.demoMode            -> carContext.getString(R.string.aa_in_range)
+            selected?.ble == null -> null
+            inRange               -> carContext.getString(R.string.aa_in_range)
+            else                  -> carContext.getString(R.string.aa_out_of_range)
         }
         // Merge presence + device name on the same body line, with the
         // presence tag in front so the dot is the first thing the eye
@@ -221,7 +220,7 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
     }
 
     private fun buildLoading(): Template {
-        val maxAttempts = if (prefs().activeTransportType == TransportType.WEBHOOK)
+        val maxAttempts = if (prefs().selectedDevice?.transport == TransportType.WEBHOOK)
             WebhookTransport.MAX_ATTEMPTS
         else
             GarageBleManager.MAX_ATTEMPTS
@@ -266,10 +265,11 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
             triggerDemo()
             return
         }
-        val transportType = p.activeTransportType
-        val deviceAddress = p.pairedDevice?.address ?: ""
-        val deviceName = p.pairedDevice?.name ?: p.webhookConfig?.name ?: ""
-        val transport = activeTransport(carContext) ?: return
+        val selected = p.selectedDevice
+        val transportType = selected?.transport
+        val deviceAddress = selected?.addressKey ?: ""
+        val deviceName = selected?.name ?: ""
+        val transport = activeTransport(carContext, selected?.id) ?: return
 
         uiState = UiState.CONNECTING
         invalidate()
@@ -298,6 +298,7 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
                                 deviceName    = deviceName,
                                 trigger       = TriggerSource.MANUAL_AA,
                                 outcome       = OpenOutcome.SUCCESS,
+                                deviceId      = selected?.id,
                             ),
                         )
                         notifyWatchResult(carContext, true)
@@ -317,6 +318,7 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
                                 deviceName    = deviceName,
                                 trigger       = TriggerSource.MANUAL_AA,
                                 outcome       = outcome,
+                                deviceId      = selected?.id,
                             ),
                         )
                         uiState = UiState.FAILURE

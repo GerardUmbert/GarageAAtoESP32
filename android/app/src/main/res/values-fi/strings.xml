@@ -20,6 +20,8 @@
     <string name="main_today">Tänään, %1$s</string>
     <string name="main_not_configured">Ei määritetty</string>
     <string name="main_demo_mode">Demotila</string>
+    <string name="main_webhook_prefix">Webhook</string>
+    <string name="main_esp32_prefix">ESP32</string>
 
     <string name="scan_title">Etsitään avaajaa…</string>
     <string name="scan_subtitle">Varmista, että ESP32 on päällä. Seiso muutaman metrin päässä siitä.</string>
@@ -63,6 +65,9 @@
     <string name="settings_password_button">Salasana</string>
     <string name="settings_pair_another">Yhdistä toinen laite</string>
     <string name="settings_webhook_edit_button">Muokkaa</string>
+    <string name="settings_selected_opener_header">Valittu avaaja</string>
+    <string name="settings_devices_header">Avaajat</string>
+    <string name="device_detail_remove">Poista tämä avaaja</string>
     <string name="settings_no_device_title">Ei yhdistettyä avaajaa</string>
     <string name="settings_no_device_subtitle">Yhdistä ESP32 aloittaaksesi.</string>
     <string name="settings_pair_opener">Yhdistä avaaja</string>
