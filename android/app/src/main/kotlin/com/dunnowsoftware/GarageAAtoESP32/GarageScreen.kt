@@ -1,5 +1,6 @@
 package com.dunnowsoftware.GarageAAtoESP32
 
+import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import androidx.car.app.CarContext
@@ -25,6 +26,21 @@ import com.dunnowsoftware.GarageAAtoESP32.wear.notifyWatchSending
 import com.dunnowsoftware.GarageAAtoESP32.wear.syncDevicesToWatch
 
 class GarageScreen(carContext: CarContext) : Screen(carContext) {
+
+    companion object {
+        // AA runs in the OS's separate car-app process, so PhoneActivity can't see
+        // its state changes the way it sees same-process events (e.g. geofence
+        // auto-open via LocalBroadcastManager). These use a real, package-scoped
+        // Context.sendBroadcast — the same mechanism WearableListenerService relies
+        // on to be invoked cross-process — so any AA-triggered open (manual tap,
+        // device picker, presence-based auto-open, voice) makes the phone's own UI
+        // react (open animation) exactly like a watch- or geofence-triggered open
+        // already does, and picks up an AA-side device selection as a side effect
+        // of the same event instead of a second, narrower signal.
+        const val ACTION_AA_OPEN_SENDING = "com.dunnowsoftware.GarageAAtoESP32.ACTION_AA_OPEN_SENDING"
+        const val ACTION_AA_OPEN_SUCCESS = "com.dunnowsoftware.GarageAAtoESP32.ACTION_AA_OPEN_SUCCESS"
+        const val ACTION_AA_OPEN_FAILURE = "com.dunnowsoftware.GarageAAtoESP32.ACTION_AA_OPEN_FAILURE"
+    }
 
     // The phone activity and the AA car screen run in different processes
     // (`gearhead:car` for AA), so we can't share an in-memory prefs cache
@@ -323,6 +339,7 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
         uiState = UiState.CONNECTING
         invalidate()
         notifyWatchSending(carContext)
+        broadcastToPhone(ACTION_AA_OPEN_SENDING)
 
         currentTransport = transport
         transport.open(
@@ -351,6 +368,7 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
                             ),
                         )
                         notifyWatchResult(carContext, true)
+                        broadcastToPhone(ACTION_AA_OPEN_SUCCESS)
                         uiState = UiState.SUCCESS
                         invalidate()
                         Handler(Looper.getMainLooper()).postDelayed({
@@ -370,6 +388,7 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
                                 deviceId      = selected?.id,
                             ),
                         )
+                        broadcastToPhone(ACTION_AA_OPEN_FAILURE)
                         uiState = UiState.FAILURE
                         failureReason = result.reason
                         invalidate()
@@ -406,5 +425,9 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
     private fun resetToIdle() {
         uiState = UiState.IDLE
         invalidate()
+    }
+
+    private fun broadcastToPhone(action: String) {
+        carContext.sendBroadcast(Intent(action).setPackage(carContext.packageName))
     }
 }

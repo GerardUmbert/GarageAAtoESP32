@@ -54,6 +54,7 @@ import com.dunnowsoftware.GarageAAtoESP32.data.getSavedLocaleTag
 import com.dunnowsoftware.GarageAAtoESP32.data.localeListFromTag
 import com.dunnowsoftware.GarageAAtoESP32.data.saveLocaleTag
 import androidx.core.content.FileProvider
+import com.dunnowsoftware.GarageAAtoESP32.GarageScreen
 import com.dunnowsoftware.GarageAAtoESP32.geofence.GeofenceForegroundService
 import com.dunnowsoftware.GarageAAtoESP32.geofence.GeofenceLogger
 import com.dunnowsoftware.GarageAAtoESP32.geofence.GeofenceManager
@@ -682,6 +683,46 @@ private fun MainHost(
         onDispose {
             LocalBroadcastManager.getInstance(ctx).unregisterReceiver(receiver)
         }
+    }
+
+    // Android Auto runs in the OS's separate car-app process, so an AA-triggered
+    // open (manual tap, device picker, presence-based auto-open, voice) is
+    // otherwise invisible to this screen — unlike the watch/geofence events
+    // above, which are same-process and can ride LocalBroadcastManager. These
+    // three mirror GarageScreen's own uiState transitions via a real,
+    // package-scoped Context.sendBroadcast, so the phone's open animation
+    // reacts to an AA open the same way it already does for watch/geofence
+    // opens, and picks up an AA-side device pick as a side effect of the same
+    // event instead of a separate, narrower signal.
+    DisposableEffect(ctx) {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                when (intent.action) {
+                    GarageScreen.ACTION_AA_OPEN_SENDING -> {
+                        if (openState == OpenState.Idle) openState = OpenState.Sending
+                        onDeviceSelectionChangedExternally()
+                    }
+                    GarageScreen.ACTION_AA_OPEN_SUCCESS -> {
+                        if (openState != OpenState.Failed) openState = OpenState.Opened
+                    }
+                    GarageScreen.ACTION_AA_OPEN_FAILURE -> {
+                        openState = OpenState.Failed
+                    }
+                }
+            }
+        }
+        val filter = IntentFilter().apply {
+            addAction(GarageScreen.ACTION_AA_OPEN_SENDING)
+            addAction(GarageScreen.ACTION_AA_OPEN_SUCCESS)
+            addAction(GarageScreen.ACTION_AA_OPEN_FAILURE)
+        }
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            ctx.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            @Suppress("UnspecifiedRegisterReceiverFlag")
+            ctx.registerReceiver(receiver, filter)
+        }
+        onDispose { ctx.unregisterReceiver(receiver) }
     }
 
     LaunchedEffect(openState) {

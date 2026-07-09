@@ -7,7 +7,8 @@ Versions follow [Semantic Versioning](https://semver.org/).
 ## [1.12.2]
 
 ### Phone — Fixed
-- The "Selected opener" dropdown wasn't refreshing when a device was picked from the watch app — it now updates immediately, reusing the same signal already sent when the watch hands off an open request.
+- The phone app didn't react at all to an Android-Auto-triggered open (no open animation, no "Selected opener" dropdown refresh) — Android Auto runs in a separate OS process with no existing bridge back to the phone's own screen. It now sends the same sending/success/failure signal the watch and geofence auto-open paths already use, so any AA-triggered open (manual tap, device picker, presence-based auto-open, voice) animates the phone UI and updates the dropdown, the same as a watch- or geofence-triggered open already did.
+- The "Selected opener" dropdown also wasn't refreshing when a device was picked from the watch app specifically — fixed by reusing the signal already sent when the watch hands off an open request.
 
 ### Wear OS — Fixed
 - The device picker list wasn't centered on the watch face — chips sat flush against the screen edges with no padding, reading as off-center on the round display. Added horizontal/vertical padding so the list and each row sit clear of the curved bezel.
