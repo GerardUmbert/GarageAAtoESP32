@@ -109,10 +109,16 @@
     <string name="aa_garage_door">Puerta del garaje</string>
     <string name="aa_connecting">Conectando…</string>
     <string name="aa_connecting_attempt">Conectando… (intento %1$d / %2$d)</string>
+    <string name="aa_connecting_named">Conectando con %1$s…</string>
+    <string name="aa_connecting_attempt_named">Conectando con %1$s… (intento %2$d / %3$d)</string>
     <string name="aa_opened">¡Abierto!</string>
+    <string name="aa_opened_named">¡%1$s abierto!</string>
     <string name="aa_auto_opened">Abierto automáticamente</string>
+    <string name="aa_auto_opened_named">%1$s abierto automáticamente</string>
     <string name="aa_auto_failed">No se pudo abrir automáticamente</string>
+    <string name="aa_auto_failed_named">No se pudo abrir %1$s automáticamente</string>
     <string name="aa_failed">Error: %1$s</string>
+    <string name="aa_failed_named">%1$s: error: %2$s</string>
     <string name="aa_try_again">Reintentar</string>
     <string name="shortcut_open_short">Abrir</string>
     <string name="shortcut_open_long">Abrir garaje</string>

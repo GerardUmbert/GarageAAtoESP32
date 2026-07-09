@@ -109,10 +109,16 @@
     <string name="aa_garage_door">Garagentor</string>
     <string name="aa_connecting">Verbinde…</string>
     <string name="aa_connecting_attempt">Verbinde… (Versuch %1$d / %2$d)</string>
+    <string name="aa_connecting_named">Verbinde mit %1$s…</string>
+    <string name="aa_connecting_attempt_named">Verbinde mit %1$s… (Versuch %2$d / %3$d)</string>
     <string name="aa_opened">Geöffnet!</string>
+    <string name="aa_opened_named">%1$s geöffnet!</string>
     <string name="aa_auto_opened">Automatisch geöffnet</string>
+    <string name="aa_auto_opened_named">%1$s automatisch geöffnet</string>
     <string name="aa_auto_failed">Automatisches Öffnen fehlgeschlagen</string>
+    <string name="aa_auto_failed_named">Automatisches Öffnen von %1$s fehlgeschlagen</string>
     <string name="aa_failed">Fehler: %1$s</string>
+    <string name="aa_failed_named">%1$s – Fehler: %2$s</string>
     <string name="aa_try_again">Erneut versuchen</string>
     <string name="shortcut_open_short">Öffnen</string>
     <string name="shortcut_open_long">Garage öffnen</string>

@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.12.4]
+
+### Android Auto — Changed
+- With 2+ devices paired, BLE presence auto-open is back — a device coming into range fires it, same as with a single device, since physical BLE range is already a safe "can't accidentally open a door you're nowhere near" signal. Limited to once per AA screen session (reset when you open/return to the screen) so a flaky BLE connection dropping and reconnecting while parked can't re-trigger a toggle-based opener. Webhook devices never participate — no proximity signal, so they stay manual-only or geofence-gated.
+- Auto-open now fires whichever specific BLE device just came into range, not only whatever happened to be selected — the selection updates to match so the phone and watch reflect what actually opened.
+
+### Android Auto — Added
+- The connecting/opened/failed screens now name the device being acted on once 2+ devices are paired (e.g. "Connecting to Main Garage…", "Main Garage opened!"). Single-device installs are unchanged.
+
 ## [1.12.3]
 
 ### Phone — Fixed

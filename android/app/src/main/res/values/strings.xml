@@ -109,10 +109,16 @@
     <string name="aa_garage_door">Garage Door</string>
     <string name="aa_connecting">Connecting…</string>
     <string name="aa_connecting_attempt">Connecting… (attempt %1$d / %2$d)</string>
+    <string name="aa_connecting_named">Connecting to %1$s…</string>
+    <string name="aa_connecting_attempt_named">Connecting to %1$s… (attempt %2$d / %3$d)</string>
     <string name="aa_opened">Opened!</string>
+    <string name="aa_opened_named">%1$s opened!</string>
     <string name="aa_auto_opened">Opened automatically</string>
+    <string name="aa_auto_opened_named">%1$s opened automatically</string>
     <string name="aa_auto_failed">Couldn\'t open automatically</string>
+    <string name="aa_auto_failed_named">Couldn\'t open %1$s automatically</string>
     <string name="aa_failed">Failed: %1$s</string>
+    <string name="aa_failed_named">%1$s failed: %2$s</string>
     <string name="aa_try_again">Try Again</string>
 
     <!-- Quick Settings tile -->

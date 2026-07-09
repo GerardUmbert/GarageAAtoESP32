@@ -74,6 +74,16 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
     // has one entry, same effective behavior as before.
     private val lastSeenByAddress = mutableMapOf<String, Long>()
     private var inRange = false
+    // Addresses considered in-range as of the last tick, so we can detect which
+    // specific device just transitioned into range this tick (rather than only
+    // ever knowing about the currently-selected device) and fire that one.
+    private var inRangeAddresses: Set<String> = emptySet()
+    // At most one BLE presence auto-fire per AA screen session (reset whenever
+    // the screen starts, i.e. the user opens/returns to it) — first device
+    // detected in range fires once, everything after that in the same session
+    // is manual-only. Prevents repeat-fires from a flaky BLE connection
+    // dropping and reconnecting while the car is still parked at the door.
+    private var hasAutoFiredThisSession = false
     // The set of MACs the running scan was started for. If prefs change (user
     // re-pairs on the phone, or adds/removes a device), we'll notice the
     // divergence on the next tick and restart the scan with the new set.
@@ -96,27 +106,44 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
                 presenceHandler.postDelayed(this, presenceCheckIntervalMs)
                 return
             }
+            val now = System.currentTimeMillis()
+            val nowInRangeAddresses = lastSeenByAddress
+                .filterValues { (now - it) < presenceStaleAfterMs }
+                .keys
+            // Any BLE address that's newly in range this tick vs. last tick — could be
+            // more than one if two devices happen to come into range in the same
+            // 1.5s window, but that's rare enough not to warrant its own tie-break.
+            val newlyInRange = nowInRangeAddresses - inRangeAddresses
+            inRangeAddresses = nowInRangeAddresses
+
             val selectedAddress = prefs().selectedDevice?.ble?.address
-            val selectedLastSeen = selectedAddress?.let { lastSeenByAddress[it] } ?: 0L
-            val nowInRange = selectedLastSeen > 0 &&
-                (System.currentTimeMillis() - selectedLastSeen) < presenceStaleAfterMs
+            val nowInRange = selectedAddress != null && selectedAddress in nowInRangeAddresses
             if (nowInRange != inRange) {
                 inRange = nowInRange
-                val now = System.currentTimeMillis()
+                if (uiState == UiState.IDLE) invalidate()
+            }
+
+            if (newlyInRange.isNotEmpty() && uiState == UiState.IDLE && !hasAutoFiredThisSession) {
                 val p = prefs()
                 val lastFired = p.lastAutoFiredAt
                 val debounceOk = (now - lastFired) > autoFireDebounceMs
-                // BLE presence is only an unambiguous "the door to open" signal when
-                // there's exactly one paired device. With 2+, "selectedDevice came into
-                // range" says nothing about which device the user actually wants right
-                // now — auto-firing here would silently guess. Until Phase 3's real
-                // geofence-based resolution exists, 2+ devices require an explicit AA
-                // picker tap; presence still drives the in-range/out-of-range UI, just
-                // not an automatic trigger.
-                if (inRange && debounceOk && uiState == UiState.IDLE && p.isConfigured && p.devices.size <= 1) {
-                    triggerOpen()
-                } else if (uiState == UiState.IDLE) {
-                    invalidate()
+                // A BLE device coming into range is a safe auto-fire signal regardless
+                // of how many devices are paired — physical RF range is the same
+                // "can't accidentally open a door you're nowhere near" guarantee the
+                // single-device case already relied on informally. This never applies
+                // to webhook devices (no presence concept, never populate
+                // lastSeenByAddress in the first place) — only a detected BLE address
+                // triggers here, and it's fired as that specific device, not whatever
+                // happens to be globally selected. Limited to once per screen session
+                // (hasAutoFiredThisSession, reset on screen start) so a flaky BLE
+                // connection dropping and reconnecting while still parked can't
+                // re-trigger a toggle-based opener and close the door back.
+                val toFire = newlyInRange.firstNotNullOfOrNull { addr ->
+                    p.devices.firstOrNull { it.ble?.address == addr }
+                }
+                if (toFire != null && debounceOk && p.isConfigured) {
+                    hasAutoFiredThisSession = true
+                    triggerOpen(autoFiredDeviceId = toFire.id)
                 }
             }
             if (uiState == UiState.IDLE) {
@@ -161,7 +188,10 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
         // Start/stop the presence scan tied to the screen's visibility so we
         // don't burn the BT radio when the AA UI isn't showing this screen.
         lifecycle.addObserver(object : DefaultLifecycleObserver {
-            override fun onStart(owner: LifecycleOwner) = startPresenceScan()
+            override fun onStart(owner: LifecycleOwner) {
+                hasAutoFiredThisSession = false
+                startPresenceScan()
+            }
             override fun onStop(owner: LifecycleOwner) {
                 stopPresenceScan()
             }
@@ -190,16 +220,45 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
         presenceHandler.removeCallbacks(presenceCheckRunnable)
         lastSeenByAddress.clear()
         inRange = false
+        inRangeAddresses = emptySet()
         scanStartedForAddresses = emptySet()
     }
 
+    // Only worth naming the device once there's more than one to disambiguate —
+    // single-device installs keep the plain "Connecting…"/"Opened!" wording.
+    // selectedDeviceId is written before triggerOpen() fires (both for a manual
+    // pick and for BLE-presence auto-fire), so this reliably names whichever
+    // device the in-flight/just-finished open actually acted on.
+    private fun connectingDeviceName(): String? {
+        val p = prefs()
+        if (p.devices.size <= 1) return null
+        return p.selectedDevice?.name
+    }
+
     override fun onGetTemplate(): Template {
+        val name = connectingDeviceName()
         return when (uiState) {
-            UiState.CONNECTING   -> buildLoading()
-            UiState.SUCCESS      -> buildMessage(carContext.getString(R.string.aa_opened), false)
-            UiState.AUTO_SUCCESS -> buildMessage(carContext.getString(R.string.aa_auto_opened), false)
-            UiState.AUTO_FAILURE -> buildMessage(carContext.getString(R.string.aa_auto_failed), false)
-            UiState.FAILURE      -> buildMessage(carContext.getString(R.string.aa_failed, failureReason), true)
+            UiState.CONNECTING   -> buildLoading(name)
+            UiState.SUCCESS      -> buildMessage(
+                if (name != null) carContext.getString(R.string.aa_opened_named, name)
+                else carContext.getString(R.string.aa_opened),
+                false,
+            )
+            UiState.AUTO_SUCCESS -> buildMessage(
+                if (name != null) carContext.getString(R.string.aa_auto_opened_named, name)
+                else carContext.getString(R.string.aa_auto_opened),
+                false,
+            )
+            UiState.AUTO_FAILURE -> buildMessage(
+                if (name != null) carContext.getString(R.string.aa_auto_failed_named, name)
+                else carContext.getString(R.string.aa_auto_failed),
+                false,
+            )
+            UiState.FAILURE      -> buildMessage(
+                if (name != null) carContext.getString(R.string.aa_failed_named, name, failureReason)
+                else carContext.getString(R.string.aa_failed, failureReason),
+                true,
+            )
             UiState.IDLE         -> buildMain()
         }
     }
@@ -301,15 +360,22 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
             .build()
     }
 
-    private fun buildLoading(): Template {
+    private fun buildLoading(name: String?): Template {
         val maxAttempts = if (prefs().selectedDevice?.transport == TransportType.WEBHOOK)
             WebhookTransport.MAX_ATTEMPTS
         else
             GarageBleManager.MAX_ATTEMPTS
-        val msg = if (connectAttempt <= 1)
-            carContext.getString(R.string.aa_connecting)
-        else
-            carContext.getString(R.string.aa_connecting_attempt, connectAttempt, maxAttempts)
+        val msg = if (name != null) {
+            if (connectAttempt <= 1)
+                carContext.getString(R.string.aa_connecting_named, name)
+            else
+                carContext.getString(R.string.aa_connecting_attempt_named, name, connectAttempt, maxAttempts)
+        } else {
+            if (connectAttempt <= 1)
+                carContext.getString(R.string.aa_connecting)
+            else
+                carContext.getString(R.string.aa_connecting_attempt, connectAttempt, maxAttempts)
+        }
         return MessageTemplate.Builder(msg)
             .setHeader(Header.Builder().setStartHeaderAction(Action.APP_ICON).build())
             .setLoading(true)
@@ -341,13 +407,24 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
 
     // ── Open trigger ──────────────────────────────────────────────────────────
 
-    private fun triggerOpen() {
+    /**
+     * [autoFiredDeviceId] is set only by BLE-presence auto-fire, which detects a
+     * *specific* device coming into range rather than acting on whatever is
+     * currently selected — manual taps, the picker, voice, and demo mode all
+     * leave this null and fall through to [DevicePreferences.selectedDevice] as
+     * before.
+     */
+    private fun triggerOpen(autoFiredDeviceId: String? = null) {
         val p = prefs()
         if (p.demoMode) {
             triggerDemo()
             return
         }
-        val selected = p.selectedDevice
+        if (autoFiredDeviceId != null && autoFiredDeviceId != p.selectedDeviceId) {
+            p.selectedDeviceId = autoFiredDeviceId
+            syncDevicesToWatch(carContext)
+        }
+        val selected = if (autoFiredDeviceId != null) p.device(autoFiredDeviceId) else p.selectedDevice
         val transportType = selected?.transport
         val deviceAddress = selected?.addressKey ?: ""
         val deviceName = selected?.name ?: ""
