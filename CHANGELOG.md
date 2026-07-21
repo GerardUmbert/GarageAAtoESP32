@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.12.6]
+
+### Phone — Changed
+- Raised `targetSdk`/`compileSdk` to 36 (Android 16) to meet the new Play Store target API requirement.
+
+### Watch OS — Changed
+- Raised `targetSdk`/`compileSdk` to 36 (Android 16) to meet the new Play Store target API requirement for Wear OS, and updated the Wear Tiles/ProtoLayout libraries to versions that fix a `SecurityException` on tile refresh that previously blocked this bump.
+
 ## [1.12.5]
 
 ### Phone — Added

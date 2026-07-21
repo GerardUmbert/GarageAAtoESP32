@@ -8,19 +8,14 @@ plugins {
 
 android {
     namespace = "com.dunnowsoftware.GarageAAtoESP32"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.dunnowsoftware.GarageAAtoESP32"
         minSdk = 26
-        // androidx.wear.tiles 1.4.1 reads the global "clockwork_sysui_package" setting to
-        // locate the tile host for requestUpdate(); that key is only readable to apps
-        // targeting SDK <= 34. Targeting 35 makes every tile refresh throw SecurityException,
-        // leaving the tile stuck on its last state. Keep targetSdk at 34 until the library
-        // stops reading that gated setting.
-        targetSdk = 34
-        versionCode = 10078
-        versionName = "1.12.5"
+        targetSdk = 36
+        versionCode = 10079
+        versionName = "1.12.6"
     }
 
     buildFeatures {

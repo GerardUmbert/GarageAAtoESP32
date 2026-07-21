@@ -8,14 +8,14 @@ plugins {
 
 android {
     namespace = "com.dunnowsoftware.GarageAAtoESP32"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.dunnowsoftware.GarageAAtoESP32"
         minSdk = 29
-        targetSdk = 35
-        versionCode = 78
-        versionName = "1.12.5"
+        targetSdk = 36
+        versionCode = 79
+        versionName = "1.12.6"
     }
 
     buildFeatures {
