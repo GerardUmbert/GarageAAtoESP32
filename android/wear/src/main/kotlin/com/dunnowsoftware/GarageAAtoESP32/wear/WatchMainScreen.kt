@@ -40,13 +40,23 @@ fun WatchMainScreen(
     state: WatchOpenState,
     devices: List<WatchDevice> = emptyList(),
     selectedId: String? = null,
+    resolvedDevices: List<WatchDevice> = emptyList(),
     onOpen: () -> Unit,
     onOpenDevice: (String) -> Unit = {},
 ) {
-    // A picker only makes sense with 2+ known devices and while idle — mid-send/result
-    // states keep showing the hero button so the tap target and feedback stay
-    // where the user is already looking, same as the single-device case.
-    if (devices.size > 1 && state == WatchOpenState.Idle) {
+    // Mid-send/result states always keep showing the hero button so the tap target
+    // and feedback stay where the user is already looking, regardless of which
+    // idle state (one-tap vs. picker) preceded it.
+    if (state == WatchOpenState.Idle && devices.size > 1) {
+        // Live geofence resolution has a confident answer (raw presence, no driving
+        // gates) — one-tap screen, same shape as the single-device hero button, just
+        // labeled with the resolved device(s). Empty resolution falls through to the
+        // existing picker unchanged, so every device (including ungeofenced webhooks)
+        // stays reachable by hand. See PLAN_multiple_garages.md Phase 3.
+        if (resolvedDevices.isNotEmpty()) {
+            WatchResolvedOneTap(state = state, devices = resolvedDevices, onClick = onOpen)
+            return
+        }
         WatchDevicePicker(devices = devices, selectedId = selectedId, onPick = onOpenDevice)
         return
     }
@@ -57,6 +67,28 @@ fun WatchMainScreen(
         contentAlignment = Alignment.Center,
     ) {
         WatchHeroButton(state = state, onClick = onOpen)
+    }
+}
+
+@Composable
+private fun WatchResolvedOneTap(state: WatchOpenState, devices: List<WatchDevice>, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(WearColors.Bg),
+        contentAlignment = Alignment.Center,
+    ) {
+        val defaultName = stringResource(R.string.watch_device_default_name)
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            WatchHeroButton(state = state, onClick = onClick)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = devices.joinToString(" + ") { it.name.ifEmpty { defaultName } },
+                color = WearColors.TextDim,
+                fontSize = 11.sp,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            )
+        }
     }
 }
 

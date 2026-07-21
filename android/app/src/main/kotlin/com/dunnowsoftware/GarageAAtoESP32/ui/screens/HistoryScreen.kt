@@ -143,11 +143,21 @@ fun HistoryScreen(
                 stickyHeader(key = "sep_$dayKey") {
                     DateSeparator(label = label)
                 }
-                items(dayEntries, key = { it.timestampMs }) { entry ->
-                    HistoryRow(
-                        entry = entry,
-                        expandedKey = activeKey,
-                    )
+                // Consecutive entries sharing a non-null sessionId came from one
+                // trigger action that fired 2+ devices at once (geofence resolution
+                // matching multiple devices, or the no-geofence BLE fallback) —
+                // render them as one visual group instead of unrelated-looking rows.
+                // Entries are stored/read newest-first, and every entry from one
+                // fire is appended back-to-back, so a simple consecutive-run split
+                // is sufficient — no need to hunt for the same sessionId elsewhere
+                // in the list.
+                val runs = groupConsecutiveBySession(dayEntries)
+                items(runs, key = { run -> run.first().timestampMs }) { run ->
+                    if (run.size > 1) {
+                        HistoryGroupCard(entries = run, expandedKey = activeKey)
+                    } else {
+                        HistoryRow(entry = run.first(), expandedKey = activeKey)
+                    }
                 }
             }
         }
@@ -157,6 +167,20 @@ fun HistoryScreen(
 private fun dayKey(ms: Long): String {
     val cal = Calendar.getInstance().apply { timeInMillis = ms }
     return "${cal.get(Calendar.YEAR)}-${cal.get(Calendar.DAY_OF_YEAR)}"
+}
+
+/** Splits [entries] into runs of consecutive entries sharing the same non-null sessionId; every other entry is its own single-element run. */
+private fun groupConsecutiveBySession(entries: List<OpenHistoryEntry>): List<List<OpenHistoryEntry>> {
+    val runs = mutableListOf<MutableList<OpenHistoryEntry>>()
+    for (entry in entries) {
+        val lastRun = runs.lastOrNull()
+        if (entry.sessionId != null && lastRun != null && lastRun.first().sessionId == entry.sessionId) {
+            lastRun += entry
+        } else {
+            runs += mutableListOf(entry)
+        }
+    }
+    return runs
 }
 
 @Composable
@@ -174,6 +198,170 @@ private fun DateSeparator(label: String) {
             fontWeight = FontWeight.SemiBold,
             letterSpacing = 1.2.sp,
         )
+    }
+}
+
+/** One trigger action that fired 2+ devices at once — same time/trigger, one row per device inside instead of unrelated-looking duplicate top-level rows. */
+@Composable
+private fun HistoryGroupCard(entries: List<OpenHistoryEntry>, expandedKey: MutableState<Long?>?) {
+    val groupKey = entries.first().timestampMs
+    var localExpanded by rememberSaveable(groupKey) { mutableStateOf(false) }
+    val expanded = if (expandedKey != null) expandedKey.value == groupKey else localExpanded
+    val onToggle: () -> Unit = if (expandedKey != null) {
+        { expandedKey.value = if (expandedKey.value == groupKey) null else groupKey }
+    } else {
+        { localExpanded = !localExpanded }
+    }
+
+    val allSucceeded = entries.all { it.outcome == OpenOutcome.SUCCESS }
+    val anySucceeded = entries.any { it.outcome == OpenOutcome.SUCCESS }
+    val dotColor = when {
+        allSucceeded  -> GarageColors.Accent
+        anySucceeded  -> GarageColors.Accent // partial success — still worth the accent color, detail panel shows the failing device(s)
+        else          -> GarageColors.Danger
+    }
+    val outcomeText = if (allSucceeded)
+        stringResource(R.string.history_outcome_success)
+    else if (anySucceeded)
+        stringResource(R.string.history_outcome_partial)
+    else
+        stringResource(R.string.history_outcome_failed)
+    val triggerText = when (entries.first().trigger) {
+        TriggerSource.MANUAL_PHONE  -> stringResource(R.string.history_trigger_manual_phone)
+        TriggerSource.MANUAL_AA     -> stringResource(R.string.history_trigger_manual_aa)
+        TriggerSource.AUTO_GEOFENCE -> stringResource(R.string.history_trigger_auto)
+        TriggerSource.VOICE         -> stringResource(R.string.history_trigger_voice)
+        TriggerSource.WEAR          -> stringResource(R.string.history_trigger_wear)
+    }
+    val timeStr = remember(groupKey) {
+        SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(groupKey))
+    }
+    val chevronRotation by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        animationSpec = tween(200),
+        label = "chevron",
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onToggle() },
+    ) {
+        val lineColor = GarageColors.Hairline
+        val dotOffsetDp = 31.dp
+        Canvas(modifier = Modifier.width(32.dp).matchParentSize()) {
+            val cx = 16.dp.toPx()
+            val dotR = 5.dp.toPx()
+            val dotY = dotOffsetDp.toPx()
+            drawLine(lineColor, Offset(cx, 0f), Offset(cx, dotY - dotR), strokeWidth = 1.dp.toPx())
+            drawLine(lineColor, Offset(cx, dotY + dotR), Offset(cx, size.height), strokeWidth = 1.dp.toPx())
+            drawCircle(dotColor, radius = dotR, center = Offset(cx, dotY))
+        }
+
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Spacer(Modifier.width(32.dp))
+            Spacer(Modifier.width(12.dp))
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(top = 16.dp, bottom = 20.dp),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        text = timeStr,
+                        color = GarageColors.TextDim,
+                        fontSize = 12.sp,
+                        fontFamily = FontFamily.Monospace,
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        text = triggerText,
+                        color = GarageColors.Text,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        text = "▾",
+                        color = GarageColors.TextFaint,
+                        fontSize = 12.sp,
+                        modifier = Modifier.rotate(chevronRotation),
+                    )
+                    Spacer(Modifier.weight(1f))
+                    OutcomeChip(text = outcomeText, color = dotColor)
+                }
+                Text(
+                    text = entries.joinToString(" + ") { it.deviceName },
+                    color = GarageColors.TextDim,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+
+                AnimatedVisibility(
+                    visible = expanded,
+                    enter = expandVertically(),
+                    exit = shrinkVertically(),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 10.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        entries.forEach { entry ->
+                            val entryDotColor = when (entry.outcome) {
+                                OpenOutcome.SUCCESS        -> GarageColors.Accent
+                                OpenOutcome.FAILED_BLE      -> GarageColors.Danger
+                                OpenOutcome.FAILED_WEBHOOK -> GarageColors.Danger
+                                OpenOutcome.SUPPRESSED     -> GarageColors.TextFaint
+                            }
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(GarageColors.Surface)
+                                    .border(1.dp, GarageColors.Hairline, RoundedCornerShape(10.dp))
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(6.dp)
+                                            .clip(CircleShape)
+                                            .background(entryDotColor),
+                                    )
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(
+                                        text = entry.deviceName,
+                                        color = GarageColors.Text,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Medium,
+                                    )
+                                }
+                                if (entry.outcome == OpenOutcome.FAILED_BLE || entry.outcome == OpenOutcome.FAILED_WEBHOOK) {
+                                    val reason = if (entry.detail == "AUTH_FAILURE") {
+                                        if (entry.outcome == OpenOutcome.FAILED_WEBHOOK)
+                                            stringResource(R.string.history_fail_auth_webhook)
+                                        else
+                                            stringResource(R.string.history_fail_auth)
+                                    } else if (entry.outcome == OpenOutcome.FAILED_WEBHOOK) {
+                                        stringResource(R.string.history_fail_webhook)
+                                    } else {
+                                        stringResource(R.string.history_fail_ble)
+                                    }
+                                    Text(text = reason, color = GarageColors.DangerPastel, fontSize = 12.sp)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

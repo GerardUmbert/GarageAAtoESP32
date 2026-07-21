@@ -51,6 +51,7 @@ class WearActivity : ComponentActivity(), MessageClient.OnMessageReceivedListene
                 state = openState,
                 devices = deviceList.devices,
                 selectedId = deviceList.selectedId,
+                resolvedDevices = deviceList.resolvedDevices,
                 onOpen = { sendOpenCommand(null) },
                 onOpenDevice = { id -> sendOpenCommand(id) },
             )
@@ -64,11 +65,13 @@ class WearActivity : ComponentActivity(), MessageClient.OnMessageReceivedListene
         deviceList = list
         if (pendingAutoOpen) {
             pendingAutoOpen = false
-            // 2+ known devices: land on the picker (already showing, since deviceList
-            // just updated) instead of guessing which one the tile tap meant — same
-            // "open the app, then pick" flow as tapping the tile with the app already
-            // open. 0/1 devices: nothing to pick between, fire immediately as before.
-            if (list.devices.size <= 1) sendOpenCommand(null)
+            // 0/1 known devices, or 2+ with a confident geofence resolution (the
+            // one-tap screen is already showing, since deviceList just updated):
+            // nothing to pick between, fire immediately. 2+ with no resolution:
+            // land on the picker instead of guessing which one the tile tap meant —
+            // same "open the app, then pick" flow as tapping the tile with the app
+            // already open.
+            if (list.devices.size <= 1 || list.resolvedDevices.isNotEmpty()) sendOpenCommand(null)
         }
     }
 

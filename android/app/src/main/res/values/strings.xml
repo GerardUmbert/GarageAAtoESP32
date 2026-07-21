@@ -212,6 +212,7 @@
     <string name="history_trigger_voice">Voice</string>
     <string name="history_trigger_wear">Watch</string>
     <string name="history_outcome_success">Opened</string>
+    <string name="history_outcome_partial">Partially opened</string>
     <string name="history_outcome_failed">Failed</string>
     <string name="history_outcome_suppressed">Suppressed</string>
     <string name="history_detail_gate">Triggered via %1$s</string>

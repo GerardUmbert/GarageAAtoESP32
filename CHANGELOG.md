@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.12.5]
+
+### Phone — Added
+- With 2+ devices paired, the "Selected opener" dropdown now pre-selects whichever device's geofence you're currently standing in — walk out to the car or stand near a gate and the right opener (or openers, if two geofences overlap) is already picked, no manual switch needed. Shows as "Main Garage + Side Gate" when two match at once, and firing "Open" fires all of them together. Nothing changes if you tap a different device — that pick sticks until you leave and come back to the main screen, then geofence presence takes over again. No geofence configured at all, or none currently entered: unchanged, works exactly as it does today (BLE devices with no geofence still fire on demand; nothing auto-selects).
+
+### Android Auto — Added
+- With 2+ devices paired and a geofence currently entered, the car screen now shows a single "Open" button naming the resolved device(s) instead of the picker list — one tap, same as a 1-device install. The picker only appears when no geofence is currently entered, same as before this release.
+
+### Watch OS — Added
+- Same geofence-based one-tap behavior as Android Auto: with 2+ devices paired and a geofence entered, the watch shows one "Open" button for the resolved device(s) instead of the picker. Falls back to the existing picker otherwise.
+
+### Phone — Changed
+- The Quick Settings tile now also resolves geofence presence with 2+ devices paired: it fires the matching device(s) directly if a geofence is entered, or opens the app to the picker if it can't tell which one you mean, instead of always firing whatever was last selected. Single-device installs are unaffected — the tile still fires immediately with no extra check.
+- Manually opening 2+ devices at once (via geofence pre-selection) now shows as one grouped entry in History, with a per-device breakdown, instead of unrelated-looking duplicate rows.
+
+### Phone — Fixed
+- Fully automatic (no-tap) geofence auto-open now debounces each device independently instead of sharing one global cooldown, so two geofences entered close together (e.g. an outer gate and a garage door on the same property) can no longer have one's auto-open silently suppress the other.
+
 ## [1.12.4]
 
 ### Android Auto — Changed

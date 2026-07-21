@@ -63,6 +63,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
                     geofence.requestId.startsWith(GEOFENCE_ID_PREFIX) -> {
                         val address = geofence.requestId.removePrefix(GEOFENCE_ID_PREFIX)
                         GeofenceLogger.i(context, TAG, "Inner geofence EXIT — setting outside flag and stopping GPS warmup for $address")
+                        markRawGeofenceExit(context, address)
                         DevicePreferences(context).wasOutsideOuterGeofence = true
                         stopGpsWarmup(context)
                         stopGeofenceService(context)
@@ -83,6 +84,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
                 }
                 geofence.requestId.startsWith(GEOFENCE_ID_PREFIX) -> {
                     val address = geofence.requestId.removePrefix(GEOFENCE_ID_PREFIX)
+                    markRawGeofenceEnter(context, address)
                     handleEnter(context, address, event)
                 }
             }
@@ -123,6 +125,25 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
         DevicePreferences(context).wasOutsideOuterGeofence = false
         val intent = Intent(context, GpsWarmupForegroundService::class.java)
         context.startForegroundService(intent)
+    }
+
+    /**
+     * Raw presence tracking, parallel to the gated auto-fire path below —
+     * drives pre-selection on manual-tap surfaces (phone dropdown, AA,
+     * watch, tile) only. Never fires a transport itself.
+     */
+    private fun markRawGeofenceEnter(context: Context, deviceAddress: String) {
+        val prefs = DevicePreferences(context)
+        val device = prefs.devices.firstOrNull { it.addressKey == deviceAddress } ?: return
+        prefs.markGeofenceEntered(device.id)
+        com.dunnowsoftware.GarageAAtoESP32.wear.syncDevicesToWatch(context)
+    }
+
+    private fun markRawGeofenceExit(context: Context, deviceAddress: String) {
+        val prefs = DevicePreferences(context)
+        val device = prefs.devices.firstOrNull { it.addressKey == deviceAddress } ?: return
+        prefs.markGeofenceExited(device.id)
+        com.dunnowsoftware.GarageAAtoESP32.wear.syncDevicesToWatch(context)
     }
 
     private fun stopGpsWarmup(context: Context) {
@@ -281,15 +302,23 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
 
     private fun fireIfNotDebounced(context: Context, deviceAddress: String, gateDetail: String?) {
         val prefs = DevicePreferences(context)
-        val now = System.currentTimeMillis()
-
-        val lastFired = prefs.lastAutoFiredAt
-        val firedAgoMs = now - lastFired
-        GeofenceLogger.d(context, TAG, "Debounce — last successful auto-fire ${firedAgoMs}ms ago (limit=${DEBOUNCE_MS}ms): ${if (firedAgoMs >= DEBOUNCE_MS) "PASS" else "FAIL"}")
-        if (firedAgoMs < DEBOUNCE_MS) {
-            GeofenceLogger.i(context, TAG, "ENTER suppressed: debounce — fired ${firedAgoMs}ms ago")
+        val device = prefs.devices.firstOrNull { it.addressKey == deviceAddress }
+        if (device == null) {
+            GeofenceLogger.w(context, TAG, "fireIfNotDebounced: no matching paired device for $deviceAddress — dropping")
             return
         }
+
+        // Per-device debounce, deliberately separate from the global
+        // lastAutoFiredAt notification signal — two geofences entered close
+        // together (e.g. an outer gate + garage door on one property) must
+        // not have one's auto-fire suppress the other purely by timing.
+        val debounceOk = prefs.debounceOkFor(device.id, DEBOUNCE_MS)
+        GeofenceLogger.d(context, TAG, "Debounce for ${device.id} ($deviceAddress): ${if (debounceOk) "PASS" else "FAIL"}")
+        if (!debounceOk) {
+            GeofenceLogger.i(context, TAG, "ENTER suppressed: debounce — $deviceAddress fired within the last ${DEBOUNCE_MS}ms")
+            return
+        }
+        prefs.markAutoFireDebounce(device.id)
 
         GeofenceLogger.i(context, TAG, "All gates passed for $deviceAddress — starting foreground service")
         stopGpsWarmup(context)

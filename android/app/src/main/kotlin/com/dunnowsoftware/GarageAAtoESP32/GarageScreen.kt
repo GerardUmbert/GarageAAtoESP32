@@ -11,11 +11,13 @@ import androidx.lifecycle.LifecycleOwner
 import com.dunnowsoftware.GarageAAtoESP32.R
 import com.dunnowsoftware.GarageAAtoESP32.ble.BleScanner
 import com.dunnowsoftware.GarageAAtoESP32.ble.GarageBleManager
+import com.dunnowsoftware.GarageAAtoESP32.geofence.GeofenceResolution
+import com.dunnowsoftware.GarageAAtoESP32.geofence.resolveGeofenceTargets
+import com.dunnowsoftware.GarageAAtoESP32.transport.MultiDeviceOpenCoordinator
 import com.dunnowsoftware.GarageAAtoESP32.transport.OpenResult
-import com.dunnowsoftware.GarageAAtoESP32.transport.OpenTransport
 import com.dunnowsoftware.GarageAAtoESP32.transport.WebhookTransport
-import com.dunnowsoftware.GarageAAtoESP32.transport.activeTransport
 import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
+import com.dunnowsoftware.GarageAAtoESP32.data.GarageDevice
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryEntry
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryStore
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenOutcome
@@ -48,7 +50,7 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
     // read so we pick up phone-side edits (re-pair, password change, demo
     // toggle) the next time AA reads them.
     private fun prefs() = DevicePreferences(carContext)
-    private var currentTransport: OpenTransport? = null
+    private var coordinator: MultiDeviceOpenCoordinator? = null
     private val presenceScanner = BleScanner(carContext)
 
     private enum class UiState { IDLE, CONNECTING, SUCCESS, AUTO_SUCCESS, FAILURE, AUTO_FAILURE }
@@ -224,15 +226,16 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
         scanStartedForAddresses = emptySet()
     }
 
-    // Only worth naming the device once there's more than one to disambiguate —
+    // Which device(s) the in-flight/just-finished open actually acted on — set at
+    // the top of triggerOpen() so it correctly reflects a resolved multi-device
+    // fire ("Main Garage + Side Gate"), not just whatever selectedDeviceId is.
+    // Only worth naming once there's more than one device paired to disambiguate —
     // single-device installs keep the plain "Connecting…"/"Opened!" wording.
-    // selectedDeviceId is written before triggerOpen() fires (both for a manual
-    // pick and for BLE-presence auto-fire), so this reliably names whichever
-    // device the in-flight/just-finished open actually acted on.
+    private var firingDevices: List<GarageDevice> = emptyList()
+
     private fun connectingDeviceName(): String? {
-        val p = prefs()
-        if (p.devices.size <= 1) return null
-        return p.selectedDevice?.name
+        if (prefs().devices.size <= 1) return null
+        return firingDevices.takeIf { it.isNotEmpty() }?.joinToString(" + ") { it.name }
     }
 
     override fun onGetTemplate(): Template {
@@ -267,14 +270,42 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
 
     private fun buildMain(): Template {
         val p = prefs()
-        // 2+ real devices (not demo mode, which has nothing to pick between) get a
-        // row-per-device picker instead of the single button; tapping a row both
-        // opens that device and updates selectedDeviceId so every other surface
-        // (phone dropdown, watch) reflects the same choice next time it's shown.
+        // 2+ real devices (not demo mode, which has nothing to pick between): check
+        // live geofence resolution first. A confident answer (raw presence, no
+        // driving gates — see PLAN_multiple_garages.md Phase 3) gets a one-tap
+        // screen, same shape as the 1-device case. Empty resolution falls through
+        // to the existing row-per-device picker unchanged — that fallback always
+        // shows every device (including ungeofenced webhooks), never a narrowed set.
         if (!p.demoMode && p.devices.size > 1) {
+            val resolved = (resolveGeofenceTargets(p) as? GeofenceResolution.Resolved)?.devices
+            if (!resolved.isNullOrEmpty()) {
+                return buildResolvedOneTap(resolved)
+            }
             return buildDevicePicker(p)
         }
         return buildSingleDevice(p)
+    }
+
+    private fun buildResolvedOneTap(devices: List<GarageDevice>): Template {
+        val name = devices.joinToString(" + ") { it.name }
+        val openAction = Action.Builder()
+            .setTitle(carContext.getString(R.string.aa_open_garage))
+            .setOnClickListener { triggerOpen(resolvedDevices = devices) }
+            .build()
+
+        val pane = Pane.Builder()
+            .addRow(
+                Row.Builder()
+                    .setTitle(carContext.getString(R.string.aa_garage_door))
+                    .addText(name)
+                    .build()
+            )
+            .addAction(openAction)
+            .build()
+
+        return PaneTemplate.Builder(pane)
+            .setHeader(Header.Builder().setStartHeaderAction(Action.APP_ICON).build())
+            .build()
     }
 
     private fun buildDevicePicker(p: DevicePreferences): Template {
@@ -361,10 +392,11 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
     }
 
     private fun buildLoading(name: String?): Template {
-        val maxAttempts = if (prefs().selectedDevice?.transport == TransportType.WEBHOOK)
-            WebhookTransport.MAX_ATTEMPTS
-        else
-            GarageBleManager.MAX_ATTEMPTS
+        // firingDevices may mix BLE and webhook in a multi-device fire; show
+        // whichever max-attempts figure applies to the majority transport rather
+        // than picking one arbitrarily — cosmetic only, doesn't affect retry logic.
+        val anyBle = firingDevices.any { it.transport != TransportType.WEBHOOK }
+        val maxAttempts = if (anyBle) GarageBleManager.MAX_ATTEMPTS else WebhookTransport.MAX_ATTEMPTS
         val msg = if (name != null) {
             if (connectAttempt <= 1)
                 carContext.getString(R.string.aa_connecting_named, name)
@@ -410,11 +442,12 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
     /**
      * [autoFiredDeviceId] is set only by BLE-presence auto-fire, which detects a
      * *specific* device coming into range rather than acting on whatever is
-     * currently selected — manual taps, the picker, voice, and demo mode all
-     * leave this null and fall through to [DevicePreferences.selectedDevice] as
-     * before.
+     * currently selected. [resolvedDevices] is set only by [buildResolvedOneTap]'s
+     * tap — the live geofence-resolved set (1+ devices) for this specific tap.
+     * Manual picker taps, voice, and demo mode leave both null and fall through to
+     * [DevicePreferences.selectedDevice] as before.
      */
-    private fun triggerOpen(autoFiredDeviceId: String? = null) {
+    private fun triggerOpen(autoFiredDeviceId: String? = null, resolvedDevices: List<GarageDevice>? = null) {
         val p = prefs()
         if (p.demoMode) {
             triggerDemo()
@@ -424,43 +457,56 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
             p.selectedDeviceId = autoFiredDeviceId
             syncDevicesToWatch(carContext)
         }
-        val selected = if (autoFiredDeviceId != null) p.device(autoFiredDeviceId) else p.selectedDevice
-        val transportType = selected?.transport
-        val deviceAddress = selected?.addressKey ?: ""
-        val deviceName = selected?.name ?: ""
-        val transport = activeTransport(carContext, selected?.id) ?: return
+        val targets = when {
+            !resolvedDevices.isNullOrEmpty() -> resolvedDevices
+            autoFiredDeviceId != null -> listOfNotNull(p.device(autoFiredDeviceId))
+            else -> listOfNotNull(p.selectedDevice)
+        }
+        if (targets.isEmpty()) return
+        firingDevices = targets
 
         uiState = UiState.CONNECTING
+        connectAttempt = 0
         invalidate()
         notifyWatchSending(carContext)
         broadcastToPhone(ACTION_AA_OPEN_SENDING)
 
-        currentTransport = transport
-        transport.open(
+        val newCoordinator = MultiDeviceOpenCoordinator(carContext)
+        coordinator = newCoordinator
+        newCoordinator.open(
+            devices = targets,
             trigger = TriggerSource.MANUAL_AA,
-            onAttempt = { n ->
+            onDeviceAttempt = { _, n ->
                 carContext.mainExecutor.execute {
-                    connectAttempt = n
+                    connectAttempt = maxOf(connectAttempt, n)
                     invalidate()
                 }
-            }
-        ) { result ->
-            carContext.mainExecutor.execute {
-                when (result) {
-                    is OpenResult.Success -> {
-                        val ts = System.currentTimeMillis()
-                        prefs().lastAutoFiredAt = ts
-                        OpenHistoryStore.append(
-                            carContext,
-                            OpenHistoryEntry(
-                                timestampMs   = ts,
-                                deviceAddress = deviceAddress,
-                                deviceName    = deviceName,
-                                trigger       = TriggerSource.MANUAL_AA,
-                                outcome       = OpenOutcome.SUCCESS,
-                                deviceId      = selected?.id,
-                            ),
-                        )
+            },
+            onDeviceResult = { outcome ->
+                val deviceOutcome = when {
+                    outcome.result is OpenResult.Success -> OpenOutcome.SUCCESS
+                    outcome.device.transport == TransportType.WEBHOOK -> OpenOutcome.FAILED_WEBHOOK
+                    else -> OpenOutcome.FAILED_BLE
+                }
+                OpenHistoryStore.append(
+                    carContext,
+                    OpenHistoryEntry(
+                        timestampMs   = System.currentTimeMillis(),
+                        deviceAddress = outcome.device.addressKey,
+                        deviceName    = outcome.device.name,
+                        trigger       = TriggerSource.MANUAL_AA,
+                        outcome       = deviceOutcome,
+                        detail        = (outcome.result as? OpenResult.Failure)?.reason,
+                        deviceId      = outcome.device.id,
+                        sessionId     = if (targets.size > 1) newCoordinator.sessionId else null,
+                    ),
+                )
+            },
+            onAllComplete = { outcomes ->
+                carContext.mainExecutor.execute {
+                    val anySuccess = outcomes.any { it.result is OpenResult.Success }
+                    if (anySuccess) {
+                        prefs().lastAutoFiredAt = System.currentTimeMillis()
                         notifyWatchResult(carContext, true)
                         broadcastToPhone(ACTION_AA_OPEN_SUCCESS)
                         uiState = UiState.SUCCESS
@@ -468,28 +514,16 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
                         Handler(Looper.getMainLooper()).postDelayed({
                             carContext.mainExecutor.execute { resetToIdle() }
                         }, 2000)
-                    }
-                    is OpenResult.Failure -> {
-                        val outcome = if (transportType == TransportType.WEBHOOK) OpenOutcome.FAILED_WEBHOOK else OpenOutcome.FAILED_BLE
-                        OpenHistoryStore.append(
-                            carContext,
-                            OpenHistoryEntry(
-                                timestampMs   = System.currentTimeMillis(),
-                                deviceAddress = deviceAddress,
-                                deviceName    = deviceName,
-                                trigger       = TriggerSource.MANUAL_AA,
-                                outcome       = outcome,
-                                deviceId      = selected?.id,
-                            ),
-                        )
+                    } else {
+                        notifyWatchResult(carContext, false)
                         broadcastToPhone(ACTION_AA_OPEN_FAILURE)
                         uiState = UiState.FAILURE
-                        failureReason = result.reason
+                        failureReason = (outcomes.firstOrNull()?.result as? OpenResult.Failure)?.reason ?: ""
                         invalidate()
                     }
                 }
-            }
-        }
+            },
+        )
     }
 
     private fun triggerDemo() {

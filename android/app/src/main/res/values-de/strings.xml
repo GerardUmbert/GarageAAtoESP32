@@ -195,6 +195,7 @@
     <string name="history_trigger_voice">Sprache</string>
     <string name="history_trigger_wear">Uhr</string>
     <string name="history_outcome_success">Geöffnet</string>
+    <string name="history_outcome_partial">Teilweise geöffnet</string>
     <string name="history_outcome_failed">Fehlgeschlagen</string>
     <string name="history_outcome_suppressed">Unterdrückt</string>
     <string name="history_detail_gate">Ausgelöst via %1$s</string>

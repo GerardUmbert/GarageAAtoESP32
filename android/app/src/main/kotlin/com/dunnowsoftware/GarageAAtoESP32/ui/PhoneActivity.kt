@@ -43,7 +43,6 @@ import com.dunnowsoftware.GarageAAtoESP32.DemoOpener
 import com.dunnowsoftware.GarageAAtoESP32.R
 import com.dunnowsoftware.GarageAAtoESP32.ble.BleConstants
 import com.dunnowsoftware.GarageAAtoESP32.transport.OpenResult
-import com.dunnowsoftware.GarageAAtoESP32.transport.activeTransport
 import com.dunnowsoftware.GarageAAtoESP32.data.DevicePreferences
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryEntry
 import com.dunnowsoftware.GarageAAtoESP32.data.OpenHistoryStore
@@ -78,7 +77,6 @@ import java.util.Locale
 class PhoneActivity : AppCompatActivity() {
 
     private lateinit var prefs: DevicePreferences
-    private var currentTransport: com.dunnowsoftware.GarageAAtoESP32.transport.OpenTransport? = null
     private val shortcutOpenPending = mutableStateOf(false)
 
     override fun attachBaseContext(newBase: Context) {
@@ -129,10 +127,12 @@ class PhoneActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        currentTransport?.cleanup()
+        multiOpenCoordinator?.cleanup()
     }
 
-    private fun triggerOpen(onResult: (OpenResult) -> Unit) {
+    private var multiOpenCoordinator: com.dunnowsoftware.GarageAAtoESP32.transport.MultiDeviceOpenCoordinator? = null
+
+    private fun triggerOpen(explicitOverrideDeviceId: String?, onResult: (OpenResult) -> Unit) {
         if (prefs.demoMode) {
             android.os.Handler(mainLooper).postDelayed(
                 { onResult(DemoOpener.nextResult()) },
@@ -140,35 +140,47 @@ class PhoneActivity : AppCompatActivity() {
             )
             return
         }
-        val selected = prefs.selectedDevice
-        val transportType = selected?.transport
-        val deviceAddress = selected?.addressKey ?: ""
-        val deviceName = selected?.name ?: ""
-        val transport = activeTransport(this, selected?.id)
-        if (transport == null) {
+        val resolved = if (explicitOverrideDeviceId != null) null else
+            (com.dunnowsoftware.GarageAAtoESP32.geofence.resolveGeofenceTargets(prefs) as?
+                com.dunnowsoftware.GarageAAtoESP32.geofence.GeofenceResolution.Resolved)?.devices
+        val targets = if (!resolved.isNullOrEmpty()) resolved
+            else listOfNotNull(explicitOverrideDeviceId?.let { prefs.device(it) } ?: prefs.selectedDevice)
+        if (targets.isEmpty()) {
             onResult(OpenResult.Failure("No paired device"))
             return
         }
-        currentTransport = transport
-        transport.open(trigger = TriggerSource.MANUAL_PHONE) { result ->
-            val outcome = when {
-                result is OpenResult.Success -> OpenOutcome.SUCCESS
-                transportType == TransportType.WEBHOOK -> OpenOutcome.FAILED_WEBHOOK
-                else -> OpenOutcome.FAILED_BLE
-            }
-            OpenHistoryStore.append(
-                this,
-                OpenHistoryEntry(
-                    timestampMs   = System.currentTimeMillis(),
-                    deviceAddress = deviceAddress,
-                    deviceName    = deviceName,
-                    trigger       = TriggerSource.MANUAL_PHONE,
-                    outcome       = outcome,
-                    deviceId      = selected?.id,
-                ),
-            )
-            runOnUiThread { onResult(result) }
-        }
+
+        val coordinator = com.dunnowsoftware.GarageAAtoESP32.transport.MultiDeviceOpenCoordinator(this)
+        multiOpenCoordinator = coordinator
+        val sessionId = coordinator.open(
+            devices = targets,
+            trigger = TriggerSource.MANUAL_PHONE,
+            onDeviceResult = { outcome ->
+                val deviceOutcome = when {
+                    outcome.result is OpenResult.Success -> OpenOutcome.SUCCESS
+                    outcome.device.transport == TransportType.WEBHOOK -> OpenOutcome.FAILED_WEBHOOK
+                    else -> OpenOutcome.FAILED_BLE
+                }
+                OpenHistoryStore.append(
+                    this,
+                    OpenHistoryEntry(
+                        timestampMs   = System.currentTimeMillis(),
+                        deviceAddress = outcome.device.addressKey,
+                        deviceName    = outcome.device.name,
+                        trigger       = TriggerSource.MANUAL_PHONE,
+                        outcome       = deviceOutcome,
+                        deviceId      = outcome.device.id,
+                        sessionId     = if (targets.size > 1) coordinator.sessionId else null,
+                    ),
+                )
+            },
+            onAllComplete = { outcomes ->
+                val anySuccess = outcomes.any { it.result is OpenResult.Success }
+                val aggregate = if (anySuccess) OpenResult.Success() else (outcomes.firstOrNull()?.result as? OpenResult.Failure)
+                    ?: OpenResult.Failure("No paired device")
+                runOnUiThread { onResult(aggregate) }
+            },
+        )
     }
 }
 
@@ -194,7 +206,7 @@ private sealed interface Route {
 @Composable
 private fun AppRoot(
     prefs: DevicePreferences,
-    onTriggerOpen: ((OpenResult) -> Unit) -> Unit,
+    onTriggerOpen: (String?, (OpenResult) -> Unit) -> Unit,
     shortcutOpenPending: androidx.compose.runtime.MutableState<Boolean>,
     onApplyLocale: (String?) -> Unit,
 ) {
@@ -210,6 +222,17 @@ private fun AppRoot(
     // WebhookSetup for "Add a device" instead.
     var editingDeviceId by remember { mutableStateOf<String?>(null) }
     val current = routeStack.last()
+
+    // An explicit dropdown pick on the Main screen overrides geofence pre-selection
+    // for the current visit only (see PLAN_multiple_garages.md Phase 3, "Explicit
+    // pick lifetime") — cleared whenever Main is (re-)entered so the next visit goes
+    // back to live geofence resolution rather than staying pinned to a stale pick.
+    var mainExplicitOverrideId by remember { mutableStateOf<String?>(null) }
+    var previousRoute by remember { mutableStateOf<Route?>(null) }
+    if (current == Route.Main && previousRoute != Route.Main) {
+        mainExplicitOverrideId = null
+    }
+    previousRoute = current
 
     fun push(r: Route) { routeStack = routeStack + r }
     fun pop() {
@@ -341,12 +364,14 @@ private fun AppRoot(
         Route.Main -> MainHost(
             prefs = prefs,
             stateBust = stateBust,
+            explicitOverrideDeviceId = mainExplicitOverrideId,
             onTriggerOpen = onTriggerOpen,
             shortcutOpenPending = shortcutOpenPending,
             onSettings = { push(Route.Settings) },
             onHistory = { push(Route.History) },
             onSelectDevice = { deviceId ->
                 prefs.selectedDeviceId = deviceId
+                mainExplicitOverrideId = deviceId
                 syncDevicesToWatch(ctx)
                 bust()
             },
@@ -635,7 +660,8 @@ private fun AppRoot(
 private fun MainHost(
     prefs: DevicePreferences,
     stateBust: Int,
-    onTriggerOpen: ((OpenResult) -> Unit) -> Unit,
+    explicitOverrideDeviceId: String?,
+    onTriggerOpen: (String?, (OpenResult) -> Unit) -> Unit,
     shortcutOpenPending: androidx.compose.runtime.MutableState<Boolean>,
     onSettings: () -> Unit,
     onHistory: () -> Unit,
@@ -744,7 +770,7 @@ private fun MainHost(
             shortcutOpenPending.value = false
             openState = OpenState.Sending
             notifyWatchSending(ctx)
-            onTriggerOpen { result ->
+            onTriggerOpen(null) { result ->
                 when (result) {
                     is OpenResult.Success -> {
                         prefs.lastOpenedAt = System.currentTimeMillis()
@@ -760,18 +786,32 @@ private fun MainHost(
         }
     }
 
-    val deviceLabel = remember(stateBust) {
-        val selected = prefs.selectedDevice
+    // An explicit dropdown pick this visit wins over live geofence resolution — see
+    // "Explicit pick lifetime" in PLAN_multiple_garages.md Phase 3. explicitOverrideDeviceId
+    // is cleared by AppRoot whenever Main is freshly (re-)entered, so this only lasts for
+    // the current visit, not permanently.
+    val resolvedTargets = remember(stateBust, explicitOverrideDeviceId) {
+        if (explicitOverrideDeviceId != null) null
+        else (com.dunnowsoftware.GarageAAtoESP32.geofence.resolveGeofenceTargets(prefs) as?
+            com.dunnowsoftware.GarageAAtoESP32.geofence.GeofenceResolution.Resolved)?.devices
+    }
+    val deviceLabel = remember(stateBust, resolvedTargets) {
+        val resolved = resolvedTargets
         when {
-            prefs.demoMode    -> ctx.getString(R.string.main_demo_mode)
-            selected != null  -> {
-                val prefix = if (selected.transport == com.dunnowsoftware.GarageAAtoESP32.data.TransportType.WEBHOOK)
-                    ctx.getString(R.string.main_webhook_prefix)
-                else
-                    ctx.getString(R.string.main_esp32_prefix)
-                "$prefix · ${selected.name}"
+            prefs.demoMode -> ctx.getString(R.string.main_demo_mode)
+            resolved != null && resolved.size > 1 -> resolved.joinToString(" + ") { it.name }
+            else -> {
+                val selected = resolved?.firstOrNull() ?: prefs.selectedDevice
+                if (selected != null) {
+                    val prefix = if (selected.transport == com.dunnowsoftware.GarageAAtoESP32.data.TransportType.WEBHOOK)
+                        ctx.getString(R.string.main_webhook_prefix)
+                    else
+                        ctx.getString(R.string.main_esp32_prefix)
+                    "$prefix · ${selected.name}"
+                } else {
+                    ctx.getString(R.string.main_not_configured)
+                }
             }
-            else              -> ctx.getString(R.string.main_not_configured)
         }
     }
     val deviceOptions = remember(stateBust) {
@@ -807,7 +847,7 @@ private fun MainHost(
             if (openState != OpenState.Idle) return@MainScreen
             openState = OpenState.Sending
             notifyWatchSending(ctx)
-            onTriggerOpen { result ->
+            onTriggerOpen(explicitOverrideDeviceId) { result ->
                 when (result) {
                     is OpenResult.Success -> {
                         prefs.lastOpenedAt = System.currentTimeMillis()

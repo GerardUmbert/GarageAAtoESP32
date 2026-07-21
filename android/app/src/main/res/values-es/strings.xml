@@ -195,6 +195,7 @@
     <string name="history_trigger_voice">Voz</string>
     <string name="history_trigger_wear">Reloj</string>
     <string name="history_outcome_success">Abierto</string>
+    <string name="history_outcome_partial">Abierto parcialmente</string>
     <string name="history_outcome_failed">Error</string>
     <string name="history_outcome_suppressed">Suprimido</string>
     <string name="history_detail_gate">Activado via %1$s</string>

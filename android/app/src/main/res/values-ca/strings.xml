@@ -195,6 +195,7 @@
     <string name="history_trigger_voice">Veu</string>
     <string name="history_trigger_wear">Rellotge</string>
     <string name="history_outcome_success">Obert</string>
+    <string name="history_outcome_partial">Obert parcialment</string>
     <string name="history_outcome_failed">Error</string>
     <string name="history_outcome_suppressed">Suprimit</string>
     <string name="history_detail_gate">Activat via %1$s</string>

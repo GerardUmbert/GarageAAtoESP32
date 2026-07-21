@@ -189,11 +189,48 @@ class DevicePreferences(context: Context) {
      * Epoch-ms of the last successful auto-fire (geofence or BLE in-range).
      * Shared between GarageScreen (AA process) and GeofenceBroadcastReceiver
      * (main process) via EncryptedSharedPreferences — the only storage that
-     * crosses the process boundary reliably.
+     * crosses the process boundary reliably. This is the "show a success
+     * notification" signal, deliberately not per-device — see
+     * [debounceOkFor]/[markAutoFireDebounce] for the debounce itself, which
+     * is per-device so two geofences entered close together (e.g. an outer
+     * gate + garage door) don't have one suppress the other.
      */
     var lastAutoFiredAt: Long
         get() = prefs.getLong(KEY_LAST_AUTO_FIRED, 0L)
         set(value) = prefs.edit().putLong(KEY_LAST_AUTO_FIRED, value).apply()
+
+    /**
+     * Per-device debounce for GeofenceBroadcastReceiver's automatic (no-tap)
+     * fire path only — separate from [lastAutoFiredAt], which is a single
+     * global "show a notification" signal shared across devices. Keying
+     * the debounce globally would mean device A's auto-fire suppresses
+     * device B's, purely by timing, even though both legitimately entered
+     * their own geofence — this keeps each device's debounce independent.
+     */
+    fun debounceOkFor(deviceId: String, windowMs: Long): Boolean {
+        val map = readDebounceMap()
+        val last = map[deviceId] ?: return true
+        return (System.currentTimeMillis() - last) >= windowMs
+    }
+
+    fun markAutoFireDebounce(deviceId: String) {
+        val map = readDebounceMap().toMutableMap()
+        map[deviceId] = System.currentTimeMillis()
+        // Trim anything absurdly old so this doesn't grow forever across a long-lived install.
+        val cutoff = System.currentTimeMillis() - 24 * 60 * 60 * 1000L
+        map.entries.removeAll { it.value < cutoff }
+        prefs.edit().putString(KEY_AUTO_FIRE_DEBOUNCE, JSONObject(map as Map<*, *>).toString()).apply()
+    }
+
+    private fun readDebounceMap(): Map<String, Long> {
+        val raw = prefs.getString(KEY_AUTO_FIRE_DEBOUNCE, null) ?: return emptyMap()
+        return try {
+            val o = JSONObject(raw)
+            o.keys().asSequence().associateWith { o.getLong(it) }
+        } catch (_: Throwable) {
+            emptyMap()
+        }
+    }
 
     var lastAutoFailedAt: Long
         get() = prefs.getLong(KEY_LAST_AUTO_FAILED, 0L)
@@ -210,6 +247,49 @@ class DevicePreferences(context: Context) {
     var wasOutsideOuterGeofence: Boolean
         get() = prefs.getBoolean(KEY_OUTSIDE_OUTER_GEOFENCE, false)
         set(value) = prefs.edit().putBoolean(KEY_OUTSIDE_OUTER_GEOFENCE, value).apply()
+
+    /**
+     * Device IDs whose inner geofence is currently entered (raw ENTER/EXIT,
+     * independent of GeofenceBroadcastReceiver's gate chain used for
+     * unattended auto-fire). Drives pre-selection on every manual-tap
+     * surface — phone dropdown, AA, watch, tile — never fires anything by
+     * itself.
+     */
+    var enteredGeofenceDeviceIds: Set<String>
+        get() = prefs.getStringSet(KEY_ENTERED_GEOFENCE_DEVICE_IDS, null)?.toSet() ?: emptySet()
+        set(value) = prefs.edit().putStringSet(KEY_ENTERED_GEOFENCE_DEVICE_IDS, value).apply()
+
+    fun markGeofenceEntered(deviceId: String) {
+        enteredGeofenceDeviceIds = enteredGeofenceDeviceIds + deviceId
+    }
+
+    fun markGeofenceExited(deviceId: String) {
+        enteredGeofenceDeviceIds = enteredGeofenceDeviceIds - deviceId
+    }
+
+/**
+     * Devices whose inner geofence is currently entered — a real, positive
+     * "you are here" signal, safe to drive a one-tap screen or auto-fire
+     * without a human confirming which device. Empty if none entered.
+     */
+    fun geofenceMatchedTargets(): List<GarageDevice> {
+        val entered = enteredGeofenceDeviceIds
+        return devices.filter { it.id in entered }
+    }
+
+    /**
+     * BLE devices with no geofence configured at all — a device the user
+     * chose not to scope, so RF range is its only signal. This is
+     * deliberately *not* used to pre-build a one-tap button anywhere: RF
+     * range alone can't tell "in range" from "connected," so the existing
+     * per-surface presence-scan/connect logic (GarageScreen's BLE-presence
+     * auto-fire, the phone/watch's own connect flow) is the correct, already
+     * -safe mechanism for these devices — this list exists only so a caller
+     * can decide whether the fallback covers every device or leaves some
+     * out, not to fire on its own.
+     */
+    fun noGeofenceBleFallbackTargets(): List<GarageDevice> =
+        devices.filter { it.transport == TransportType.BLE && !it.hasGeofence }
 
     val isConfigured: Boolean
         get() = demoMode || devices.isNotEmpty()
@@ -377,5 +457,7 @@ class DevicePreferences(context: Context) {
         private const val KEY_LAST_AUTO_FAILED        = "last_auto_failed_at"
         private const val KEY_LAST_SENDING            = "last_sending_at"
         private const val KEY_OUTSIDE_OUTER_GEOFENCE  = "outside_outer_geofence"
+        private const val KEY_ENTERED_GEOFENCE_DEVICE_IDS = "entered_geofence_device_ids"
+        private const val KEY_AUTO_FIRE_DEBOUNCE = "auto_fire_debounce_per_device"
     }
 }

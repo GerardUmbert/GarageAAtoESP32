@@ -195,6 +195,7 @@
     <string name="history_trigger_voice">Ääni</string>
     <string name="history_trigger_wear">Kello</string>
     <string name="history_outcome_success">Avattu</string>
+    <string name="history_outcome_partial">Osittain avattu</string>
     <string name="history_outcome_failed">Epäonnistui</string>
     <string name="history_outcome_suppressed">Estetty</string>
     <string name="history_detail_gate">Laukaistiin kautta %1$s</string>
