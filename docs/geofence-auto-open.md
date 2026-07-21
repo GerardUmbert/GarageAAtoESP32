@@ -6,13 +6,15 @@ When enabled, the garage opens automatically as you approach — no tap needed. 
 
 ## Setup
 
-In the phone app: **Settings → Auto-open → Garage location** — tap the map to set your garage pin and drag the radius slider (15–75 m). Enable the **Auto-open on arrival** toggle. That's it.
+In the phone app: **Settings → (device) → Auto-open → Garage location** — tap the map to set that device's pin and drag the radius slider (15–75 m). Enable the **Auto-open on arrival** toggle. That's it.
+
+With 2+ devices paired, each device has its own independent geofence — set up, evaluated, and debounced separately. A device with no geofence configured simply never auto-fires from location; it stays reachable via the picker and its own BLE-presence auto-fire (see [Resolution across multiple devices](#resolution-across-multiple-devices) below).
 
 ---
 
 ## How it triggers
 
-Two geofences are registered around your garage location:
+Two geofences are registered per device around its configured location:
 
 - **Inner geofence** — at your configured radius (15–75 m). This is the trigger zone.
 - **Outer geofence** — at your configured radius + warmup ring offset (default 250 m, adjustable 15–1000 m). This is the GPS warmup zone.
@@ -119,9 +121,19 @@ The service stops on whichever comes first:
 
 ## Debounce
 
-After a successful open, a 10-second debounce prevents re-triggering. Both the geofence service and the AA car screen share the same `lastAutoFiredAt` timestamp in encrypted storage — cross-process races are absorbed.
+After a successful open, a 10-second debounce prevents re-triggering. The debounce is tracked **per device**, not globally — two geofences entered close together (an outer gate and a garage door on the same property, for example) can't have one device's auto-open silently suppress the other's. Both the geofence service and the AA car screen share the same per-device `lastAutoFiredAt` timestamp in encrypted storage — cross-process races are absorbed.
 
 Only confirmed successful opens (`OpenResult.Success`) write the timestamp. Failed attempts do not block subsequent triggers.
+
+---
+
+## Resolution across multiple devices
+
+Geofence auto-open (this document) is the fully-automatic, no-tap path — a passed gate chain fires the BLE open with no user interaction. Separately, every manual-tap surface (the phone's "Selected opener" dropdown, Android Auto, the watch, and the Quick Settings tile) also reads current geofence presence to decide what a *tap* should do:
+
+- If you're standing inside a device's geofence right now, that device (or devices, if two geofences overlap) is pre-selected or shown as a single one-tap button, instead of making you pick from a list.
+- Devices with no geofence configured are never part of this pre-selection — RF/BLE range alone isn't a reliable "you are here" signal the way a geofence is, so those devices are only ever reached by manually picking them or through their own BLE-presence auto-fire.
+- This resolution is purely a selection convenience for taps — it never fires anything on its own. Only the gate chain above can trigger a no-tap open.
 
 ---
 

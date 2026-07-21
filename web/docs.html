@@ -567,18 +567,24 @@ ESP32 GND     ──────────▶ Emitter (E)
         </table>
 
         <h3>Presence indicator</h3>
-        <p>A low-power BLE scan filtered to your paired device's MAC runs while the main screen is in the foreground. The dot shows <strong>In range</strong> (green) when the opener has been heard within the last 15 s, <strong>Out of range</strong> (grey) otherwise.</p>
+        <p>A low-power BLE scan filtered to your paired device's MAC runs while the main screen is in the foreground. The dot shows <strong>In range</strong> (green) when the opener has been heard within the last 8 s, <strong>Out of range</strong> (grey) otherwise. With 2+ devices paired, every paired BLE device's address is scanned at once, not just the currently-selected one.</p>
+
+        <h3>Multiple openers</h3>
+        <p>You're not limited to one device — pair any mix of BLE ESP32s and webhooks. Existing single-device installs migrate automatically with no visible change.</p>
+        <p>Once 2+ devices are paired, the main screen replaces the plain open button's device address with a <strong>Selected opener</strong> dropdown: tap it to see every paired device with its transport icon (Bluetooth/Wi-Fi), a type subtitle, and live in-range coloring for BLE devices. Picking a device applies immediately across every trigger surface — manual tap, Android Auto, the Wear tile, the watch app, voice, and the Quick Settings tile.</p>
+        <p>If any of your paired devices has a <a href="#geofence-auto-open">geofence</a> configured, the dropdown pre-selects whichever device's geofence you're currently standing in instead of leaving the last manual pick selected — walk out to the car or stand near a gate and the right opener is already chosen. If two geofences overlap, both are pre-selected together (shown as "Main Garage + Side Gate") and tapping <strong>Open</strong> fires both at once. Tapping a different device overrides this pick until you leave and return to the main screen, at which point geofence presence takes over again. Devices with no geofence configured are unaffected — they're never auto-selected, only ever chosen manually or reached via their own BLE-presence auto-fire.</p>
+        <p>Settings shows a device list (name, transport, live BLE presence dot) once 2+ devices are paired; tapping a device opens its own Device Detail screen with re-pair/change-password (BLE) or edit (webhook) actions, its own geofence auto-open section, and a remove action.</p>
 
         <h3>Open history</h3>
-        <p>Tap the history row at the bottom of the main screen to open a full timeline of every open event — timestamp, trigger source (manual tap, Android Auto, geofence auto-open, voice), and result. Geofence entries expand to show which gate passed and any suppression reasons. Entries are grouped by day with sticky date headers.</p>
+        <p>Tap the history row at the bottom of the main screen to open a full timeline of every open event — timestamp, trigger source (manual tap, Android Auto, geofence auto-open, voice), and result. Geofence entries expand to show which gate passed and any suppression reasons. Opening 2+ devices at once (via geofence pre-selection) shows as a single grouped entry with a per-device breakdown, rather than separate unrelated-looking rows. Entries are grouped by day with sticky date headers.</p>
 
         <h3>Settings</h3>
         <p>Open settings via the ⚙ button in the top right. From here you can:</p>
         <ul>
-          <li>View or change your paired device (Repair / Pair another / Unpair)</li>
+          <li>View, add, or remove paired devices (Repair / Pair another device / Unpair) — see <a href="#phone-ui">Multiple openers</a> above</li>
           <li>Connect to the ESP32's Wi-Fi log server — the 📶 button appears next to the device address when the firmware was flashed with the web log feature enabled</li>
           <li>Change your password</li>
-          <li>Configure geofence auto-open (location, radius, warmup ring)</li>
+          <li>Configure geofence auto-open per device (location, radius, warmup ring)</li>
           <li>Switch the app language (8 supported)</li>
           <li>Enable Demo mode (runs the full UI flow without a real ESP32)</li>
           <li>Share the geofence diagnostic log (Settings → Diagnostics)</li>
@@ -586,7 +592,7 @@ ESP32 GND     ──────────▶ Emitter (E)
 
         <!-- ── ANDROID AUTO ── -->
         <h2 id="android-auto">Android Auto</h2>
-        <p>The AA screen is built on the Car App Library and shows a single button: <strong>Open Garage</strong>. Designed to be safe to operate while driving.</p>
+        <p>The AA screen is built on the Car App Library. With a single device paired it shows one button: <strong>Open Garage</strong>. Designed to be safe to operate while driving.</p>
 
         <h3>States on the car screen</h3>
         <table>
@@ -599,8 +605,12 @@ ESP32 GND     ──────────▶ Emitter (E)
           </tbody>
         </table>
 
+        <h3>Multiple openers</h3>
+        <p>With 2+ devices paired, the car screen shows a list instead of a single button — name, transport badge, and live BLE presence per row. Tapping a row opens that device and updates the phone's selection.</p>
+        <p>If a <a href="#geofence-auto-open">geofence</a> is currently entered, the list is replaced by a single one-tap <strong>Open</strong> button naming the resolved device(s) — same one-tap experience as a single-device install, no need to pick from the list while driving. The picker only appears when no geofence is currently entered.</p>
+
         <h3>Auto-fire</h3>
-        <p>When the AA screen is active and the presence scan detects the paired device in range, the app fires the open command automatically — once per AA session. This means the gate often starts opening before you've pulled up to it. AA being connected is also the strongest signal in the <a href="#geofence-gates">geofence gate chain</a> — if you use geofence auto-open, the AA path always takes priority.</p>
+        <p>When the AA screen is active and the presence scan detects a paired device in range, the app fires the open command automatically — once per AA session, for whichever specific device came into range (the selection updates to match). This means the gate often starts opening before you've pulled up to it. With 2+ devices paired, this only fires for the currently selected/resolved device, not any paired device that happens to be nearby. AA being connected is also the strongest signal in the <a href="#geofence-gates">geofence gate chain</a> — if you use geofence auto-open, the AA path always takes priority.</p>
 
         <h3>Testing without a car</h3>
         <p>Use the Android Auto Desktop Head Unit emulator. Install it via Android Studio: <em>Tools → SDK Manager → SDK Tools → Android Auto Desktop Head Unit Emulator</em>. Start the DHU server on your phone (Android Auto → Developer settings → Start head unit server), then launch the emulator on your PC.</p>
@@ -623,6 +633,10 @@ ESP32 GND     ──────────▶ Emitter (E)
         </table>
 
         <p>The screen turns on and shows the result even when the watch is locked — no need to wake it manually first.</p>
+
+        <h3>Multiple openers</h3>
+        <p>With 2+ devices paired, the watch app and swipe-in tile show a device picker (name, transport badge, live BLE presence) instead of a single button, synced from the phone's device list. Picking a device on the watch updates the phone's selection too.</p>
+        <p>If a <a href="#geofence-auto-open">geofence</a> is currently entered, the watch shows a single one-tap <strong>Open</strong> button for the resolved device(s) instead of the picker — same behavior as Android Auto. Falls back to the picker otherwise.</p>
 
         <h3>Watch tile</h3>
         <p>Add the <strong>Garage Opener</strong> tile to your watch face: swipe left to the tile carousel → Edit tiles → add Garage Opener. Tapping the tile launches the watch app and fires the open command immediately, without having to navigate to the app first.</p>
@@ -650,11 +664,12 @@ ESP32 GND     ──────────▶ Emitter (E)
         <p>Add the app to your notification shade for one-swipe access: long-press the shade → <strong>Edit tiles</strong> → drag <strong>Garage Opener</strong> into the active area.</p>
         <p>The tile subtitle shows the current state: <em>Sending…</em> → <em>Opened</em> / <em>Failed</em>, then clears after 2 seconds. You can open the garage without unlocking the phone or opening the app.</p>
         <p>There's also a launcher long-press shortcut: long-press the app icon → <strong>Open garage</strong> — launches the app and triggers the opener immediately.</p>
+        <p>With a single device paired, the tile fires immediately with no extra check, same as before. With 2+ devices paired, the tile also resolves <a href="#geofence-auto-open">geofence</a> presence: it fires the matching device(s) directly if a geofence is currently entered, or opens the app to the picker if it can't tell which device you mean.</p>
 
         <!-- ── GEOFENCE AUTO-OPEN ── -->
         <h2 id="geofence-auto-open">Geofence auto-open</h2>
-        <p>When enabled, the garage opens automatically as you approach — no tap needed. Set it up in <strong>Settings → Auto-open → Garage location</strong>: tap the map to place your garage pin, drag the radius slider (15–75 m), and enable the <strong>Auto-open on arrival</strong> toggle.</p>
-        <p>Two geofences are registered around your garage:</p>
+        <p>When enabled, the garage opens automatically as you approach — no tap needed. Set it up per device in <strong>Settings → (device) → Auto-open → Garage location</strong>: tap the map to place that device's pin, drag the radius slider (15–75 m), and enable the <strong>Auto-open on arrival</strong> toggle. With 2+ devices paired, each device has its own independent geofence — a device with no geofence configured is simply never auto-fired by presence in a zone; it stays reachable via the ordinary picker and its own BLE-presence auto-fire.</p>
+        <p>Two geofences are registered per device around its location:</p>
         <ul>
           <li><strong>Inner geofence</strong> — at your configured radius. This is the trigger zone.</li>
           <li><strong>Outer geofence</strong> — at your configured radius + warmup ring offset (default 400 m, adjustable 15–1000 m). This is the GPS warmup zone (shown as a dashed ring in the picker).</li>
@@ -760,7 +775,7 @@ flowchart TD
         </ol>
 
         <h3>Debounce</h3>
-        <p>After a successful open, a 10-second debounce prevents re-triggering. The timestamp is shared between the geofence service and the AA car screen via encrypted storage — cross-process races are absorbed. Only confirmed successful opens write the timestamp; failed attempts do not block subsequent triggers.</p>
+        <p>After a successful open, a 10-second debounce prevents re-triggering. The debounce is tracked independently per device, so two geofences entered close together — an outer gate and a garage door on the same property, for example — can't have one device's auto-open silently suppress the other's. The timestamp is shared between the geofence service and the AA car screen via encrypted storage — cross-process races are absorbed. Only confirmed successful opens write the timestamp; failed attempts do not block subsequent triggers.</p>
 
         <h3>Re-registration</h3>
         <p>Both geofences are re-registered automatically on boot, app update, cold start, and every ~15 minutes via WorkManager (covers OEM process killers). <code>setInitialTrigger(0)</code> ensures re-registration never fires a spurious ENTER if you're already inside the zone.</p>
