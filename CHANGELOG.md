@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.12.7]
+
+### Watch OS — Changed
+- Play Store listing description now mentions the Wear OS tile, to meet Google's Wear OS eligibility requirement that the listing disclose tile/complication features included in the app.
+
 ## [1.12.6]
 
 ### Phone — Changed
