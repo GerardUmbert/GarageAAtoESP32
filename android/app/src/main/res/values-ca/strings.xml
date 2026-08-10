@@ -102,7 +102,7 @@
     <string name="toast_password_updated">Contrasenya actualitzada</string>
 
     <string name="aa_demo_mode">Mode de demostració — sense ESP32</string>
-    <string name="aa_not_configured">Configura el garatge des de l\'app del mòbil</string>
+    <string name="aa_not_configured">Cap garatge configurat</string>
     <string name="aa_in_range">● A l\'abast</string>
     <string name="aa_out_of_range">○ Fora de l\'abast</string>
     <string name="aa_open_garage">Obrir garatge</string>

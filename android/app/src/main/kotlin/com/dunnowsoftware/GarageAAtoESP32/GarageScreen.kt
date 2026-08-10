@@ -349,18 +349,28 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
 
     private fun buildSingleDevice(p: DevicePreferences): Template {
         val configured = p.isConfigured
-        val selected = p.selectedDevice
-        val deviceName = when {
-            p.demoMode        -> carContext.getString(R.string.aa_demo_mode)
-            selected != null  -> selected.name
-            else              -> carContext.getString(R.string.aa_not_configured)
+        if (!configured) {
+            // No tappable action here: an enabled-looking "Open Garage" button
+            // that silently no-ops because nothing is paired reads to Play
+            // Console's Auto App Quality scanner as a control gated behind
+            // phone interaction while driving. A plain message screen has no
+            // interactive element for it to flag.
+            return MessageTemplate.Builder(carContext.getString(R.string.aa_not_configured))
+                .setHeader(
+                    Header.Builder()
+                        .setStartHeaderAction(Action.APP_ICON)
+                        .setTitle(carContext.getString(R.string.aa_garage_door))
+                        .build()
+                )
+                .build()
         }
+        val selected = p.selectedDevice
+        val deviceName = if (p.demoMode) carContext.getString(R.string.aa_demo_mode) else selected!!.name
         // BLE presence (in range/out of range) has no equivalent for webhook
         // targets — there's no proximity signal to report (no BLE, and this
         // screen doesn't check geofence/location), so the tag is omitted
         // entirely rather than showing a permanently-wrong "out of range".
         val presenceTag = when {
-            !configured           -> null
             p.demoMode            -> carContext.getString(R.string.aa_in_range)
             selected?.ble == null -> null
             inRange               -> carContext.getString(R.string.aa_in_range)
@@ -373,7 +383,7 @@ class GarageScreen(carContext: CarContext) : Screen(carContext) {
 
         val openAction = Action.Builder()
             .setTitle(carContext.getString(R.string.aa_open_garage))
-            .setOnClickListener { if (configured) triggerOpen() }
+            .setOnClickListener { triggerOpen() }
             .build()
 
         val pane = Pane.Builder()

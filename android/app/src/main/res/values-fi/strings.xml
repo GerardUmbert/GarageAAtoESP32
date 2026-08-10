@@ -102,7 +102,7 @@
     <string name="toast_password_updated">Salasana päivitetty</string>
 
     <string name="aa_demo_mode">Demotila — ei ESP32:ta tarvita</string>
-    <string name="aa_not_configured">Määritä autotalli puhelinsovelluksessa</string>
+    <string name="aa_not_configured">Autotallia ei ole määritetty</string>
     <string name="aa_in_range">● Kantaman sisällä</string>
     <string name="aa_out_of_range">○ Kantaman ulkopuolella</string>
     <string name="aa_open_garage">Avaa autotalli</string>

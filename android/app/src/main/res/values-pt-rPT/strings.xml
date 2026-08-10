@@ -102,7 +102,7 @@
     <string name="toast_password_updated">Palavra-passe atualizada</string>
 
     <string name="aa_demo_mode">Modo de demonstração — sem ESP32</string>
-    <string name="aa_not_configured">Configura a garagem na app do telemóvel</string>
+    <string name="aa_not_configured">Nenhuma garagem configurada</string>
     <string name="aa_in_range">● Ao alcance</string>
     <string name="aa_out_of_range">○ Fora de alcance</string>
     <string name="aa_open_garage">Abrir garagem</string>

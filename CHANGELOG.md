@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.12.8]
+
+### Android Auto — Fixed
+- Removed the tappable "Open Garage" action from the car screen's unpaired state (it silently did nothing) and reworded the unpaired message to a plain status line instead of an instruction to use the phone, addressing a Play Console Auto App Quality rejection ("Visual info on phone").
+
 ## [1.12.7]
 
 ### Watch OS — Changed

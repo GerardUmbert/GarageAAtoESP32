@@ -102,7 +102,7 @@
 
     <!-- Android Auto car screen -->
     <string name="aa_demo_mode">Demo mode — no ESP32 needed</string>
-    <string name="aa_not_configured">Set up garage in the phone app first</string>
+    <string name="aa_not_configured">No garage configured</string>
     <string name="aa_in_range">● In range</string>
     <string name="aa_out_of_range">○ Out of range</string>
     <string name="aa_open_garage">Open Garage</string>
