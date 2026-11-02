@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.dunnowsoftware.GarageAAtoESP32.BuildConfig
 import com.dunnowsoftware.GarageAAtoESP32.R
 import com.dunnowsoftware.GarageAAtoESP32.ui.HAPTIC_TAP
 import com.dunnowsoftware.GarageAAtoESP32.ui.vibrate
@@ -34,11 +35,13 @@ import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageColors
 import com.google.android.gms.location.LocationServices
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.tileprovider.tilesource.TileSourcePolicy
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.util.MapTileIndex
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Polygon
+import org.osmdroid.views.overlay.TilesOverlay
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import kotlin.math.abs
@@ -63,9 +66,13 @@ private val CartoDarkTiles = object : OnlineTileSourceBase(
         return baseUrl +
             MapTileIndex.getZoom(pMapTileIndex) + "/" +
             MapTileIndex.getX(pMapTileIndex) + "/" +
-            MapTileIndex.getY(pMapTileIndex) + mImageFilenameEnding
+            MapTileIndex.getY(pMapTileIndex) + mImageFilenameEnding +
+            "?key=" + BuildConfig.CARTO_API_KEY
     }
 }
+
+// CARTO requires an API key; builds without one (forks) use OSM tiles, color-inverted to stay dark.
+private val HasCartoKey = BuildConfig.CARTO_API_KEY.isNotBlank()
 
 private const val ACCENT_ARGB            = 0xFF2AD4A3.toInt()
 private const val ACCENT_FILL_ARGB       = 0x302AD4A3
@@ -235,7 +242,12 @@ fun GeofencePickerScreen(
                 modifier = Modifier.fillMaxSize(),
                 factory = { mapCtx ->
                     MapView(mapCtx).apply {
-                        setTileSource(CartoDarkTiles)
+                        if (HasCartoKey) {
+                            setTileSource(CartoDarkTiles)
+                        } else {
+                            setTileSource(TileSourceFactory.MAPNIK)
+                            overlayManager.tilesOverlay.setColorFilter(TilesOverlay.INVERT_COLORS)
+                        }
                         setMultiTouchControls(true)
                         zoomController.setVisibility(org.osmdroid.views.CustomZoomButtonsController.Visibility.NEVER)
                         controller.setZoom(DEFAULT_ZOOM)

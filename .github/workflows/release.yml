@@ -54,6 +54,7 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          CARTO_API_KEY: ${{ secrets.CARTO_API_KEY }}
         run: |
           chmod +x gradlew
           ./gradlew assembleRelease bundleRelease assembleDebug

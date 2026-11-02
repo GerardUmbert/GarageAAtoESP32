@@ -16,10 +16,23 @@ android {
         targetSdk = 36
         versionCode = 81
         versionName = "1.12.8"
+
+        // CARTO basemap key: env var, then android/secrets.properties (gitignored).
+        // Blank is fine — the geofence picker falls back to OpenStreetMap tiles.
+        val secretsPropsFile = rootProject.file("secrets.properties")
+        val secretsProps = Properties().apply {
+            if (secretsPropsFile.exists()) {
+                secretsPropsFile.inputStream().use { load(it) }
+            }
+        }
+        val cartoKey = (System.getenv("CARTO_API_KEY") ?: secretsProps.getProperty("CARTO_API_KEY"))
+            ?.trim().orEmpty()
+        buildConfigField("String", "CARTO_API_KEY", "\"$cartoKey\"")
     }
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     signingConfigs {
