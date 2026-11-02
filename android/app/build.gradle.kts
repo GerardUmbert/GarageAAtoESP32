@@ -14,8 +14,8 @@ android {
         applicationId = "com.dunnowsoftware.GarageAAtoESP32"
         minSdk = 29
         targetSdk = 36
-        versionCode = 82
-        versionName = "1.12.9"
+        versionCode = 83
+        versionName = "1.12.10"
 
         // CARTO basemap key: env var, then android/secrets.properties (gitignored).
         // Blank is fine — the geofence picker falls back to OpenStreetMap tiles.

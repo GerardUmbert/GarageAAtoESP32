@@ -236,6 +236,8 @@ fun GeofencePickerScreen(
                             map.uiSettings.isCompassEnabled = false
                             map.uiSettings.isRotateGesturesEnabled = false
                             map.uiSettings.isTiltGesturesEnabled = false
+                            map.uiSettings.isLogoEnabled = false
+                            map.uiSettings.isAttributionEnabled = false
 
                             val builder = if (HasCartoKey) Style.Builder().fromUri(MapStyleUrl)
                                           else Style.Builder().fromJson(OsmFallbackStyle)

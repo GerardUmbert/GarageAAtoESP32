@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.12.10]
+
+### Phone — Changed
+- The geofence picker map no longer shows the MapLibre logo and attribution button.
+
+### Flash tool (Linux) — Fixed
+- `flash.sh` now matches `flash.ps1`. The generated `platformio.build.ini` previously contained literal `\n` text instead of line breaks, so the LED, web log and Home Assistant build flags ended up on one malformed line.
+- Home Assistant Wi-Fi SSID and password are now escaped as string macros, as on Windows, so they compile.
+- The Home Assistant configuration summary at the end no longer aborts with "PIN: unbound variable"; the token hash is computed before the PIN is cleared.
+- The web log prompt now correctly describes the access point as hidden and protected by your PIN, and the trigger GPIO prompt mentions the capacitive pad option.
+
 ## [1.12.9]
 
 ### Phone — Fixed
