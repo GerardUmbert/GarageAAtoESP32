@@ -359,7 +359,7 @@ echo -e "  ${GRAY}These are optional. Hit Enter at each prompt to use the defaul
 echo ""
 
 # Trigger pin
-echo -e "  ${GRAY}GPIO pin used to fire the trigger (transistor base / relay coil).${NC}"
+echo -e "  ${GRAY}GPIO pin used to fire the trigger (transistor base / relay coil / capacitive pad).${NC}"
 echo -e "  ${GRAY}Default for ${BOARD_LABELS[$BOARD]}: GPIO $DEFAULT_TRIGGER_PIN${NC}"
 read -rp "  Trigger GPIO (default: $DEFAULT_TRIGGER_PIN): " pin_input
 if [[ -z "$pin_input" ]]; then
@@ -422,9 +422,9 @@ write_ok "Device name: $DEVICE_NAME"
 
 # Web log server
 echo ""
-echo -e "  ${GRAY}Enable Wi-Fi log server? The ESP32 will host an open Wi-Fi AP${NC}"
-echo -e "  ${GRAY}(SSID: ${DEVICE_NAME}_XXXXXX) serving a web page with the full open history.${NC}"
-echo -e "  ${GRAY}Uses more power while the AP is active.${NC}"
+echo -e "  ${GRAY}Enable Wi-Fi log server? The ESP32 will host a hidden Wi-Fi AP${NC}"
+echo -e "  ${GRAY}(SSID: ${DEVICE_NAME}_XXXXXX, password: your PIN) serving a web page${NC}"
+echo -e "  ${GRAY}with the full open history. Uses more power while the AP is active.${NC}"
 echo -e "  ${GRAY}(If you enable Home Assistant webhook in the next step, the log is${NC}"
 echo -e "  ${GRAY} served automatically at http://${DEVICE_NAME}.local/log instead.)${NC}"
 read -rp "  Enable web log? (y/n, default: n): " weblog_input
@@ -481,19 +481,24 @@ echo ""
 LED_PIN="${BOARD_LED_PINS[$BOARD]}"
 LED_ON="${BOARD_LED_ON[$BOARD]}"
 
+NL=$'\n'
+BSQ='\"'   # backslash + quote: PlatformIO needs string macros escaped like this
+
 LED_FLAGS=""
 if [[ -n "$LED_PIN" ]]; then
-    LED_FLAGS="\n    -DLED_PIN=${LED_PIN}\n    -DLED_ON_LEVEL=${LED_ON}"
+    LED_FLAGS="${NL}    -DLED_PIN=${LED_PIN}${NL}    -DLED_ON_LEVEL=${LED_ON}"
 fi
 
 WEBLOG_FLAG=""
 if (( ENABLE_WEBLOG )); then
-    WEBLOG_FLAG="\n    -DENABLE_WEBLOG=1"
+    WEBLOG_FLAG="${NL}    -DENABLE_WEBLOG=1"
 fi
 
 HA_FLAG=""
 if (( ENABLE_HA )); then
-    HA_FLAG="\n    -DENABLE_HA_WEBHOOK=1\n    -DHA_WIFI_SSID=\"${HA_WIFI_SSID}\"\n    -DHA_WIFI_PASS=\"${HA_WIFI_PASS}\""
+    HA_FLAG="${NL}    -DENABLE_HA_WEBHOOK=1${NL}    -DHA_WIFI_SSID=${BSQ}${HA_WIFI_SSID}${BSQ}${NL}    -DHA_WIFI_PASS=${BSQ}${HA_WIFI_PASS}${BSQ}"
+    # Computed before the PIN is unset below; shown in the HA summary at the end.
+    PIN_HASH=$(printf '%s' "${PIN}" | sha256sum | awk '{print $1}')
 fi
 
 BUILD_INI_FILE="$(dirname "$0")/platformio.build.ini"
@@ -552,7 +557,6 @@ if (( FLASH_OK )); then
     echo -e "  ${GRAY}Your PIN was never saved to disk.${NC}"
     echo ""
     if (( ENABLE_HA )); then
-        PIN_HASH=$(printf '%s' "${PIN}" | sha256sum | awk '{print $1}')
         echo -e "  ${CYAN}── Home Assistant configuration ──────────────────────────${NC}"
         echo -e "  ${GRAY}Add this to your configuration.yaml and reload HA:${NC}"
         echo ""
