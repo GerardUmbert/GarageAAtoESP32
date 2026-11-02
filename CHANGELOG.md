@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.12.9]
+
+### Phone — Fixed
+- The geofence picker map showed no tiles: CARTO now requires an API key for its basemaps outside its own platform and was serving "API KEY REQUIRED" watermark tiles. The key is now supplied at build time (`CARTO_API_KEY` env var or the gitignored `android/secrets.properties`; a repo secret in CI). Builds without a key fall back to OpenStreetMap tiles so forks still get a working map.
+
+### Phone — Changed
+- The geofence picker now renders CARTO's dark vector basemap through MapLibre instead of osmdroid raster tiles, for sharper text and smoother zoom. Pin placement, radius and warmup-ring sliders, initial fit-to-circle zoom and the location dot behave as before.
+
 ## [1.12.8]
 
 ### Android Auto — Fixed

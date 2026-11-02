@@ -14,8 +14,8 @@ android {
         applicationId = "com.dunnowsoftware.GarageAAtoESP32"
         minSdk = 29
         targetSdk = 36
-        versionCode = 81
-        versionName = "1.12.8"
+        versionCode = 82
+        versionName = "1.12.9"
 
         // CARTO basemap key: env var, then android/secrets.properties (gitignored).
         // Blank is fine — the geofence picker falls back to OpenStreetMap tiles.
@@ -104,7 +104,7 @@ dependencies {
     implementation(libs.play.services.wearable)
     implementation(libs.wear.remote.interactions)
     implementation("com.google.guava:guava:31.1-android")
-    implementation(libs.osmdroid)
+    implementation(libs.maplibre)
     implementation(libs.work.manager)
 
     implementation(libs.activity.compose)

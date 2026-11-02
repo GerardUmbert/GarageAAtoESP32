@@ -1,10 +1,12 @@
 package com.dunnowsoftware.GarageAAtoESP32.ui.screens
 
-import android.graphics.DashPathEffect
-import android.graphics.Paint
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.pm.PackageManager
 import android.location.Location
-import androidx.preference.PreferenceManager
-import android.view.MotionEvent
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -33,49 +35,49 @@ import com.dunnowsoftware.GarageAAtoESP32.ui.HAPTIC_TAP
 import com.dunnowsoftware.GarageAAtoESP32.ui.vibrate
 import com.dunnowsoftware.GarageAAtoESP32.ui.theme.GarageColors
 import com.google.android.gms.location.LocationServices
-import org.osmdroid.config.Configuration
-import org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
-import org.osmdroid.tileprovider.tilesource.TileSourcePolicy
-import org.osmdroid.util.GeoPoint
-import org.osmdroid.util.MapTileIndex
-import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.Polygon
-import org.osmdroid.views.overlay.TilesOverlay
-import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
-import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
+import org.maplibre.android.MapLibre
+import org.maplibre.android.camera.CameraUpdateFactory
+import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.geometry.LatLngBounds
+import org.maplibre.android.location.LocationComponentActivationOptions
+import org.maplibre.android.maps.MapLibreMap
+import org.maplibre.android.maps.MapView
+import org.maplibre.android.maps.Style
+import org.maplibre.android.style.layers.FillLayer
+import org.maplibre.android.style.layers.LineLayer
+import org.maplibre.android.style.layers.PropertyFactory
+import org.maplibre.android.style.sources.GeoJsonSource
+import org.maplibre.geojson.Feature
+import org.maplibre.geojson.FeatureCollection
+import org.maplibre.geojson.Point
+import org.maplibre.geojson.Polygon
 import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.math.roundToInt
 
-private val CartoDarkTiles = object : OnlineTileSourceBase(
-    "CartoDark",
-    0, 19, 256, ".png",
-    arrayOf(
-        "https://a.basemaps.cartocdn.com/dark_all/",
-        "https://b.basemaps.cartocdn.com/dark_all/",
-        "https://c.basemaps.cartocdn.com/dark_all/",
-    ),
-    "© OpenStreetMap contributors, © CARTO",
-    TileSourcePolicy(
-        2,
-        TileSourcePolicy.FLAG_NO_BULK or TileSourcePolicy.FLAG_NO_PREVENTIVE or
-            TileSourcePolicy.FLAG_USER_AGENT_MEANINGFUL or TileSourcePolicy.FLAG_USER_AGENT_NORMALIZED,
-    ),
-) {
-    override fun getTileURLString(pMapTileIndex: Long): String {
-        return baseUrl +
-            MapTileIndex.getZoom(pMapTileIndex) + "/" +
-            MapTileIndex.getX(pMapTileIndex) + "/" +
-            MapTileIndex.getY(pMapTileIndex) + mImageFilenameEnding +
-            "?key=" + BuildConfig.CARTO_API_KEY
+// CARTO requires an API key; builds without one (forks) fall back to plain OSM raster tiles.
+private val MapStyleUrl = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json?key=${BuildConfig.CARTO_API_KEY}"
+private val HasCartoKey = BuildConfig.CARTO_API_KEY.isNotBlank()
+private const val OsmFallbackStyle = """{"version":8,"sources":{"osm":{"type":"raster","tiles":["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],"tileSize":256,"maxzoom":19,"attribution":"© OpenStreetMap contributors"}},"layers":[{"id":"osm","type":"raster","source":"osm"}]}"""
+
+private const val SRC_INNER = "geofence-inner"
+private const val SRC_OUTER = "geofence-outer"
+
+/** Circle as a GeoJSON polygon (flat-earth approximation, accurate enough at geofence scale). */
+private fun circlePoints(center: LatLng, radiusM: Double): List<Point> {
+    val dLat = radiusM / 111_320.0
+    val dLng = radiusM / (111_320.0 * cos(Math.toRadians(center.latitude)))
+    return (0..72).map { i ->
+        val a = Math.toRadians(i * 5.0)
+        Point.fromLngLat(center.longitude + dLng * cos(a), center.latitude + dLat * sin(a))
     }
 }
 
-// CARTO requires an API key; builds without one (forks) use OSM tiles, color-inverted to stay dark.
-private val HasCartoKey = BuildConfig.CARTO_API_KEY.isNotBlank()
+private fun circlePolygon(center: LatLng, radiusM: Double): Polygon =
+    Polygon.fromLngLats(listOf(circlePoints(center, radiusM)))
 
 private const val ACCENT_ARGB            = 0xFF2AD4A3.toInt()
-private const val ACCENT_FILL_ARGB       = 0x302AD4A3
 private const val ACCENT_OUTER_ARGB      = 0x662AD4A3  // ~40% alpha for the warmup ring
 
 private const val RADIUS_MIN        = 15f
@@ -106,61 +108,21 @@ fun GeofencePickerScreen(
 ) {
     val context = LocalContext.current
 
-    LaunchedEffect(Unit) {
-        Configuration.getInstance().apply {
-            load(context, PreferenceManager.getDefaultSharedPreferences(context))
-            userAgentValue = context.packageName
-        }
-    }
-
     var pickedPoint by remember {
         mutableStateOf(
-            if (initialLat != null && initialLng != null) GeoPoint(initialLat, initialLng) else null
+            if (initialLat != null && initialLng != null) LatLng(initialLat, initialLng) else null
         )
     }
     var radiusM by remember { mutableFloatStateOf(initialRadiusM ?: RADIUS_DEFAULT) }
     var outerOffsetM by remember { mutableFloatStateOf(initialOuterOffsetM ?: OUTER_OFFSET_DEFAULT) }
-    var mapViewRef by remember { mutableStateOf<MapView?>(null) }
-    var geofencePolygon by remember { mutableStateOf<Polygon?>(null) }
-    var outerPolygon by remember { mutableStateOf<Polygon?>(null) }
+    var mapRef by remember { mutableStateOf<MapLibreMap?>(null) }
 
-    fun updateCircle(center: GeoPoint, map: MapView) {
-        geofencePolygon?.let { map.overlays.remove(it) }
-        outerPolygon?.let { map.overlays.remove(it) }
-
-        val outer = Polygon(map).apply {
-            points = Polygon.pointsAsCircle(center, radiusM.toDouble() + outerOffsetM.toDouble())
-            fillPaint.apply {
-                color = 0x002AD4A3  // transparent fill
-                style = Paint.Style.FILL
-            }
-            outlinePaint.apply {
-                color = ACCENT_OUTER_ARGB
-                strokeWidth = 2f
-                style = Paint.Style.STROKE
-                pathEffect = DashPathEffect(floatArrayOf(14f, 10f), 0f)
-            }
-            isVisible = true
-        }
-        map.overlays.add(outer)
-        outerPolygon = outer
-
-        val poly = Polygon(map).apply {
-            points = Polygon.pointsAsCircle(center, radiusM.toDouble())
-            fillPaint.apply {
-                color = ACCENT_FILL_ARGB
-                style = Paint.Style.FILL
-            }
-            outlinePaint.apply {
-                color = ACCENT_ARGB
-                strokeWidth = 3f
-                style = Paint.Style.STROKE
-            }
-            isVisible = true
-        }
-        map.overlays.add(poly)
-        geofencePolygon = poly
-        map.invalidate()
+    fun updateCircle(center: LatLng, map: MapLibreMap) {
+        val style = map.style ?: return
+        style.getSourceAs<GeoJsonSource>(SRC_INNER)
+            ?.setGeoJson(Feature.fromGeometry(circlePolygon(center, radiusM.toDouble())))
+        style.getSourceAs<GeoJsonSource>(SRC_OUTER)
+            ?.setGeoJson(Feature.fromGeometry(circlePolygon(center, radiusM.toDouble() + outerOffsetM.toDouble())))
     }
 
     Column(
@@ -238,72 +200,111 @@ fun GeofencePickerScreen(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(20.dp)),
         ) {
+            val lifecycle = androidx.compose.ui.platform.LocalLifecycleOwner.current.lifecycle
+            val mapView = remember {
+                MapLibre.getInstance(context)
+                MapView(context)
+            }
+            DisposableEffect(lifecycle, mapView) {
+                mapView.onCreate(null)
+                val observer = LifecycleEventObserver { _, event ->
+                    when (event) {
+                        Lifecycle.Event.ON_START -> mapView.onStart()
+                        Lifecycle.Event.ON_RESUME -> mapView.onResume()
+                        Lifecycle.Event.ON_PAUSE -> mapView.onPause()
+                        Lifecycle.Event.ON_STOP -> mapView.onStop()
+                        else -> Unit
+                    }
+                }
+                lifecycle.addObserver(observer)
+                // The effect may start after the lifecycle already reached STARTED/RESUMED.
+                if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) mapView.onStart()
+                if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) mapView.onResume()
+                onDispose {
+                    lifecycle.removeObserver(observer)
+                    mapView.onPause()
+                    mapView.onStop()
+                    mapView.onDestroy()
+                }
+            }
+
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
-                factory = { mapCtx ->
-                    MapView(mapCtx).apply {
-                        if (HasCartoKey) {
-                            setTileSource(CartoDarkTiles)
-                        } else {
-                            setTileSource(TileSourceFactory.MAPNIK)
-                            overlayManager.tilesOverlay.setColorFilter(TilesOverlay.INVERT_COLORS)
-                        }
-                        setMultiTouchControls(true)
-                        zoomController.setVisibility(org.osmdroid.views.CustomZoomButtonsController.Visibility.NEVER)
-                        controller.setZoom(DEFAULT_ZOOM)
-                        clipToOutline = true
+                factory = {
+                    mapView.apply {
+                        getMapAsync { map ->
+                            map.uiSettings.isCompassEnabled = false
+                            map.uiSettings.isRotateGesturesEnabled = false
+                            map.uiSettings.isTiltGesturesEnabled = false
 
-                        val startPoint = pickedPoint
-                        if (startPoint != null) {
-                            // Zoom so the circle fills ~55% of the viewport on first open.
-                            // zoomToBoundingBox needs the map to have a measured size, so
-                            // post it to run after the first layout pass.
-                            val circleBbox = org.osmdroid.util.BoundingBox.fromGeoPoints(
-                                Polygon.pointsAsCircle(startPoint, radiusM.toDouble())
-                            )
-                            post {
-                                controller.setCenter(startPoint)
-                                zoomToBoundingBox(
-                                    circleBbox.increaseByScale((1.0 / CIRCLE_PADDING).toFloat()),
-                                    false,
+                            val builder = if (HasCartoKey) Style.Builder().fromUri(MapStyleUrl)
+                                          else Style.Builder().fromJson(OsmFallbackStyle)
+                            map.setStyle(builder) { style ->
+                                val empty = FeatureCollection.fromFeatures(emptyList<Feature>())
+                                style.addSource(GeoJsonSource(SRC_OUTER, empty))
+                                style.addSource(GeoJsonSource(SRC_INNER, empty))
+                                style.addLayer(
+                                    LineLayer("geofence-outer-line", SRC_OUTER).withProperties(
+                                        PropertyFactory.lineColor(ACCENT_OUTER_ARGB),
+                                        PropertyFactory.lineWidth(2f),
+                                        PropertyFactory.lineDasharray(arrayOf(5f, 4f)),
+                                    )
                                 )
-                            }
-                            updateCircle(startPoint, this)
-                        } else {
-                            try {
-                                LocationServices.getFusedLocationProviderClient(mapCtx)
-                                    .lastLocation
-                                    .addOnSuccessListener { loc: Location? ->
-                                        if (loc != null) {
-                                            controller.setZoom(DEFAULT_ZOOM)
-                                            controller.animateTo(GeoPoint(loc.latitude, loc.longitude))
-                                        }
+                                style.addLayer(
+                                    FillLayer("geofence-inner-fill", SRC_INNER).withProperties(
+                                        PropertyFactory.fillColor(ACCENT_ARGB),
+                                        PropertyFactory.fillOpacity(0.19f),
+                                    )
+                                )
+                                style.addLayer(
+                                    LineLayer("geofence-inner-line", SRC_INNER).withProperties(
+                                        PropertyFactory.lineColor(ACCENT_ARGB),
+                                        PropertyFactory.lineWidth(3f),
+                                    )
+                                )
+
+                                enableUserLocation(context, map, style)
+
+                                val startPoint = pickedPoint
+                                if (startPoint != null) {
+                                    updateCircle(startPoint, map)
+                                    // Zoom so the circle fills ~55% of the viewport on first open.
+                                    val bounds = LatLngBounds.Builder()
+                                        .includes(circlePoints(startPoint, radiusM / CIRCLE_PADDING)
+                                            .map { LatLng(it.latitude(), it.longitude()) })
+                                        .build()
+                                    map.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 0))
+                                } else {
+                                    try {
+                                        LocationServices.getFusedLocationProviderClient(context)
+                                            .lastLocation
+                                            .addOnSuccessListener { loc: Location? ->
+                                                if (loc != null) {
+                                                    map.animateCamera(
+                                                        CameraUpdateFactory.newLatLngZoom(
+                                                            LatLng(loc.latitude, loc.longitude), DEFAULT_ZOOM,
+                                                        )
+                                                    )
+                                                }
+                                            }
+                                    } catch (_: SecurityException) {
+                                        map.moveCamera(CameraUpdateFactory.zoomTo(DEFAULT_ZOOM))
                                     }
-                            } catch (_: SecurityException) {
-                                controller.setZoom(DEFAULT_ZOOM)
+                                }
                             }
-                        }
 
-                        val myLocOverlay = MyLocationNewOverlay(GpsMyLocationProvider(mapCtx), this)
-                        myLocOverlay.enableMyLocation()
-                        overlays.add(myLocOverlay)
-
-                        overlays.add(object : org.osmdroid.views.overlay.Overlay() {
-                            override fun onSingleTapConfirmed(e: MotionEvent, mapView: MapView): Boolean {
-                                val proj = mapView.projection
-                                val tapped = proj.fromPixels(e.x.toInt(), e.y.toInt()) as GeoPoint
+                            map.addOnMapClickListener { tapped ->
                                 pickedPoint = tapped
-                                updateCircle(tapped, mapView)
-                                return true
+                                updateCircle(tapped, map)
+                                true
                             }
-                        })
-
-                        mapViewRef = this
+                            mapRef = map
+                        }
                     }
                 },
-                update = { map ->
+                update = {
                     val point = pickedPoint ?: return@AndroidView
-                    updateCircle(point, map)
+                    mapRef?.let { updateCircle(point, it) }
                 },
             )
 
@@ -411,7 +412,7 @@ fun GeofencePickerScreen(
                 onValueChange = { v ->
                     radiusM = v
                     val p = pickedPoint ?: return@Slider
-                    val map = mapViewRef ?: return@Slider
+                    val map = mapRef ?: return@Slider
                     updateCircle(p, map)
                 },
                 valueRange = RADIUS_MIN..RADIUS_MAX,
@@ -464,7 +465,7 @@ fun GeofencePickerScreen(
                 onValueChange = { v ->
                     outerOffsetM = v
                     val p = pickedPoint ?: return@Slider
-                    val map = mapViewRef ?: return@Slider
+                    val map = mapRef ?: return@Slider
                     updateCircle(p, map)
                 },
                 valueRange = OUTER_OFFSET_MIN..OUTER_OFFSET_MAX,
@@ -516,5 +517,17 @@ fun GeofencePickerScreen(
         } else {
             Spacer(Modifier.height(20.dp))
         }
+    }
+}
+
+@SuppressLint("MissingPermission")
+private fun enableUserLocation(context: android.content.Context, map: MapLibreMap, style: Style) {
+    val granted =
+        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+    if (!granted) return
+    map.locationComponent.apply {
+        activateLocationComponent(LocationComponentActivationOptions.builder(context, style).build())
+        isLocationComponentEnabled = true
     }
 }
