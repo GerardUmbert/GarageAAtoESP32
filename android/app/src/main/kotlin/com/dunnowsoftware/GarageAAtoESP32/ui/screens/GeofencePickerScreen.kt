@@ -29,7 +29,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.dunnowsoftware.GarageAAtoESP32.BuildConfig
 import com.dunnowsoftware.GarageAAtoESP32.R
 import com.dunnowsoftware.GarageAAtoESP32.ui.HAPTIC_TAP
 import com.dunnowsoftware.GarageAAtoESP32.ui.vibrate
@@ -56,10 +55,8 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.roundToInt
 
-// CARTO requires an API key; builds without one (forks) fall back to plain OSM raster tiles.
-private val MapStyleUrl = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json?key=${BuildConfig.CARTO_API_KEY}"
-private val HasCartoKey = BuildConfig.CARTO_API_KEY.isNotBlank()
-private const val OsmFallbackStyle = """{"version":8,"sources":{"osm":{"type":"raster","tiles":["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],"tileSize":256,"maxzoom":19,"attribution":"© OpenStreetMap contributors"}},"layers":[{"id":"osm","type":"raster","source":"osm"}]}"""
+// OpenStreetMap vector tiles served by OpenFreeMap (no API key); dark style lives in assets/map_style_dark.json.
+private const val MapStyleAsset = "asset://map_style_dark.json"
 
 private const val SRC_INNER = "geofence-inner"
 private const val SRC_OUTER = "geofence-outer"
@@ -239,9 +236,7 @@ fun GeofencePickerScreen(
                             map.uiSettings.isLogoEnabled = false
                             map.uiSettings.isAttributionEnabled = false
 
-                            val builder = if (HasCartoKey) Style.Builder().fromUri(MapStyleUrl)
-                                          else Style.Builder().fromJson(OsmFallbackStyle)
-                            map.setStyle(builder) { style ->
+                            map.setStyle(Style.Builder().fromUri(MapStyleAsset)) { style ->
                                 val empty = FeatureCollection.fromFeatures(emptyList<Feature>())
                                 style.addSource(GeoJsonSource(SRC_OUTER, empty))
                                 style.addSource(GeoJsonSource(SRC_INNER, empty))

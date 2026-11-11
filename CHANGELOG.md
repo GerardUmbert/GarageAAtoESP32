@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.12.11]
+
+### Phone — Fixed
+- The geofence picker map sometimes loaded partially or not at all. It now uses OpenStreetMap vector tiles served by OpenFreeMap with a dark style matched to the previous look, and keeps drawing when zoomed past the last tile level.
+
+### Phone — Changed
+- The map no longer needs a CARTO API key; the `CARTO_API_KEY` build setting and CI secret have been removed.
+
 ## [1.12.10]
 
 ### Phone — Changed

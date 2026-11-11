@@ -14,20 +14,8 @@ android {
         applicationId = "com.dunnowsoftware.GarageAAtoESP32"
         minSdk = 29
         targetSdk = 36
-        versionCode = 83
-        versionName = "1.12.10"
-
-        // CARTO basemap key: env var, then android/secrets.properties (gitignored).
-        // Blank is fine — the geofence picker falls back to OpenStreetMap tiles.
-        val secretsPropsFile = rootProject.file("secrets.properties")
-        val secretsProps = Properties().apply {
-            if (secretsPropsFile.exists()) {
-                secretsPropsFile.inputStream().use { load(it) }
-            }
-        }
-        val cartoKey = (System.getenv("CARTO_API_KEY") ?: secretsProps.getProperty("CARTO_API_KEY"))
-            ?.trim().orEmpty()
-        buildConfigField("String", "CARTO_API_KEY", "\"$cartoKey\"")
+        versionCode = 84
+        versionName = "1.12.11"
     }
 
     buildFeatures {
